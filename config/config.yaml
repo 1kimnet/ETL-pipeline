@@ -1,5 +1,5 @@
 # Global settings
-use_bbox_filter: false  # Start without bbox filtering
-logging_level: "INFO"   # Default logging level
+use_bbox_filter: true  # Start without bbox filtering
+logging_level: "VERBOSE"   # Default logging level
 max_retries: 3          # Number of download retry attempts
 continue_on_failure: true  # Continue with other sources if one fails
