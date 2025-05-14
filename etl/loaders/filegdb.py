@@ -1,35 +1,27 @@
 """Loader that consolidates all staged shapefiles into *staging.gdb* using ArcPy.
 
-This **updated** version adds:
-* detailed ArcPy error capture with source file context
-* duplicate‑safe, FGDB‑legal layer names with [AUTHORITY]_[SANITIZED_NAME] convention
-* Sanitization for Swedish characters (åäö)
-* `arcpy.env.overwriteOutput = True` so reruns don’t crash
-* Enhanced logging in _reset_gdb to pinpoint creation/deletion issues.
+This **updated** version:
+* Uses a dedicated naming utility for cleaner code.
+* Implements [AUTHORITY]_[SANITIZED_NAME] convention.
+* Sanitizes Swedish characters (åäö).
+* Includes detailed ArcPy error capture and enhanced logging.
+* Sets `arcpy.env.overwriteOutput = True`.
 """
 
 from __future__ import annotations
 
 import logging
 import shutil
-import re
 from pathlib import Path
-from typing import Set, Dict
+from typing import Set
 
 import arcpy  # ArcGIS Pro / Server Python ships with this
 
 from ..utils import paths, ensure_dirs
-
+from ..utils.naming import generate_base_feature_class_name, DEFAULT_MAX_FC_NAME_LENGTH # Import the new utility and constant
 
 class ArcPyFileGDBLoader:  # noqa: D101
     """Build (or rebuild) *staging.gdb* from everything under *data/staging*."""
-
-    # --- Class attribute for Swedish character mapping ---
-    SWEDISH_CHAR_MAP: Dict[str, str] = {
-        'å': 'a', 'Å': 'A',
-        'ä': 'a', 'Ä': 'A',
-        'ö': 'o', 'Ö': 'O',
-    }
 
     def __init__(self, gdb_path: Path | None = None):
         ensure_dirs()
@@ -39,7 +31,7 @@ class ArcPyFileGDBLoader:  # noqa: D101
 
     def load_from_staging(self, staging_root: Path) -> None:  # noqa: D401
         """Recreate the FileGDB and copy every `.shp` inside *staging_root*."""
-        self._reset_gdb() # This will now raise an error if it fails, stopping before CopyFeatures
+        self._reset_gdb() 
 
         shp_files = list(staging_root.rglob("*.shp"))
         if not shp_files:
@@ -52,6 +44,8 @@ class ArcPyFileGDBLoader:  # noqa: D101
 
         used_names: Set[str] = set()
         for shp in shp_files:
+            tgt_name = "unknown_target" # Initialize for robust error logging
+            authority = "unknown_authority" # Initialize authority for robust error logging
             try:
                 # Extract authority from the path structure: staging_root/AUTHORITY/dataset_name/file.shp
                 relative_path = shp.relative_to(staging_root)
@@ -60,30 +54,37 @@ class ArcPyFileGDBLoader:  # noqa: D101
                     continue
                 authority = relative_path.parts[0]
 
-                tgt_name = self._safe_name(shp.stem, authority, used_names)
-                logging.info("📥 Copying %s → %s (Original: %s, Authority: %s)",
-                             shp.relative_to(paths.ROOT), tgt_name, shp.stem, authority)
+                # Generate the base name using the utility function
+                # _ensure_unique_name will now primarily handle uniqueness and final length.
+                # Pass the desired final max length to generate_base_feature_class_name
+                # so it can reserve space for suffixes correctly.
+                base_name = generate_base_feature_class_name(
+                    shp.stem, 
+                    authority, 
+                    max_length=DEFAULT_MAX_FC_NAME_LENGTH # Use constant from naming.py
+                ) 
+                tgt_name = self._ensure_unique_name(
+                    base_name, 
+                    used_names, 
+                    max_length=DEFAULT_MAX_FC_NAME_LENGTH # Use constant from naming.py
+                )
+                
+                logging.info("📥 Copying %s → %s (Original Stem: %s, Authority: %s, Base Name: %s)",
+                             shp.relative_to(paths.ROOT), tgt_name, shp.stem, authority, base_name)
                 arcpy.management.CopyFeatures(str(shp), tgt_name)
             except arcpy.ExecuteError:  # type: ignore[attr-defined]
-                # Ensure tgt_name is defined for logging, even if _safe_name failed (though it shouldn't)
-                safe_tgt_name = tgt_name if 'tgt_name' in locals() else "unknown_target"
                 logging.error(
-                    "❌ CopyFeatures failed for %s → %s: %s", shp.name, safe_tgt_name, arcpy.GetMessages(2)
+                    "❌ CopyFeatures failed for %s → %s: %s", shp.name, tgt_name, arcpy.GetMessages(2)
                 )
-                # Optionally, re-raise or continue based on project requirements
-                # For now, it continues to allow other files to be processed.
-                # raise # Uncomment to stop on first CopyFeatures error
-                continue
-            except ValueError as ve: # Catch errors from _safe_name, e.g., if a name cannot be generated
-                logging.error("❌ Naming error for %s: %s", shp.stem, ve)
-                continue
-            except Exception as e:
-                safe_tgt_name = tgt_name if 'tgt_name' in locals() else "unknown_target"
+                continue # Continue with the next shapefile
+            except ValueError as ve: # Catch naming errors from generate_base_feature_class_name or _ensure_unique_name
+                logging.error("❌ Naming error for original stem '%s' (authority '%s'): %s", shp.stem, authority, ve)
+                continue # Continue with the next shapefile
+            except Exception as e: # Catch any other unexpected errors
                 logging.error(
-                    "❌ Unexpected error during CopyFeatures for %s → %s: %s", shp.name, safe_tgt_name, e, exc_info=True
+                    "❌ Unexpected error processing %s (target %s): %s", shp.name, tgt_name, e, exc_info=True
                 )
-                # raise # Uncomment to stop on first unexpected error
-                continue
+                continue # Continue with the next shapefile
 
 
     # ---------------------------------------------------------------- internals
@@ -91,11 +92,9 @@ class ArcPyFileGDBLoader:  # noqa: D101
     def _reset_gdb(self) -> None:
         """
         Delete and recreate the destination GDB fresh for this run.
-        Any ArcPy error is logged with *full* tool messages then re‑raised so
-        the caller can surface it (and Pipeline will catch & report).
-        Other exceptions during deletion are also logged and re-raised.
+        Logs detailed messages and re-raises critical errors.
         """
-        gdb_full_path = self.gdb_path.resolve() # Get absolute path for clarity
+        gdb_full_path = self.gdb_path.resolve() 
         logging.info("ℹ️ Target GDB path for reset: %s", gdb_full_path)
 
         if self.gdb_path.exists():
@@ -109,7 +108,6 @@ class ArcPyFileGDBLoader:  # noqa: D101
         else:
             logging.info("ℹ️ GDB does not currently exist at %s, no removal needed.", gdb_full_path)
 
-        # Ensure parent directory exists (though ensure_dirs should have handled paths.DATA)
         parent_dir = self.gdb_path.parent.resolve()
         if not parent_dir.exists():
             logging.info("🆕 Parent directory %s for GDB does not exist. Attempting to create.", parent_dir)
@@ -124,87 +122,83 @@ class ArcPyFileGDBLoader:  # noqa: D101
         try:
             arcpy.management.CreateFileGDB(str(self.gdb_path.parent), self.gdb_path.name)
             logging.info("✅ Successfully created new GDB: %s", gdb_full_path)
-        except arcpy.ExecuteError:  # type: ignore[attr-defined]
-            msg = arcpy.GetMessages(2) # Get detailed ArcPy error messages
+        except arcpy.ExecuteError: 
+            msg = arcpy.GetMessages(2) 
             logging.error("❌ arcpy.management.CreateFileGDB failed for '%s': %s", gdb_full_path, msg)
-            # Re-raise with the specific ArcPy message
             raise RuntimeError(f"CreateFileGDB failed for '{gdb_full_path}': {msg}") from None
-        except Exception as e: # Catch any other unexpected errors during GDB creation
+        except Exception as e: 
             logging.error("❌ Unexpected error during arcpy.management.CreateFileGDB for '%s': %s", gdb_full_path, e, exc_info=True)
             raise RuntimeError(f"Unexpected error during CreateFileGDB for '{gdb_full_path}': {e}") from e
 
     @staticmethod
-    def _sanitize_swedish_chars(text: str) -> str:
-        """Replaces Swedish characters with their non-diacritic counterparts."""
-        for swedish_char, replacement in ArcPyFileGDBLoader.SWEDISH_CHAR_MAP.items():
-            text = text.replace(swedish_char, replacement)
-        return text
-
-    @staticmethod
-    def _safe_name(original_stem: str, authority: str, used: Set[str]) -> str:
+    def _ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = DEFAULT_MAX_FC_NAME_LENGTH) -> str:
         """
-        Generates a unique, FGDB-legal layer name using [AUTHORITY]_[SANITIZED_STEM] format.
-        Sanitizes Swedish characters and ensures the name is <= 60 characters.
+        Ensures the generated feature class name is unique by appending a suffix (_1, _2, etc.)
+        if necessary. Also ensures the final name does not exceed max_length.
+
+        Args:
+            base_name: The proposed base name (already sanitized, prefixed, and length-adjusted
+                       by generate_base_feature_class_name to reserve space for suffixes).
+            used_names: A set of already used names in the current GDB context (case-insensitive check).
+            max_length: The absolute maximum length for the final feature class name.
+
+        Returns:
+            A unique feature class name.
+
+        Raises:
+            ValueError: If a unique name cannot be generated within the length constraints.
         """
-        if not authority:
-            logging.warning("⚠️ Authority is empty, cannot prefix name for %s", original_stem)
-            # Fallback to original stem or handle as an error
-            # For now, proceed without authority prefix if empty, but this should be reviewed.
-            authority_prefix = ""
-        else:
-            authority_prefix = authority.upper() + "_"
-
-        # 1. Sanitize Swedish characters and convert to lowercase
-        sanitized_stem = ArcPyFileGDBLoader._sanitize_swedish_chars(original_stem.lower())
-
-        # 2. General sanitization: replace non-alphanumeric (excluding underscore) with underscore
-        sanitized_stem = re.sub(r'[^\w_]', '_', sanitized_stem)
-        sanitized_stem = re.sub(r'_+', '_', sanitized_stem).strip('_') # Replace multiple underscores with one
-
-        if not sanitized_stem: # Handle empty stem after sanitization
-            sanitized_stem = "layer"
-        
-        base_name = f"{authority_prefix}{sanitized_stem}"
-
-        # 3. Ensure overall length is within limits (e.g., 60 chars practical limit)
-        # Max length for a feature class name in a File GDB is 160 characters.
-        # However, ArcPy tools and other systems might have shorter practical limits.
-        # Let's use a conservative limit like 60, as previously discussed.
-        # If a shorter limit like 31 (common in SDE or older formats) is needed, adjust MAX_LEN.
-        MAX_LEN = 60 
-        
-        # Truncate if base_name is too long, leaving space for potential suffixes like "_1", "_2"
-        # Suffixes can be up to ~ "_999" (4 chars), so reserve space.
-        # If MAX_LEN is 60, reserve 5 for suffix, so stem part is 55.
-        TRUNCATE_LEN = MAX_LEN - 5 
-        if len(base_name) > TRUNCATE_LEN:
-            # If authority_prefix itself is long, this could be an issue.
-            # We need to truncate from the sanitized_stem part.
-            available_len_for_stem = TRUNCATE_LEN - len(authority_prefix)
-            if available_len_for_stem < 1: # Not enough space for even one char of stem
-                 raise ValueError(f"Authority prefix '{authority_prefix}' is too long to create a valid name from '{original_stem}' within {MAX_LEN} chars.")
-            sanitized_stem = sanitized_stem[:available_len_for_stem]
-            base_name = f"{authority_prefix}{sanitized_stem}".strip('_') # Reconstruct and strip trailing underscores
-
-        if not base_name: # Should not happen if logic above is correct
-            raise ValueError(f"Could not generate a base name for {original_stem} with authority {authority}.")
-
-        # 4. Ensure uniqueness
         candidate = base_name
-        idx = 1
-        while candidate.lower() in (n.lower() for n in used): # Case-insensitive check for practical uniqueness
-            suffix = f"_{idx}"
-            # Check if adding suffix exceeds MAX_LEN
-            if len(base_name) + len(suffix) > MAX_LEN:
-                # Need to truncate base_name further
-                chars_to_remove = (len(base_name) + len(suffix)) - MAX_LEN
-                truncated_base = base_name[:-(chars_to_remove)]
-                if not truncated_base.replace(authority_prefix, ""): # Ensure stem part is not empty
-                    raise ValueError(f"Cannot generate a unique name for {original_stem} (authority {authority}) under {MAX_LEN} chars.")
-                candidate = f"{truncated_base}{suffix}"
-            else:
-                candidate = f"{base_name}{suffix}"
-            idx += 1
         
-        used.add(candidate)
-        return candidate
+        # The base_name from generate_base_feature_class_name should already be truncated 
+        # to max_length - SUFFIX_RESERVATION_LENGTH.
+        # This _ensure_unique_name function primarily handles adding suffixes and ensuring
+        # the *final* name with suffix fits max_length.
+
+        if len(candidate) > max_length: # Should ideally not happen if base_name was prepared correctly
+            logging.warning(
+                "⚠️ Base name '%s' (length %d) exceeds max_length %d even before adding suffix. Truncating.",
+                candidate, len(candidate), max_length
+            )
+            candidate = candidate[:max_length]
+            if not candidate:
+                 raise ValueError(f"Base name '{base_name}' became empty after initial truncation to {max_length} chars.")
+        
+        final_candidate = candidate # Start with the (potentially truncated) base name
+        idx = 1
+        # Perform a case-insensitive check for used names for broader compatibility,
+        # even though FGDB names are technically case-sensitive.
+        while final_candidate.lower() in (n.lower() for n in used_names):
+            suffix = f"_{idx}"
+            
+            # Check if the original candidate (which is base_name or truncated base_name) plus suffix is too long
+            if len(candidate) + len(suffix) > max_length:
+                # If so, we need to shorten 'candidate' to make space for this suffix
+                # This means the original base_name was too long to begin with, even with suffix reservation.
+                chars_to_remove = (len(candidate) + len(suffix)) - max_length
+                current_stem_part = candidate # This is the part we are trying to fit
+                
+                if chars_to_remove >= len(current_stem_part): # Cannot make it fit
+                    raise ValueError(
+                        f"Cannot generate a unique name for base '{base_name}' (stem part '{current_stem_part}') "
+                        f"under {max_length} chars with suffix '{suffix}'. Too many characters to remove."
+                    )
+                
+                truncated_stem_part = current_stem_part[:-chars_to_remove]
+                final_candidate = f"{truncated_stem_part}{suffix}"
+
+                if not truncated_stem_part: # If the stem part became empty
+                     raise ValueError(
+                        f"Cannot generate a unique name for base '{base_name}'. "
+                        f"Stem part became empty after trying to fit suffix '{suffix}' within {max_length} chars."
+                    )
+            else:
+                # The original candidate (base_name or truncated base_name) has enough space for this suffix
+                final_candidate = f"{candidate}{suffix}"
+            
+            idx += 1
+            if idx > 9999: # Safety break to prevent infinite loops
+                raise ValueError(f"Could not find a unique name for base '{base_name}' after {idx-1} attempts within {max_length} chars.")
+
+        used_names.add(final_candidate)
+        return final_candidate
