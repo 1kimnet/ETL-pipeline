@@ -35,4 +35,3 @@ class Pipeline:  # noqa: D101
             logging.error("✗ GDB load failed – %s", exc, exc_info=False)
         else:
             logging.info("🏁 Pipeline finished – consolidated GDB at %s", paths.GDB)
-

@@ -41,19 +41,19 @@ sources:
     name: "Miljöriskområde"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml"
-    enabled: true
+    enabled: false
 
   - authority: "LST"
     name: "Vindkraftskollen: Vindkraftverk"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml"
-    enabled: true
+    enabled: false
 
   - authority: "LST"
     name: "Vindkraftskollen: projekteringsområden"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml"
-    enabled: true
+    enabled: false
 
   - authority: "LST"
     name: "Potentiellt förorenade områden"
@@ -65,23 +65,261 @@ sources:
     name: "Riksintressen"
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer"
-    enabled: true
+    enabled: false
 
   - authority: "LST"
     name: "Riksintressen - Vindbruk"
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer"
+    enabled: false
+    
+# --- LST ---
+  - authority: "LSTD"
+    name: "LstD Foreskrifter"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Fysisk planering"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Ett rikt odlingslandskap"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Friluftsliv"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD God bebyggd miljö"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Hav i balans"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Levande sjöar och vattendrag"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Levande skogar"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Klimat"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Klimat_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Kulturmiljö"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Markavvattning"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Markstabilitet"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Naturkartläggning"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD Skog och träd"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LstD GI Värdetrakter våtmark"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/FeatureServer"
+    enabled: false
+  - authority: "LSTD"
+    name: "LSTD Strandskydd"
+    type: "rest_api"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/FeatureServer"
+    enabled: false
+
+# --- MSB ---
+  - authority: "MSB"
+    name: "Skyddsrum"
+    type: "file"
+    url: "https://inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip"
+    enabled: false
+
+# --- RAA ---
+  - authority: "RAA"
+    name: "Riksintresse Kulturmiljövård MB3kap6"
+    type: "atom_feed"
+    url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml"
+    enabled: false
+  - authority: "RAA"
+    name: "Bebyggelse, kulturhistoriskt inventerad"
+    type: "file"
+    url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg"
+    enabled: true
+  - authority: "RAA"
+    name: "Enskilda och statliga byggnadsminnen, skyddsområden"
+    type: "file"
+    url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg"
+    enabled: true
+  - authority: "RAA"
+    name: "Kulturhistoriska lämningar, Södermanland"
+    type: "file"
+    url: "https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg"
+    enabled: true
+  - authority: "RAA"
+    name: "Världsarv i Sverige"
+    type: "file"
+    url: "https://pub.raa.se/nedladdning/datauttag/varldsarv/varldsarv_sverige.gpkg"
     enabled: true
 
+# --- SGI ---
+  - authority: "SGI"
+    name: "Inträffade skred, ras och övriga jordrörelser (skreddatabas)"
+    type: "file"
+    url: "https://gis.sgi.se/dokument/geodatasezip/SGI_Skreddatabas_ver2.zip"
+    enabled: true
 
+# --- SGU ---
+  - authority: "SGU"
+    name: "Erosion"
+    type: "ogc_api"
+    url: "https://api.sgu.se/oppnadata/stranderosion-kust/ogc/features/v1/collections/"
+    enabled: false
+  - authority: "SGU"
+    name: "SGU "
+    type: "ogc_api"
+    url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
+    enabled: false
+  - authority: "SGU"
+    name: "Brunnar"
+    type: "ogc_api"
+    url: "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1/collections/"
+    enabled: false
+  - authority: "SGU"
+    name: "Grus Krossberg"
+    type: "ogc_api"
+    url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
+    enabled: false
 
-#Advanced File Filtering
-#The pattern-based filtering system allows for more complex inclusion/exclusion rules.
-# TODO: Add ATOM support
+  # --- SJV ---
+  - authority: "SJV"
+    name: "Produktionsplatser för djurhållning"
+    type: "atom_feed"
+    url: "https://cdn.jordbruksverket.se/inspire/atom/produktionsplatser/atom-datasetfeed-produktionsplatser.xml"
+    enabled: false
+  - authority: "SJV"
+    name: "Jordbruksblock"
+    type: "atom_feed"
+    url: "https://cdn.jordbruksverket.se/inspire/atom/jordbruksblock/atom-datasetfeed-jordbruksblock.xml"
+    enabled: false
+  - authority: "SJV"
+    name: "Jordbruksblock (senaste året)"
+    type: "rest_api"
+    url: "https://epub.sjv.se/inspire/inspire/wfs"
+    enabled: false
+  - authority: "SJV"
+    name: "Jordbruksskiften (senaste året)"
+    type: "rest_api"
+    url: "https://epub.sjv.se/inspire/inspire/wfs"
+    enabled: false
+  - authority: "SJV"
+    name: "Produktionsplatser för djurhållning"
+    type: "rest_api"
+    url: "https://epub.sjv.se/inspire/inspire/wfs"
+    enabled: false
+  - authority: "SJV"
+    name: "Ängs- och betesmarksinventeringen naturtyper"
+    type: "rest_api"
+    url: "https://epub.sjv.se/inspire/inspire/wfs"
+    enabled: false
+  - authority: "SJV"
+    name: "Ängs- och betesmarksinventeringen naturtyper"
+    type: "rest_api"
+    url: "https://epub.sjv.se/inspire/inspire/wfs"
+    enabled: false
 
+  # --- SKS ---
+  - authority: "SKS"
+    name: "Naturvärden"
+    type: "atom_feed"
+    url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
+    enabled: false
+  - authority: "SKS"
+    name: "Ras och skred"
+    type: "atom_feed"
+    url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml"
+    enabled: false
+  - authority: "SKS"
+    name: "Biotopskydd beslutade av Skogsstyrelsen"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaBiotopskydd/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Utförda avverkningar"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaUtfordavverkning/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Naturvårdsavtal"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer"
+    enabled: false 
+  - authority: "SKS"
+    name: "Återvätningsavtal"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Nyckelbiotoper"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Sumpskogar"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Avverkningsanmälda områden"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Gräns för skogsskyddsbestämmelser"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer"
+    enabled: false
+  - authority: "SKS"
+    name: "Nyckelbiotoper - storskogsbruket"
+    type: "rest_api"
+    url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer"
+    enabled: false
 
-  # - name: "Skogsstyrelsen - Naturvärden"
-  #   authority: "SKS"
-  #   type: "atom_feed"
-  #   url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
-  #   enabled: false  # We'll enable this once we add ATOM support
+  # --- SVK ---
+  - authority: "SVK"
+    name: "Transmissionsnät för EL"
+    type: "file"
+    url: "https://gis-services.metria.se/svkfeed/filer/US.TransmissionsnatForEl.zip"
+    enabled: true
+  - authority: "SVK"
+    name: "Stamnät"
+    type: "file"
+    url: "https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip"
+    enabled: true
