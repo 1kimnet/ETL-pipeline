@@ -172,22 +172,22 @@ sources:
     name: "Bebyggelse, kulturhistoriskt inventerad"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg"
-    enabled: false
+    enabled: true
   - authority: "RAA"
     name: "Enskilda och statliga byggnadsminnen, skyddsområden"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg"
-    enabled: false
+    enabled: true
   - authority: "RAA"
     name: "Kulturhistoriska lämningar, Södermanland"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg"
-    enabled: false
+    enabled: true
   - authority: "RAA"
     name: "Världsarv i Sverige"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/varldsarv/varldsarv_sverige.gpkg"
-    enabled: false
+    enabled: true
 
 # --- SGI ---
   - authority: "SGI"
