@@ -36,6 +36,13 @@ class FileShapefileHandler:  # noqa: D101
         archive = paths.DOWNLOADS / filepart
         stagedir = paths.STAGING / self.src.authority / Path(filepart).stem
 
+        # --- GPKG direct handling ------------------------------------------
+        if url.lower().endswith(".gpkg"):
+            target_path = stagedir / f"{Path(filepart).stem}.gpkg"
+            downloaded = download(url, target_path)
+            logging.info("➕ Staged %s", target_path.relative_to(paths.ROOT))
+            return
+
         downloaded = download(url, archive)
         extract_zip(downloaded, stagedir)
         logging.info("➕ Staged %s", stagedir.relative_to(paths.ROOT))

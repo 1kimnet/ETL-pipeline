@@ -12,14 +12,19 @@ from __future__ import annotations
 
 import logging
 import shutil
+import re
 from pathlib import Path
-from typing import Set
+from typing import Set, Final
 
 import arcpy  # ArcGIS Pro / Server Python ships with this
 
 from ..utils import paths, ensure_dirs
-from ..utils.naming import generate_base_feature_class_name, DEFAULT_MAX_FC_NAME_LENGTH # Import the new utility and constant
+from ..utils.naming import (
+    generate_base_feature_class_name,
+    DEFAULT_MAX_FC_NAME_LENGTH,
+)
 
+_MAIN_RE: Final = re.compile(r"^main_?", re.IGNORECASE)
 class ArcPyFileGDBLoader:  # noqa: D101
     """Build (or rebuild) *staging.gdb* from everything under *data/staging*."""
 
@@ -30,15 +35,22 @@ class ArcPyFileGDBLoader:  # noqa: D101
     # ---------------------------------------------------------------- public
 
     def load_from_staging(self, staging_root: Path) -> None:  # noqa: D401
-        """Recreate the FileGDB and copy every `.shp` inside *staging_root*."""
-        self._reset_gdb() 
+        """Recreate the FileGDB and copy every `.shp` and `.gpkg` inside *staging_root*."""
+        self._reset_gdb()
 
+        used_names: Set[str] = set()
+
+        # -- GeoPackages ---------------------------------------------------
+        gpkg_files = list(staging_root.rglob("*.gpkg"))
+        for gpkg in gpkg_files:
+            authority = gpkg.relative_to(staging_root).parts[0]
+            self._copy_gpkg_into_gdb(gpkg, authority, used_names)
+
+        # -- Shapefiles ----------------------------------------------------
         shp_files = list(staging_root.rglob("*.shp"))
         if not shp_files:
             logging.warning("⚠️ No shapefiles found in %s to load into GDB", staging_root)
             return
-
-        logging.info("⚙️ Setting ArcPy environment for GDB loading...")
         arcpy.env.overwriteOutput = True  # type: ignore[attr-defined]
         arcpy.env.workspace = str(self.gdb_path)  # type: ignore[attr-defined]
 
@@ -129,6 +141,28 @@ class ArcPyFileGDBLoader:  # noqa: D101
         except Exception as e: 
             logging.error("❌ Unexpected error during arcpy.management.CreateFileGDB for '%s': %s", gdb_full_path, e, exc_info=True)
             raise RuntimeError(f"Unexpected error during CreateFileGDB for '{gdb_full_path}': {e}") from e
+    
+    def _copy_gpkg_into_gdb(
+        self,
+        gpkg: Path,
+        authority: str,
+        used_names: Set[str],
+    ) -> None:
+        """🔄 Copy every layer in *gpkg* into *self.gdb_path* with cleaned names."""
+        arcpy.env.workspace = str(gpkg)  # type: ignore[attr-defined]
+
+        for fc in arcpy.ListFeatureClasses():  # type: ignore[attr-defined]
+            cleaned_stem = _MAIN_RE.sub("", fc)
+            base = generate_base_feature_class_name(
+                cleaned_stem,
+                authority,
+                max_length=DEFAULT_MAX_FC_NAME_LENGTH,
+            )
+            tgt_name = self._ensure_unique_name(base, used_names)
+            logging.info("📥 %s/%s → %s", gpkg.name, fc, tgt_name)
+            arcpy.conversion.FeatureClassToFeatureClass(
+                fc, str(self.gdb_path), tgt_name
+            )  # type: ignore[attr-defined]
 
     @staticmethod
     def _ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = DEFAULT_MAX_FC_NAME_LENGTH) -> str:
