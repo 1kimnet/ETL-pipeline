@@ -51,19 +51,23 @@ class ArcPyFileGDBLoader:  # noqa: D101
                 )
                 continue
 
-    # ---------------------------------------------------------------- internals
+     # ---------------------------------------------------------------- internals
 
     def _reset_gdb(self) -> None:
         """Delete and recreate the destination GDB fresh for this run.
-        Any ArcPy error is logged with *full* tool messages then re‑raised so
-        the caller can surface it (and Pipeline will catch & report).
+
+        Any ArcPy error is logged with full tool messages then re-raised so the
+        caller (Pipeline) can surface it.
         """
+        if self.gdb_path.exists():
+            logging.info("🗑️ Removing existing %s", self.gdb_path.name)
+            shutil.rmtree(self.gdb_path)
+
+        logging.info("🆕 Creating %s", self.gdb_path.name)
         try:
-            if self.gdb_path.exists():
-                logging.info("🗑️ Removing existing %s", self.gdb_path.name)
-                shutil.rmtree(self.gdb_path)
-            logging.info("🆕 Creating %s", self.gdb_path.name)
-            arcpy.management.CreateFileGDB(self.gdb_path.parent, self.gdb_path.name)
+            arcpy.management.CreateFileGDB(
+                self.gdb_path.parent, self.gdb_path.name
+            )
         except arcpy.ExecuteError:  # type: ignore[attr-defined]
             msg = arcpy.GetMessages(2)
             logging.error("❌ CreateFileGDB failed: %s", msg)
@@ -71,7 +75,7 @@ class ArcPyFileGDBLoader:  # noqa: D101
 
     @staticmethod
     def _safe_name(stem: str, used: Set[str]) -> str:
-        """Generate a unique, <= 60‑char FGDB layer name."""
+        """Generate a unique, <= 60-char FGDB layer name."""
         stem = stem[:55]  # leave room for suffix
         candidate = stem or "layer"
         idx = 1
