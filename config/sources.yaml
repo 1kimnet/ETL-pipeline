@@ -14,8 +14,27 @@ sources:
     url: "https://geodata.naturvardsverket.se/nedladdning/naturvardsregistret/"
     enabled: true
     download_format: "zip"
-    include: []
-    exclude: []
+    include: [
+      Biosfarsomraden;
+      DVO;
+      HELCOM;
+      IF;
+      KR;
+      LBSO;
+      NP;
+      NR;
+      NVA;
+      NVO;
+      Nationalparksplan;
+      OBO;
+      OSPAR;
+      Ramsar_2018;
+      SCI_Rikstackande;
+      SPA_Rikstackande;
+      TILLTRADESFORBUD;
+      VSO;
+      Varldsarv
+    ]
 
   # --- LST ---
   - authority: "LST"
