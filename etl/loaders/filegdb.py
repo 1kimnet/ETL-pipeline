@@ -2,8 +2,8 @@
 
 This **updated** version adds:
 * detailed ArcPy error capture with source file context
-* duplicate‑safe, FGDB‑legal layer names
-* `arcpy.env.overwriteOutput = True` so reruns don’t crash
+* duplicate-safe, FGDB-legal layer names (transliterate + sanitize)
+* overwriteOutput enabled for reruns
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from ..utils import paths, ensure_dirs
 
 
 class ArcPyFileGDBLoader:  # noqa: D101
-    """Build (or rebuild) *staging.gdb* from everything under *data/staging*."""
+    """Build or rebuild *staging.gdb* from everything under *data/staging*."""
 
     def __init__(self, gdb_path: Path | None = None):
         ensure_dirs()
@@ -51,20 +51,15 @@ class ArcPyFileGDBLoader:  # noqa: D101
                 )
                 continue
 
-     # ---------------------------------------------------------------- internals
+    # ---------------------------------------------------------------- internals
 
     def _reset_gdb(self) -> None:
-        """Delete and recreate the destination GDB fresh for this run.
-
-        Any ArcPy error is logged with full tool messages then re-raised so the
-        caller (Pipeline) can surface it.
-        """
-        if self.gdb_path.exists():
-            logging.info("🗑️ Removing existing %s", self.gdb_path.name)
-            shutil.rmtree(self.gdb_path)
-
-        logging.info("🆕 Creating %s", self.gdb_path.name)
+        """Delete and recreate the destination GDB fresh for this run."""
         try:
+            if self.gdb_path.exists():
+                logging.info("🗑️ Removing existing %s", self.gdb_path.name)
+                shutil.rmtree(self.gdb_path)
+            logging.info("🆕 Creating %s", self.gdb_path.name)
             arcpy.management.CreateFileGDB(
                 self.gdb_path.parent, self.gdb_path.name
             )
@@ -75,12 +70,26 @@ class ArcPyFileGDBLoader:  # noqa: D101
 
     @staticmethod
     def _safe_name(stem: str, used: Set[str]) -> str:
-        """Generate a unique, <= 60-char FGDB layer name."""
-        stem = stem[:55]  # leave room for suffix
-        candidate = stem or "layer"
+        """Generate a unique, <= 60-char FGDB layer name, sanitized to FGDB rules."""
+        # Transliterate Swedish characters to ASCII
+        trans_map = {
+            ord('å'): 'a', ord('ä'): 'a', ord('ö'): 'o',
+            ord('Å'): 'A', ord('Ä'): 'A', ord('Ö'): 'O',
+        }
+        normalized = stem.translate(trans_map)
+        # Replace invalid chars with '_'
+        import re
+        clean = re.sub(r'[^A-Za-z0-9_]', '_', normalized)
+        # Ensure starts with letter
+        if not clean or not clean[0].isalpha():
+            clean = f"L_{clean}"
+        # Truncate and avoid duplicates
+        base = clean[:55]
+        candidate = base
         idx = 1
         while candidate.lower() in (n.lower() for n in used):
-            candidate = f"{stem}_{idx}"
+            suffix = f"_{idx}"
+            candidate = base[:55 - len(suffix)] + suffix
             idx += 1
         used.add(candidate)
         return candidate

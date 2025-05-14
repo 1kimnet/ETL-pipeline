@@ -172,22 +172,22 @@ sources:
     name: "Bebyggelse, kulturhistoriskt inventerad"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg"
-    enabled: true
+    enabled: false
   - authority: "RAA"
     name: "Enskilda och statliga byggnadsminnen, skyddsområden"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg"
-    enabled: true
+    enabled: false
   - authority: "RAA"
     name: "Kulturhistoriska lämningar, Södermanland"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg"
-    enabled: true
+    enabled: false
   - authority: "RAA"
     name: "Världsarv i Sverige"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/varldsarv/varldsarv_sverige.gpkg"
-    enabled: true
+    enabled: false
 
 # --- SGI ---
   - authority: "SGI"
@@ -313,11 +313,6 @@ sources:
     enabled: false
 
   # --- SVK ---
-  - authority: "SVK"
-    name: "Transmissionsnät för EL"
-    type: "file"
-    url: "https://gis-services.metria.se/svkfeed/filer/US.TransmissionsnatForEl.zip"
-    enabled: true
   - authority: "SVK"
     name: "Stamnät"
     type: "file"
