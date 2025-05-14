@@ -31,7 +31,7 @@ class Pipeline:  # noqa: D101
         logging.info("✅ Download stage complete – building FileGDB…")
         try:
             ArcPyFileGDBLoader().load_from_staging(paths.STAGING)
-        except Exception as exc:  # pylint: disable=broad-except
-            logging.error("✗ GDB load failed – %s", exc, exc_info=False)
+        except Exception:  # pylint: disable=broad-except
+            logging.error("❌ GDB load failed – see above for ArcPy details", exc_info=False)
         else:
             logging.info("🏁 Pipeline finished – consolidated GDB at %s", paths.GDB)
