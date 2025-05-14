@@ -1,0 +1,90 @@
+Authority,YAML Name,YAML URL,TEXT Name (from .txt file),TEXT URL (Primary/Download/Feed from .txt),Notes/Match Status
+FM,FM Riksintressen totalförsvar,[...]/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip,Försvarsmaktens riksintressekatalog / Riksintressen,[...]/siteassets/4-om-myndigheten/samhallsplanering/shapefiler/riksintressen.zip,Match (Theme). URLs point to different zip files for FM Riksintressen. The .txt file link might be more general or a newer catalog. YAML is more specific.
+LST,Miljöriskområde,[...]/ATOM/ATOM_lst.LST_Miljoriskomrade.xml,"Miljöriskområde (Implied, as YAML source)",[...]/ATOM/ATOM_lst.LST_Miljoriskomrade.xml,Match
+,Vindkraftskollen: Vindkraftverk,[...]/ATOM/ATOM_lst.vbk_vindkraftverk.xml,LST Vindbrukskollen Vindkraftverk,[...]/ATOM/ATOM_lst.VKOLLEN_VINDKRAFTVERK.xml (leads to .zip),Match (Theme). Slight variation in XML name (vbk_ vs VKOLLEN_).
+,Vindkraftskollen: projekteringsområden,[...]/ATOM/ATOM_lst.vbk_projekteringsomraden.xml,LST Vindbrukskollen projekteringsområden,[...]/ATOM/ATOM_lst.VKOLLEN_PROJEKTERINGSOMRADEN.xml (leads to .zip),Match (Theme). Slight variation in XML name (vbk_ vs VKOLLEN_).
+,Potentiellt förorenade områden,[...]/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip,LST - Potentiellt förorenade områden (EBH),[...]/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip,Match
+,Riksintressen,[...]/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer,LST Riksintressen (General Category from .txt),"Various specific LST Riksintressen ATOM/Shapefile links (e.g. Naturvård, Slutförvaring, Kust, Fjäll, etc.)",Partial Match. YAML has a general REST service. Text file lists many specific Riksintressen datasets (ATOM/Shape) from LST.
+,,,LstT Värdfulla vatten kultur (Örebro),[...]/ShapeExport/Lstt.Vardefulla_vatten_kultur.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstT Broar kultur (Örebro),[...]/ShapeExport/Lstt.Broar_kultur.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstT Dammar kultur (Örebro),[...]/ShapeExport/Lstt.Dammar_kultur.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstT Kraftverk kultur (Örebro),[...]/ShapeExport/Lstt.Kraftverk_kultur.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstT Pershyttan kultur naturstig (Örebro),[...]/ShapeExport/Lstt.Pershyttan_kultur_naturstig.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstO Miljöfarliga verksamheter - sårbarhet för översvämning,[...]/ShapeExport/Lsto.MV_OversvamningID.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstO Potentiellt förorenade områden EBH - sårbarhet översvämning,[...]/ShapeExport/Lsto.FO_OversvHavsnivID.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LST NV Riksintresse Naturvård MB3kap6,[...]/ShapeExport/nv.NV_RI_naturvard_MB3kap6.zip (via ATOM),Missing in YAML (Specific LST Riksintresse file)
+,,,LstT Samrådsområde naturvård,[...]/ShapeExport/Lstt.Samradsomr.zip (via ATOM),Missing in YAML (Regional LST data)
+,,,LstT GI Våtmarker (värdetrakt),[...]/ShapeExport/Lstt.LstT_GI_VATMRK_trakt.zip (via ATOM),"Missing in YAML (Could be under LSTD GI Värdetrakter våtmark, but this is LstT specific)"
+,,,LstT Kalkade våtmarker,[...]/ShapeExport/Lstt.Kalkade_vatmarker.zip (via ATOM),Missing in YAML
+,,,LstT Tidigare våtmarker,[...]/ShapeExport/Lstt.Tidigare_vatmarker.zip (via ATOM),Missing in YAML
+,,,LstT Strandskydd,[...]/ShapeExport/Lstt.Strandskydd.zip (via ATOM),"Missing in YAML (LSTD Strandskydd exists, this is LstT specific)"
+,,,LST Intresseområde till riksintresse vattenförsörjning MB3kap8,[...]/ShapeExport/lst.LST_Intresseomrade_till_RI_vattenforsorjning_MB3kap8.zip (via ATOM),Missing in YAML
+,,,LST Riksintresse Slutförvaring,[...]/ShapeExport/lst.Riks_slutforvaring.zip (via ATOM),Missing in YAML
+,,,LST Riksintresse Högexploaterad kust MB4kap4,[...]/ShapeExport/lst.Lst_RI_Hogexploateradkust_MB4kap4.zip (via ATOM),Missing in YAML
+,,,LST Riksintresse Obruten kust MB4kap3,[...]/ShapeExport/lst.LST_RI_Obruten_kust_MB4kap3.zip (via ATOM),Missing in YAML
+,,,LST Riksintresse Obrutet Fjäll MB4kap5,[...]/ShapeExport/lst.Lst_RI_Obrutet_fjall_MB4kap5.zip (via ATOM),Missing in YAML
+,,,LST Riksintresse Rörligt friluftsliv MB4kap1+2,[...]/ShapeExport/lst.LST_RI_Rorligt_friluftsliv_MB4kap2.zip (via ATOM),"Missing in YAML (LSTD Friluftsliv exists, this is more specific and national LST)"
+,,,LST Riksintresse Skyddade Vattendrag MB4kap6,[...]/ShapeExport/lst.LST_RI_Skyddade_vattendrag_MB4kap6.zip (via ATOM),Missing in YAML
+,,,LST Riksintresse Nationalstadspark MB4kap7,[...]/ShapeExport/lst.LST_RI_Nationalstadspark_MB4kap7.zip (via ATOM),Missing in YAML
+LSTD,(Many rest_api entries for various themes),[...]/arcgis/rest/services/LSTD/[ThemeName]_EXT/FeatureServer,"(No direct LSTD entries in text file, but LST regional data like LstT might be conceptually similar)",-,"Text file has LST regional data (LstT, LstO). YAML LSTD entries are Esri REST services for various themes. Overlap is thematic rather than direct source matching with .txt."
+,LstD GI Värdetrakter våtmark,[...]/LSTD/LstD_GI_Myllrande_vatmarker_EXT/FeatureServer,LstT GI Våtmarker (värdetrakt),[...]/ShapeExport/Lstt.LstT_GI_VATMRK_trakt.zip,"Possible Thematic Match. YAML is LSTD REST, .txt is LstT (regional) direct file."
+,LSTD Strandskydd,[...]/LSTD/LstD_Strandskydd_EXT/FeatureServer,LstT Strandskydd,[...]/ShapeExport/Lstt.Strandskydd.zip,"Possible Thematic Match. YAML is LSTD REST, .txt is LstT (regional) direct file."
+MSB,Skyddsrum,[...]/inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip,"Skyddsrum (Implied, as YAML source)",[...]/inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip,Match
+,,,Översvämningsdirektivet (PFRA) historiska översvämningar,[...]/gis-services.metria.se/msbfeed/MSB_TopAtomFeed_PFRA.xml (ATOM) or [...]filer/shape/InspireMSB_PFRA.zip,Missing in YAML
+NVV,Tillträdesförbod (föreskriftsområden),[...]/naturvardsregistret/TILLTRADESFORBUD.zip,Tillträdesförbud,[...]/geodata.naturvardsverket.se/nedladdning/land/TILLTRADESFORBUD.zip (assumed new path),Match (URL path pattern varies slightly based on other NVV links in .txt)
+,Landskapsbildsskyddsområde,[...]/naturvardsregistret/LBSO.zip,Landskapsbildsskydd,[...]/geodata.naturvardsverket.se/nedladdning/land/LBSO.zip (assumed new path),Match
+,Riksintresse för friluftsliv,[...]/Riksintresse/RI_Friluftsliv.zip,Riksintresse för friluftsliv,[...]/geodata.naturvardsverket.se/nedladdning/land/RI_Friluftsliv.zip,"Match. YAML path Riksintresse/, .txt path land/."
+,Riksintresse för naturvård,[...]/riksintresse/RI_Naturvard.zip,Riksintresse för naturvård,[...]/geodata.naturvardsverket.se/nedladdning/land/RI_Naturvard.zip,"Match. YAML path riksintresse/, .txt path land/."
+,"Skyddade områden, marina områden Ospar",[...]/naturvardsregistret/OSPAR.zip,MPA-områden (OSPAR),[...]/geodata.naturvardsverket.se/nedladdning/land/PS_OSPAR.zip or OSPAR.zip,Match
+,"Skyddade områden, marina områden HELCOM",[...]/naturvardsregistret/HELCOM.zip,BSPA-områden (HELCOM),[...]/geodata.naturvardsverket.se/nedladdning/land/PS_HELCOM.zip or HELCOM.zip,Match
+,"Skyddade områden, biosfärområden",[...]/naturvardsregistret/biosfarsomraden.zip,Biosfärsområden,[...]/geodata.naturvardsverket.se/nedladdning/land/Biosfarsomraden.zip,Match
+,"Skyddade områden, naturreservat",[...]/naturvardsregistret/NR.zip,Naturreservat,[...]/geodata.naturvardsverket.se/nedladdning/land/NR.zip,Match
+,"Skyddade områden, djur- och växtskyddsområden",[...]/naturvardsregistret/DVO.zip,Djur- och växtskyddsområden,[...]/geodata.naturvardsverket.se/nedladdning/land/DVO.zip,Match
+,"Skyddade områden, biotopskyddsområden",[...]/naturvardsregistret/OBO.zip,Biotopskyddsområden (kommun/länsstyrelse),[...]/geodata.naturvardsverket.se/nedladdning/land/OBO.zip,"Match (Note: SKS also has ""Biotopskydd"")"
+,"Skyddade områden, interimistiska förbud",[...]/naturvardsregistret/IF.zip,Interimistiska förbud,[...]/geodata.naturvardsverket.se/nedladdning/land/IF.zip (assumed from context),Match
+,"Skyddade områden, kulturreservat",[...]/naturvardsregistret/KR.zip,Kulturreservat,[...]/geodata.naturvardsverket.se/nedladdning/land/KR.zip,Match
+,"Skyddade områden, Nationalparker",[...]/naturvardsregistret/NP.zip,Nationalparker,[...]/geodata.naturvardsverket.se/nedladdning/land/NP.zip,Match
+,"Skyddade områden, Naturminnen",[...]/naturvardsregistret/NM.zip,Naturminnen,[...]/geodata.naturvardsverket.se/nedladdning/land/NM.zip,Match
+,"Skyddade områden, naturvårdsområden",[...]/naturvardsregistret/NVO.zip,Naturvårdsområden,[...]/geodata.naturvardsverket.se/nedladdning/land/NVO.zip,Match
+,"Naturtypskartering, KNAS",[...]/marktacke/KNAS/KNAS6_D.zip,"Naturtypskartering KNAS (Implied, as YAML source)","Not explicitly detailed with this name in .txt, but NVV is authority for marktäcke.",Match (Authority/Theme).
+,"Skyddade områden, Ramsarområden",[...]/naturvardsregistret/Ramsar_2018.zip,RAMSAR-områden,[...]/geodata.naturvardsverket.se/nedladdning/land/RAMSAR_2018.zip,Match
+,"Skyddade områden, vattenskyddsområden",[...]/naturvardsregistret/VSO.zip,Vattenskyddsområden,[...]/geodata.naturvardsverket.se/nedladdning/land/VSO.zip,Match
+,"Skyddade områden, Världsarv höga naturvärden",[...]/naturvardsregistret/Varldsarv.zip,"Världsarv, Laponia och Höga Kusten",[...]/geodata.naturvardsverket.se/nedladdning/land/Varldsarv.zip,Match
+,Skyddsvärda statliga skogar,[...]/skog/Skyddsvarda_statliga_skogar.zip,"Skyddsvärda statliga skogar (Implied, as YAML source)","Not explicitly detailed with this name in .txt, but NVV is authority for skog.",Match (Authority/Theme).
+,,,"Natura 2000, Art- och habitatdirektivet (SCI)",[...]/geodata.naturvardsverket.se/nedladdning/land/SCI_Rikstackande.zip,Missing in YAML
+,,,"Natura 2000, Fågeldirektivet (SPA)",[...]/geodata.naturvardsverket.se/nedladdning/land/SPA_Rikstackande.zip,Missing in YAML
+RAA,"Bebyggelse, kulturhistoriskt inventerad",[...]/byggnader_kulthist_inv/byggnader_sverige.gpkg,"Bebyggelse, kulturhistoriskt inventerad (Implied)",-,"Text file does not explicitly list this exact RAA download, but RAA is the authority for bebyggelseregistret."
+,"Enskilda och statliga byggnadsminnen, skyddsomr.",[...]/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg,"Enskilda och statliga byggnadsminnen, skyddsomr. (Implied)",-,Text file does not explicitly list this exact RAA download.
+,"Kulturhistoriska lämningar, Södermanland",[...]/lamningar/lan/lämningar_län_södermanland.gpkg,Kulturhistoriska lämningar (Implied),-,Text file does not explicitly list this exact RAA download (though Fornminnesregistret is RAA).
+,Världsarv i Sverige,[...]/varldsarv/varldsarv_sverige.gpkg,Världsarv i Sverige (Implied),-,NVV also lists Världsarv. RAA is authority for cultural world heritage. Text doesn't list this RAA gpkg.
+,Riksintresse Kulturmiljövård MB3kap6,[...]/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml,Riksintresse Kulturmiljövård MB3kap6 (Implied),-,Text file does not explicitly list this RAA ATOM feed.
+SGI,"Inträffade skred, ras och övriga jordrörelser",[...]/SGI_Skreddatabas_ver2.zip,"SGI Skreddatabas (Implied, as YAML source)","(SGI mentioned as authority for Översvämningskartering, but no SGI skreddatabas link in .txt)",Match (Authority/Theme). Text file doesn't provide this specific SGI link but mentions SGI.
+SGU,Erosion,[...]/ogc/features/v1/collections/,"Erosion (Implied, as YAML source)","(SGU mentioned as authority for Översvämningskartering, but no SGU Erosion link in .txt)",Match (Authority/Theme). Text file doesn't provide this specific SGU link but mentions SGU.
+,SGU (Jordskred-raviner),[...]/ogc/features/v1/collections/,"Jordskred-raviner (Implied, as YAML source)","(SGU mentioned, but no specific link in .txt)",Match (Authority/Theme).
+,Brunnar,[...]/ogc/features/v1/collections/,"Brunnar (Implied, as YAML source)","(SGU mentioned, but no specific link in .txt)",Match (Authority/Theme).
+,Grus Krossberg,[...]/ogc/features/v1/collections,"Grus Krossberg (Implied, as YAML source)","(SGU mentioned, but no specific link in .txt)",Match (Authority/Theme).
+SJV,Jordbruksblock (senaste året) (rest_api),[...]/epub.sjv.se/inspire/inspire/wfs,Jordbruksblock (Implied from ATOM),[...]/cdn.jordbruksverket.se/inspire/atom/jordbruksblock/atom-datasetfeed-jordbruksblock.xml,"Thematic Match. YAML uses WFS service, text mentions ATOM feed (which usually links to file downloads)."
+,Jordbruksskiften (senaste året) (rest_api),[...]/epub.sjv.se/inspire/inspire/wfs,Jordbruksskiften (Implied from ATOM),"(No direct ATOM for skiften in .txt summary, but likely exists if block does)",Thematic Match (Assumed).
+,Produktionsplatser för djurhållning (rest_api),[...]/epub.sjv.se/inspire/inspire/wfs,Produktionsplatser för djurhållning (ATOM),[...]/cdn.jordbruksverket.se/inspire/atom/produktionsplatser/atom-datasetfeed-produktionsplatser.xml,"Thematic Match. YAML WFS, Text ATOM."
+,Ängs- och betesmarksinventeringen (rest_api) x2,[...]/epub.sjv.se/inspire/inspire/wfs,Ängs- och betesmarksinventeringen naturtyper (Implied ATOM),"(Text mentions SJV for översvämning, but no specific link here for ängs/bete ATOM)",Thematic Match (Assumed).
+,Produktionsplatser för djurhållning (atom_feed),[...]/cdn.jordbruksverket.se/[...]atom-datasetfeed-produktionsplatser.xml,Produktionsplatser för djurhållning (ATOM),[...]/cdn.jordbruksverket.se/[...]atom-datasetfeed-produktionsplatser.xml,Match
+,Jordbruksblock (atom_feed),[...]/cdn.jordbruksverket.se/[...]atom-datasetfeed-jordbruksblock.xml,Jordbruksblock (ATOM),[...]/cdn.jordbruksverket.se/[...]atom-datasetfeed-jordbruksblock.xml,Match
+SKS,Biotopskydd beslutade av Skogsstyrelsen (rest_api),[...]/GeodataportalVisaBiotopskydd/MapServer,Biotopskydd (SKS),[...]/geodataport/feeds/biotopskydd.xml (ATOM) or [...]/data/sksBiotopskydd.zip (File),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Utförda avverkningar (rest_api),[...]/GeodataportalVisaUtfordavverkning/MapServer,Utförda avverkningar,[...]/geodataport/feeds/UtfordAvverk.xml (ATOM) or [...]/data/sksUtfordAvverkning.zip (Assumed file),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Naturvårdsavtal (rest_api),[...]/GeodataportalVisaNaturvardsavtal/MapServer,Naturvårdsavtal (SKS),[...]/geodataport/feeds/Naturvardsavtal.xml (ATOM) or [...]/data/sksNaturvardsavtal.zip (File),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Återvätningsavtal (rest_api),[...]/GeodataportalVisaAtervatningavtal/MapServer,"(Återvätningsavtal mentioned as SKS data, but no direct ATOM/File link in .txt summary)",-,Thematic Match.
+,Nyckelbiotoper (rest_api),[...]/GeodataportalVisaNyckelbiotop/MapServer,Nyckelbiotoper - Skogsstyrelsen,[...]/geodataport/feeds/Nyckelbiotoper.xml (ATOM) or [...]/data/sksNyckelbiotoper.zip (File),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Sumpskogar (rest_api),[...]/GeodataportalVisaSumpskog/MapServer,Sumpskogar,[...]/geodataport/feeds/Sumpskogar.xml (ATOM) or [...]/data/sksSumpskogar.zip (File),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Avverkningsanmälda områden (rest_api),[...]/GeodataportalVisaAvverkningsanmalan/MapServer,Avverkningsanmälda områden,[...]/geodataport/feeds/AvverkAnm.xml (ATOM) or [...]/data/sksAvverkningsanmalda.zip (Assumed file),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Gräns för skogsskyddsbestämmelser (rest_api),[...]/GeodataportalVisaSkogsskyddsbestammelser/MapServer,Gräns för skogsskyddsbestämmelser,[...]/geodataport/feeds/Skogsskbestgr.xml (ATOM) or [...]/data/sksSkogsskbestgr.zip (Assumed file),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Nyckelbiotoper - storskogsbruket (rest_api),[...]/GeodataportalVisaSkogsbruknyckelbiotop/MapServer,Nyckelbiotoper - storskogsbruket,[...]/geodataport/feeds/StorskogsbrNyckelb.xml (ATOM) or [...]/data/sksStorskogsbrNyckelb.zip (Assumed),Thematic Match. YAML is REST service. Text is ATOM/File download.
+,Naturvärden (atom_feed),[...]/geodataport/feeds/Naturvarden.xml,Objekt med naturvärden,[...]/geodataport/feeds/Naturvarden.xml (ATOM) or [...]/data/sksNaturvarden.zip (File),Match (Name slightly different)
+,Ras och skred (atom_feed),[...]/geodataport/feeds/Rasochskred.xml,Risk för ras och skred,[...]/geodataport/feeds/Rasochskred.xml (ATOM) or various specific .zip files for components,Match (Name slightly different)
+,,,Gräns för contortatall,[...]/geodataport/feeds/Contortatallgr.xml (ATOM),Missing in YAML
+,,,Gräns för fjällnära skog,[...]/geodataport/feeds/Fjallnaragr.xml (ATOM),Missing in YAML
+,,,Skog och historia,[...]/geodataport/feeds/SkogoHistoria.xml (ATOM),Missing in YAML
+,,,ÖSI - översiktlig skogsinventering,[...]/geodataport/feeds/Osi_pkt.xml (ATOM),Missing in YAML
+,,,"SKS Rasterdata (Skogliga grunddata, SLU Skogskarta, ÖSI)",Various ATOM feeds like SGDVolym.xml etc.,Missing in YAML (YAML focuses on vector)
+SVK,Transmissionsnät för EL,[...]/gis-services.metria.se/svkfeed/filer/US.TransmissionsnatForEl.zip,"Transmissionsnät för EL (Implied, as YAML source)",Not explicitly listed in .txt but SVK is correct authority.,Match (Authority/Theme).
+,Stamnät,[...]/gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip,"Stamnät (Implied, as YAML source)",Not explicitly listed in .txt but SVK is correct authority.,Match (Authority/Theme).
+TRV,-,-,Riksintressen för trafikslagens anläggningar,[...]/trafikverkets_riksintresse_shapefiler_20211124.zip (File) or WMS service,Missing in YAML

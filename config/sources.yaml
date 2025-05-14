@@ -1,0 +1,68 @@
+# Data sources
+sources:
+  # --- FM ---
+  - name: "Försvarsmakten - Rikstäckande geodata"
+    authority: "FM"
+    type: "file"
+    url: "https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip"
+    enabled: true
+
+#--- NVV ---
+  - name: "Naturvårdsverket - naturvådsregistret"
+    authority: "NVV"
+    type: "file"
+    url: "https://geodata.naturvardsverket.se/nedladdning/naturvardsregistret/"
+    enabled: true
+    download_format: "zip"
+    include: []
+    exclude: []
+
+  # --- LST ---
+  - authority: "LST"
+    name: "Miljöriskområde"
+    type: "atom_feed"
+    url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml"
+    enabled: true
+
+  - authority: "LST"
+    name: "Vindkraftskollen: Vindkraftverk"
+    type: "atom_feed"
+    url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml"
+    enabled: true
+
+  - authority: "LST"
+    name: "Vindkraftskollen: projekteringsområden"
+    type: "atom_feed"
+    url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml"
+    enabled: true
+
+  - authority: "LST"
+    name: "Potentiellt förorenade områden"
+    type: "file"
+    url: "https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip"
+    enabled: true
+
+  - authority: "LST"
+    name: "Riksintressen"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer"
+    enabled: true
+
+  - authority: "LST"
+    name: "Riksintressen - Vindbruk"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer"
+    enabled: true
+
+
+
+#Advanced File Filtering
+#The pattern-based filtering system allows for more complex inclusion/exclusion rules.
+# TODO: Add ATOM support
+
+
+  # - name: "Skogsstyrelsen - Naturvärden"
+  #   authority: "SKS"
+  #   type: "atom_feed"
+  #   url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
+  #   enabled: false  # We'll enable this once we add ATOM support

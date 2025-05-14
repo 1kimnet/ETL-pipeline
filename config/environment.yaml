@@ -1,0 +1,10 @@
+# Environment settings
+directories:
+  download_dir: "data/downloads"  # Raw downloads location
+  staging_dir: "data/staging"     # Staging area for processing
+  log_dir: "logs"                 # Log file location
+
+# Geodatabase settings  
+staging_gdb:
+  name: "staging.gdb"
+  create_if_missing: true
