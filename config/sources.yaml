@@ -168,27 +168,41 @@ sources:
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml"
     enabled: false
-  - authority: "RAA"
-    name: "Bebyggelse, kulturhistoriskt inventerad"
-    type: "file"
+  - name: "RAA Byggnader Sverige" # This 'name' is used to create the staging subdir
+    authority: "RAA"
+    type: "file"                  # For the FileDownloadHandler
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg"
+    download_format: "gpkg"     # Hint for downloader
+    staged_data_type: "gpkg"  # Crucial for the ArcPyFileGDBLoader
     enabled: true
+    include:
+      - "byggnader_sverige_point" # Only attempt to load this valid layer
   - authority: "RAA"
     name: "Enskilda och statliga byggnadsminnen, skyddsområden"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg"
     enabled: true
+    download_format: "gpkg"
+    staged_data_type: "gpkg"
+    include:
+      - "skyddsomrade_byggnadsminne_sverige_polygon"
   - authority: "RAA"
     name: "Kulturhistoriska lämningar, Södermanland"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg"
     enabled: true
-  - authority: "RAA"
-    name: "Världsarv i Sverige"
+    download_format: "gpkg"
+    staged_data_type: "gpkg"
+  - name: "RAA Världsarv i Sverige"
+    authority: "RAA"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/varldsarv/varldsarv_sverige.gpkg"
+    download_format: "gpkg"
+    staged_data_type: "gpkg"
     enabled: true
-
+    include:
+      - "varldsarv_sverige_polygon" # Only attempt to load this valid layer
+      
 # --- SGI ---
   - authority: "SGI"
     name: "Inträffade skred, ras och övriga jordrörelser (skreddatabas)"
