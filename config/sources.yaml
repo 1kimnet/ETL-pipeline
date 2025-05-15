@@ -37,29 +37,41 @@ sources:
     ]
 
   # --- LST ---
-  - authority: "LST"
-    name: "Miljöriskområde"
-    type: "atom_feed"
+  - name: "Miljöriskområde"
+    authority: "LST"
+    type: "atom_feed" # This tells the pipeline to use AtomFeedDownloadHandler
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml"
-    enabled: false
+    staged_data_type: "gpkg" # Or "gpkg" if the Atom feed links *only* to GPKGs
+                                            # If it links to ZIPs containing shapefiles, use "shapefile_collection"
+                                            # If it links to a mix, the handler tries to infer per link.
+                                            # This field helps the *loader* know what to expect in the staging dir.
+    enabled: true
+    # 'include' for atom_feed type is not used by this downloader version,
+    # but could be used by the loader if the Atom feed stages multiple distinct GPKGs
+    # into the source_specific_staging_dir. For now, assume all content from an Atom feed
+    # is one logical dataset for that source.
 
   - authority: "LST"
     name: "Vindkraftskollen: Vindkraftverk"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml"
-    enabled: false
+    staged_data_type: "gpkg"
+    enabled: true
+
 
   - authority: "LST"
     name: "Vindkraftskollen: projekteringsområden"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml"
-    enabled: false
+    enabled: true
+    staged_data_type: "gpkg"
 
   - authority: "LST"
     name: "Potentiellt förorenade områden"
     type: "file"
     url: "https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip"
     enabled: true
+    staged_data_type: "shapefile_collection"
 
   - authority: "LST"
     name: "Riksintressen"
@@ -72,7 +84,6 @@ sources:
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer"
     enabled: false
-    
 # --- LST ---
   - authority: "LSTD"
     name: "LstD Foreskrifter"
@@ -160,14 +171,15 @@ sources:
     name: "Skyddsrum"
     type: "file"
     url: "https://inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip"
-    enabled: false
+    enabled: true
 
 # --- RAA ---
   - authority: "RAA"
     name: "Riksintresse Kulturmiljövård MB3kap6"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml"
-    enabled: false
+    staged_data_type: "gpkg" # Or "gpkg"
+    enabled: true
   - name: "RAA Byggnader Sverige" # This 'name' is used to create the staging subdir
     authority: "RAA"
     type: "file"                  # For the FileDownloadHandler
@@ -232,17 +244,19 @@ sources:
     url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
     enabled: false
 
-  # --- SJV ---
-  - authority: "SJV"
-    name: "Produktionsplatser för djurhållning"
-    type: "atom_feed"
-    url: "https://cdn.jordbruksverket.se/inspire/atom/produktionsplatser/atom-datasetfeed-produktionsplatser.xml"
-    enabled: false
-  - authority: "SJV"
-    name: "Jordbruksblock"
-    type: "atom_feed"
-    url: "https://cdn.jordbruksverket.se/inspire/atom/jordbruksblock/atom-datasetfeed-jordbruksblock.xml"
-    enabled: false
+  # # --- SJV ---
+  # - authority: "SJV"
+  #   name: "Produktionsplatser för djurhållning"
+  #   type: "atom_feed"
+  #   url: "https://cdn.jordbruksverket.se/inspire/atom/produktionsplatser/atom-datasetfeed-produktionsplatser.xml"
+  #   enabled: true
+  #   staged_data_type: "mix" # Or "gpkg"
+  # - authority: "SJV"
+  #   name: "Jordbruksblock"
+  #   type: "atom_feed"
+  #   url: "https://cdn.jordbruksverket.se/inspire/atom/jordbruksblock/atom-datasetfeed-jordbruksblock.xml"
+  #   enabled: true
+  #   staged_data_type: "mix" # Or "gpkg"
   - authority: "SJV"
     name: "Jordbruksblock (senaste året)"
     type: "rest_api"
@@ -274,12 +288,13 @@ sources:
     name: "Naturvärden"
     type: "atom_feed"
     url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
-    enabled: false
-  - authority: "SKS"
-    name: "Ras och skred"
-    type: "atom_feed"
-    url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml"
-    enabled: false
+    enabled: true
+    staged_data_type: "gpkg" # Or "gpkg"
+  # - authority: "SKS"
+  #   name: "Ras och skred"
+  #   type: "atom_feed"
+  #   url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml"
+  #   enabled: true
   - authority: "SKS"
     name: "Biotopskydd beslutade av Skogsstyrelsen"
     type: "rest_api"

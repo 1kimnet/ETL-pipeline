@@ -1,15 +1,15 @@
-"""Register all concrete handlers in a single mapping used by Pipeline."""
-
+# handlers/__init__.py
+from __future__ import annotations
 from typing import Dict, Type
 
-# from ..models import Source # Source model not directly needed here
-from .file import FileDownloadHandler # Updated class name
+from .file import FileDownloadHandler
+from .atom_feed import AtomFeedDownloadHandler   # ← your new class
 
-HANDLER_MAP: Dict[str, Type[FileDownloadHandler]] = { # Updated type hint
-    "file": FileDownloadHandler,
-    # Add other handlers here as they are created, e.g.:
-    # "atom_feed": AtomFeedHandler,
-    # "rest_api": RestApiHandler,
+HANDLER_MAP: Dict[str, Type] = {
+    "file": FileDownloadHandler,        # ZIP, GPKG, etc.
+    "atom_feed": AtomFeedDownloadHandler,
+    # "rest_api": RestApiDownloadHandler,   # future
+    # "ogc_api":  OgcApiDownloadHandler,    # future
 }
 
 __all__ = ["HANDLER_MAP"]
