@@ -77,94 +77,94 @@ sources:
     name: "Riksintressen"
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer"
-    enabled: false
+    enabled: true
 
   - authority: "LST"
     name: "Riksintressen - Vindbruk"
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer"
-    enabled: false
+    enabled: true
 # --- LST ---
   - authority: "LSTD"
     name: "LstD Foreskrifter"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Fysisk planering"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Ett rikt odlingslandskap"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Friluftsliv"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD God bebyggd miljö"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Hav i balans"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Levande sjöar och vattendrag"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Levande skogar"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Klimat"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Klimat_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Kulturmiljö"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Markavvattning"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Markstabilitet"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Naturkartläggning"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Skog och träd"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD GI Värdetrakter våtmark"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LSTD Strandskydd"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/FeatureServer"
-    enabled: false
+    enabled: true
 
 # --- MSB ---
   - authority: "MSB"
@@ -227,22 +227,22 @@ sources:
     name: "Erosion"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/stranderosion-kust/ogc/features/v1/collections/"
-    enabled: false
+    enabled: true
   - authority: "SGU"
     name: "SGU "
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
-    enabled: false
+    enabled: true
   - authority: "SGU"
     name: "Brunnar"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1/collections/"
-    enabled: false
+    enabled: true
   - authority: "SGU"
     name: "Grus Krossberg"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
-    enabled: false
+    enabled: true
 
   # # --- SJV ---
   # - authority: "SJV"
@@ -261,27 +261,27 @@ sources:
     name: "Jordbruksblock (senaste året)"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    enabled: true
   - authority: "SJV"
     name: "Jordbruksskiften (senaste året)"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    enabled: true
   - authority: "SJV"
     name: "Produktionsplatser för djurhållning"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    enabled: true
   - authority: "SJV"
     name: "Ängs- och betesmarksinventeringen naturtyper"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    enabled: true
   - authority: "SJV"
     name: "Ängs- och betesmarksinventeringen naturtyper"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    enabled: true
 
   # --- SKS ---
   - authority: "SKS"
@@ -299,47 +299,47 @@ sources:
     name: "Biotopskydd beslutade av Skogsstyrelsen"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaBiotopskydd/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Utförda avverkningar"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaUtfordavverkning/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Naturvårdsavtal"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer"
-    enabled: false 
+    enabled: true 
   - authority: "SKS"
     name: "Återvätningsavtal"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Nyckelbiotoper"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Sumpskogar"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Avverkningsanmälda områden"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Gräns för skogsskyddsbestämmelser"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer"
-    enabled: false
+    enabled: true
   - authority: "SKS"
     name: "Nyckelbiotoper - storskogsbruket"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer"
-    enabled: false
+    enabled: true
 
   # --- SVK ---
   - authority: "SVK"
