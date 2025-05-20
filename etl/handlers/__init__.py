@@ -1,15 +1,21 @@
 # handlers/__init__.py
 from __future__ import annotations
-from typing import Dict, Type
+from typing import Dict, Type, TypeAlias, Any # Added TypeAlias, Any
 
 from .file import FileDownloadHandler
-from .atom_feed import AtomFeedDownloadHandler   # ← your new class
+from .atom_feed import AtomFeedDownloadHandler
+from .rest_api import RestApiDownloadHandler # <-- Add this
 
-HANDLER_MAP: Dict[str, Type] = {
-    "file": FileDownloadHandler,        # ZIP, GPKG, etc.
+# Define a more specific type for the handler classes if possible
+# from .base_handler import BaseDownloadHandler # Assuming you might create a base class
+# DownloadHandlerType: TypeAlias = Type[BaseDownloadHandler]
+DownloadHandlerType: TypeAlias = Type[Any] # Using Any for now for simplicity
+
+HANDLER_MAP: Dict[str, DownloadHandlerType] = {
+    "file": FileDownloadHandler,
     "atom_feed": AtomFeedDownloadHandler,
-    # "rest_api": RestApiDownloadHandler,   # future
-    # "ogc_api":  OgcApiDownloadHandler,    # future
+    "rest_api": RestApiDownloadHandler, # <-- Register new handler
+    # "ogc_api":  OgcApiDownloadHandler, # future
 }
 
 __all__ = ["HANDLER_MAP"]
