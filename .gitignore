@@ -174,3 +174,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+config/sources_rest.yaml
+docs/test.py
