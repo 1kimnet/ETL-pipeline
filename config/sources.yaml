@@ -5,14 +5,14 @@ sources:
     authority: "FM"
     type: "file"
     url: "https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip"
-    enabled: false
+    enabled: true
 
 #--- NVV ---
   - name: "Naturvårdsverket - naturvådsregistret"
     authority: "NVV"
     type: "file"
     url: "https://geodata.naturvardsverket.se/nedladdning/naturvardsregistret/"
-    enabled: false
+    enabled: true
     download_format: "zip"
     include: [
       Biosfarsomraden;
@@ -45,7 +45,7 @@ sources:
                                             # If it links to ZIPs containing shapefiles, use "shapefile_collection"
                                             # If it links to a mix, the handler tries to infer per link.
                                             # This field helps the *loader* know what to expect in the staging dir.
-    enabled: false
+    enabled: true
     # 'include' for atom_feed type is not used by this downloader version,
     # but could be used by the loader if the Atom feed stages multiple distinct GPKGs
     # into the source_specific_staging_dir. For now, assume all content from an Atom feed
@@ -63,115 +63,169 @@ sources:
     name: "Vindkraftskollen: projekteringsområden"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml"
-    enabled: false
+    enabled: true
     staged_data_type: "gpkg"
 
   - authority: "LST"
     name: "Potentiellt förorenade områden"
     type: "file"
     url: "https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip"
-    enabled: false
+    enabled: true
     staged_data_type: "shapefile_collection"
 
   - authority: "LST"
     name: "Riksintressen"
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "json" # <--- IMPORTANT for the loader
+    raw:
+      format: "json" # Ensure handler outputs geojson
 
   - authority: "LST"
     name: "Riksintressen - Vindbruk"
     type: "rest_api"
     url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
 # --- LST ---
   - authority: "LSTD"
     name: "LstD Foreskrifter"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Fysisk planering"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Ett rikt odlingslandskap"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Friluftsliv"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD God bebyggd miljö"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Hav i balans"
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/FeatureServer"
-    enabled: false
+    enabled: true
   - authority: "LSTD"
     name: "LstD Levande sjöar och vattendrag"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Levande skogar"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Klimat"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Klimat_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Kulturmiljö"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Markavvattning"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Markstabilitet"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Naturkartläggning"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD Skog och träd"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LstD GI Värdetrakter våtmark"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/FeatureServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "LSTD"
     name: "LSTD Strandskydd"
     type: "rest_api"
     url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/FeatureServer"
-    enabled: false
-
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
 # --- MSB ---
   - authority: "MSB"
     name: "Skyddsrum"
     type: "file"
+    staged_data_type: "shapefile_collection"
     url: "https://inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip"
-    enabled: false
+    enabled: true
 
 # --- RAA ---
   - authority: "RAA"
@@ -179,21 +233,21 @@ sources:
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml"
     staged_data_type: "gpkg" # Or "gpkg"
-    enabled: false
+    enabled: true
   - name: "RAA Byggnader Sverige" # This 'name' is used to create the staging subdir
     authority: "RAA"
     type: "file"                  # For the FileDownloadHandler
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg"
     download_format: "gpkg"     # Hint for downloader
     staged_data_type: "gpkg"  # Crucial for the ArcPyFileGDBLoader
-    enabled: false
+    enabled: true
     include:
       - "byggnader_sverige_point" # Only attempt to load this valid layer
   - authority: "RAA"
     name: "Enskilda och statliga byggnadsminnen, skyddsområden"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg"
-    enabled: false
+    enabled: true
     download_format: "gpkg"
     staged_data_type: "gpkg"
     include:
@@ -202,7 +256,7 @@ sources:
     name: "Kulturhistoriska lämningar, Södermanland"
     type: "file"
     url: "https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg"
-    enabled: false
+    enabled: true
     download_format: "gpkg"
     staged_data_type: "gpkg"
   - name: "RAA Världsarv i Sverige"
@@ -211,7 +265,7 @@ sources:
     url: "https://pub.raa.se/nedladdning/datauttag/varldsarv/varldsarv_sverige.gpkg"
     download_format: "gpkg"
     staged_data_type: "gpkg"
-    enabled: false
+    enabled: true
     include:
       - "varldsarv_sverige_polygon" # Only attempt to load this valid layer
       
@@ -220,7 +274,7 @@ sources:
     name: "Inträffade skred, ras och övriga jordrörelser (skreddatabas)"
     type: "file"
     url: "https://gis.sgi.se/dokument/geodatasezip/SGI_Skreddatabas_ver2.zip"
-    enabled: false
+    enabled: true
 
 # --- SGU ---
   - authority: "SGU"
@@ -262,39 +316,53 @@ sources:
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
     enabled: false
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SJV"
     name: "Jordbruksskiften (senaste året)"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
     enabled: false
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SJV"
     name: "Produktionsplatser för djurhållning"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
     enabled: false
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SJV"
     name: "Ängs- och betesmarksinventeringen naturtyper"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
     enabled: false
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SJV"
     name: "Ängs- och betesmarksinventeringen naturtyper"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
     enabled: false
-
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   # --- SKS ---
   - authority: "SKS"
     name: "Naturvärden"
     type: "atom_feed"
     url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
-    enabled:  false
+    enabled:  true
     staged_data_type: "gpkg" # Or "gpkg"
   - authority: "SKS"
     name: "Ras och skred"
     type: "atom_feed"
     url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml"
-    enabled: false
+    enabled: true
   - name: "Skogsstyrelsen - Biotopskydd (REST)"
     authority: "SKS"
     type: "rest_api"
@@ -302,52 +370,75 @@ sources:
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
-      layer_ids: [0]
       format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Utförda avverkningar"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaUtfordavverkning/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Naturvårdsavtal"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer"
-    enabled: false 
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Återvätningsavtal"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Nyckelbiotoper"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Sumpskogar"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Avverkningsanmälda områden"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Gräns för skogsskyddsbestämmelser"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
   - authority: "SKS"
     name: "Nyckelbiotoper - storskogsbruket"
     type: "rest_api"
     url: "https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
 
   # --- SVK ---
   - authority: "SVK"
     name: "Stamnät"
     type: "file"
     url: "https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip"
-    enabled: false
+    enabled: true
