@@ -91,10 +91,29 @@ sources:
     raw:
       format: "geojson" # Ensure handler outputs geojson
 # --- LST ---
+  - authority: "LST"
+    name: "Riksintressen"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer"
+    enabled: true
+    staged_data_type: "geojson" # Change this to "geojson"
+    raw:
+      format: "geojson"       # Change this to "geojson"
+      # layer_ids: [0, 1, 2, 3, 4, 5] # Optional: Omit to fetch all layers, or specify if needed
+
+  - authority: "LST"
+    name: "Riksintressen - Vindbruk"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer"
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler outputs geojson
+# --- LST ---
   - authority: "LSTD"
     name: "LstD Foreskrifter"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -102,7 +121,7 @@ sources:
   - authority: "LSTD"
     name: "LstD Fysisk planering"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -110,23 +129,26 @@ sources:
   - authority: "LSTD"
     name: "LstD Ett rikt odlingslandskap"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [2, 3, 4, 5, 6]      
   - authority: "LSTD"
     name: "LstD Friluftsliv"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [0, 1, 2, 3, 4] # Optional: Omit to fetch all layers, or specify if needed
+
   - authority: "LSTD"
     name: "LstD God bebyggd miljö"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -137,52 +159,57 @@ sources:
     raw:
       format: "geojson" # Ensure handler outputs geojson
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/MapServer"
     enabled: true
   - authority: "LSTD"
     name: "LstD Levande sjöar och vattendrag"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ,17]      
   - authority: "LSTD"
     name: "LstD Levande skogar"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [1, 2]      
   - authority: "LSTD"
     name: "LstD Klimat"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Klimat_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Klimat_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [2, 3, 4, 5, 6]
   - authority: "LSTD"
     name: "LstD Kulturmiljö"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [1]     
   - authority: "LSTD"
     name: "LstD Markavvattning"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
-      format: "geojson" # Ensure handler outputs geojson
+      format: "geojson" 
+      layer_ids: [2, 3, 4, 5, 6]
   - authority: "LSTD"
     name: "LstD Markstabilitet"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -190,7 +217,7 @@ sources:
   - authority: "LSTD"
     name: "LstD Naturkartläggning"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -198,7 +225,7 @@ sources:
   - authority: "LSTD"
     name: "LstD Skog och träd"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -206,7 +233,7 @@ sources:
   - authority: "LSTD"
     name: "LstD GI Värdetrakter våtmark"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -214,7 +241,7 @@ sources:
   - authority: "LSTD"
     name: "LSTD Strandskydd"
     type: "rest_api"
-    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/FeatureServer"
+    url: "https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/MapServer"
     enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
@@ -356,7 +383,7 @@ sources:
     name: "Naturvärden"
     type: "atom_feed"
     url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
-    enabled:  true
+    enabled:  false
     staged_data_type: "gpkg" # Or "gpkg"
   - authority: "SKS"
     name: "Ras och skred"
@@ -435,6 +462,7 @@ sources:
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+
 
   # --- SVK ---
   - authority: "SVK"
