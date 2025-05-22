@@ -6,5 +6,5 @@ continue_on_failure: true
 
 # Optional: Define a global BBOX here if use_bbox_filter is true
 # These would be used if a source of type 'rest_api' doesn't define its own bbox in sources.yaml
-global_bbox: "6610991.89,586206.43,647910.44,6551159.79"
+global_bbox: "586206,6551160,647910,6610992"
 global_bbox_sr: "3006"

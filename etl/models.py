@@ -1,9 +1,10 @@
+# ETL-pipeline/etl/models.py
 from __future__ import annotations
 
 import re
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional # Added Optional
+from typing import Any, Dict, List, Optional 
 import logging
 import yaml
 
@@ -16,8 +17,8 @@ def _parse_include(value: Any) -> List[str]:
     raw_items = value if isinstance(value, list) else [value]
     out: List[str] = []
     for item in raw_items:
-        for part in re.split(r"[;,]", str(item)): # Handles comma or semicolon separated
-            cleaned = part.strip().rstrip(".") # Strip whitespace and trailing dots
+        for part in re.split(r"[;,]", str(item)): 
+            cleaned = part.strip().rstrip(".") 
             if cleaned:
                 out.append(cleaned)
     return out
@@ -29,43 +30,55 @@ class Source:
 
     name: str
     authority: str
-    type: str = "file"  # e.g., "file", "atom_feed", "rest_api", "gpkg_file"
+    type: str = "file"
     url: str = ""
     enabled: bool = True
-    
-    # download_format: Can be used by handlers to know if it's zip, gpkg direct, etc.
-    download_format: Optional[str] = None 
-    
-    # staged_data_type: Hints to the loader how to process staged files.
-    # e.g., "shapefile_collection", "gpkg"
-    staged_data_type: Optional[str] = None 
-    
-    # include: For "shapefile_collection" (from zip), it's archive stems.
-    #          For "gpkg", it's feature class names (after 'main.' stripping).
+    download_format: Optional[str] = None
+    staged_data_type: Optional[str] = None
     include: List[str] = field(default_factory=list)
-    
     raw: Dict[str, Any] = field(default_factory=dict) # For any other custom attributes
 
     @classmethod
     def from_dict(cls, dct: Dict[str, Any]) -> "Source":
-        dct = dct.copy() # Work on a copy
+        dct_copy = dct.copy()
+
+        # Fields that are directly part of the dataclass definition (excluding 'raw' for now)
+        known_field_names = {f.name for f in cls.__dataclass_fields__.values() if f.name != 'raw'}
         
-        # Ensure 'include' is processed by _parse_include
-        if "include" in dct:
-            dct["include"] = _parse_include(dct["include"])
+        init_args = {}
         
-        # Get known field names from the dataclass definition
-        known_field_names = {f.name for f in cls.__dataclass_fields__.values()}
+        # Handle 'include' parsing specifically if present
+        if "include" in dct_copy:
+            init_args["include"] = _parse_include(dct_copy.pop("include"))
+
+        # Extract explicit 'raw' dictionary from YAML if it exists
+        explicit_raw_dict_from_yaml = dct_copy.pop('raw', None)
+
+        # Populate init_args for known fields and collect other items for the raw dictionary
+        unconsumed_yaml_items_for_raw = {}
+        for k, v in dct_copy.items():
+            if k in known_field_names:
+                init_args[k] = v
+            else:
+                # This key is not a defined field in the dataclass (other than 'raw' or 'include')
+                unconsumed_yaml_items_for_raw[k] = v
         
-        # Prepare arguments for dataclass instantiation (only known fields)
-        init_args = {k: v for k, v in dct.items() if k in known_field_names}
-        
-        # Store any extra fields in the 'raw' dictionary
-        extra_args = {k: v for k, v in dct.items() if k not in known_field_names}
-        
-        # Instantiate the object
+        # Instantiate the object. obj.raw will be an empty dict due to default_factory.
         obj = cls(**init_args)
-        obj.raw = extra_args # Assign extra arguments to the 'raw' field
+
+        # Now, correctly populate obj.raw
+        # 1. Start with the dictionary from the 'raw' key in YAML, if it was a dict.
+        if isinstance(explicit_raw_dict_from_yaml, dict):
+            obj.raw.update(explicit_raw_dict_from_yaml)
+        elif explicit_raw_dict_from_yaml is not None:
+            # 'raw' key was present in YAML but wasn't a dictionary. Log a warning.
+            logging.warning(
+                f"Source '{dct.get('name', 'Unknown')}' has a 'raw' field in YAML which is not a dictionary. "
+                f"Content: {explicit_raw_dict_from_yaml}. This content will be ignored for obj.raw."
+            )
+        
+        # 2. Add any other top-level keys from YAML that weren't direct dataclass fields.
+        obj.raw.update(unconsumed_yaml_items_for_raw)
         
         return obj
 
@@ -88,4 +101,3 @@ class Source:
         except Exception as e:
             logging.error(f"❌ Unexpected error loading sources from {path}: {e}", exc_info=True)
             return []
-
