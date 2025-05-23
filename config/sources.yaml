@@ -305,14 +305,13 @@ sources:
     enabled: true
 
 # --- SGU ---
-# In sources.yaml
+# Data sources
   - authority: "SGU"
     name: "Erosion"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/stranderosion-kust/ogc/features/v1/collections/"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["aktiv-erosion"]
       page_size: 1000
@@ -323,7 +322,6 @@ sources:
     url: "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1/collections/"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["brunnar"]
       page_size: 1000
@@ -334,7 +332,6 @@ sources:
     url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["jordskred-raviner"]
       page_size: 1000
@@ -345,11 +342,9 @@ sources:
     url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["grus-grus", "grus-berg", "grus-moran"]
       page_size: 1000
-
 
 
   # # --- SJV ---
