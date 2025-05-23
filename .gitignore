@@ -176,3 +176,4 @@ cython_debug/
 .pypirc
 config/sources_rest.yaml
 docs/test.py
+config/sources_ogc_api.yaml
