@@ -55,8 +55,9 @@ sources:
     name: "Vindkraftskollen: Vindkraftverk"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml"
-    staged_data_type: "gpkg"
-    enabled: false
+    staged_data_type: "shapefile_collection"
+    enabled: true
+    BBOX: 
 
 
   - authority: "LST"
@@ -178,7 +179,7 @@ sources:
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
-      layer_ids: [1, 2]      
+      layer_ids: [0]      
   - authority: "LSTD"
     name: "LstD Klimat"
     type: "rest_api"
@@ -304,48 +305,64 @@ sources:
     enabled: true
 
 # --- SGU ---
+# In sources.yaml
   - authority: "SGU"
     name: "Erosion"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/stranderosion-kust/ogc/features/v1/collections/"
-    enabled: false
-  - authority: "SGU"
-    name: "SGU "
-    type: "ogc_api"
-    url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson"
+    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
+    raw:
+      collections: ["aktiv-erosion"]
+      page_size: 1000
+
   - authority: "SGU"
     name: "Brunnar"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1/collections/"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson"
+    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
+    raw:
+      collections: ["brunnar"]
+      page_size: 1000
+
+  - authority: "SGU"
+    name: "Jordskred och raviner"
+    type: "ogc_api"
+    url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
+    enabled: true
+    staged_data_type: "geojson"
+    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
+    raw:
+      collections: ["jordskred-raviner"]
+      page_size: 1000
+
   - authority: "SGU"
     name: "Grus Krossberg"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
-    enabled: false
+    enabled: true
+    staged_data_type: "geojson"
+    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
+    raw:
+      collections: ["grus-grus", "grus-berg", "grus-moran"]
+      page_size: 1000
+
+
 
   # # --- SJV ---
-  # - authority: "SJV"
-  #   name: "Produktionsplatser för djurhållning"
-  #   type: "atom_feed"
-  #   url: "https://cdn.jordbruksverket.se/inspire/atom/produktionsplatser/atom-datasetfeed-produktionsplatser.xml"
-  #   enabled: false
-  #   staged_data_type: "mix" # Or "gpkg"
-  # - authority: "SJV"
-  #   name: "Jordbruksblock"
-  #   type: "atom_feed"
-  #   url: "https://cdn.jordbruksverket.se/inspire/atom/jordbruksblock/atom-datasetfeed-jordbruksblock.xml"
-  #   enabled: false
-  #   staged_data_type: "mix" # Or "gpkg"
   - authority: "SJV"
-    name: "Jordbruksblock (senaste året)"
+    name: "Jordbruksblock (2024)"
     type: "rest_api"
-    url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/SJV/lst_sjv_fak04jbb/MapServer"
+    enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [18]
+
   - authority: "SJV"
     name: "Jordbruksskiften (senaste året)"
     type: "rest_api"
@@ -354,37 +371,34 @@ sources:
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [18] 
+
   - authority: "SJV"
     name: "Produktionsplatser för djurhållning"
-    type: "rest_api"
-    url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
-    staged_data_type: "geojson" # <--- IMPORTANT for the loader
-    raw:
-      format: "geojson" # Ensure handler outputs geojson
+    type: "file"
+    url: "http://epub.sjv.se/inspire/inspire/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=inspire:produktionsplatser&outputFormat=application/json"
+    enabled: true
+    staged_data_type: "geojson"
+    download_format: "json"
+
   - authority: "SJV"
-    name: "Ängs- och betesmarksinventeringen naturtyper"
+    name: "Ängs- och betesmarksinventeringen"
     type: "rest_api"
-    url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/SJV/lst_sjv_fak04ovr/MapServer"
+    enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
-  - authority: "SJV"
-    name: "Ängs- och betesmarksinventeringen naturtyper"
-    type: "rest_api"
-    url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
-    staged_data_type: "geojson" # <--- IMPORTANT for the loader
-    raw:
-      format: "geojson" # Ensure handler outputs geojson
+      layer_ids: [4, 5] 
+
   # --- SKS ---
   - authority: "SKS"
     name: "Naturvärden"
-    type: "atom_feed"
-    url: "https://geodpags.skogsstyrelsen.se/geodataport/feeds/Naturvarden.xml"
-    enabled:  false
-    staged_data_type: "gpkg" # Or "gpkg"
+    type: "file"
+    url: "https://geodpags.skogsstyrelsen.se/geodataport/data/sksNaturvarden_gpkg.zip"
+    enabled: true
+    staged_data_type: "gpkg" 
+
   - authority: "SKS"
     name: "Ras och skred"
     type: "atom_feed"
@@ -462,7 +476,6 @@ sources:
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
-
 
   # --- SVK ---
   - authority: "SVK"

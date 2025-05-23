@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Dict, Type, TypeAlias, Any # Added TypeAlias, Any
 
+from .ogc_api import OgcApiDownloadHandler
 from .file import FileDownloadHandler
 from .atom_feed import AtomFeedDownloadHandler
 from .rest_api import RestApiDownloadHandler # <-- Add this
@@ -14,8 +15,8 @@ DownloadHandlerType: TypeAlias = Type[Any] # Using Any for now for simplicity
 HANDLER_MAP: Dict[str, DownloadHandlerType] = {
     "file": FileDownloadHandler,
     "atom_feed": AtomFeedDownloadHandler,
-    "rest_api": RestApiDownloadHandler, # <-- Register new handler
-    # "ogc_api":  OgcApiDownloadHandler, # future
+    "rest_api": RestApiDownloadHandler,
+    "ogc_api": OgcApiDownloadHandler,  
 }
 
 __all__ = ["HANDLER_MAP"]

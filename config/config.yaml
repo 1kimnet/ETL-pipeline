@@ -8,3 +8,14 @@ continue_on_failure: true
 # These would be used if a source of type 'rest_api' doesn't define its own bbox in sources.yaml
 global_bbox: "586206,6551160,647910,6610992"
 global_bbox_sr: "3006"
+ogc_api_delay: 0.1  # Seconds between requests (default: 0.1)
+
+# Global defaults for OGC API BBOX (if not overridden in source.raw)
+# These coordinates are WGS84 (minlon,minlat,maxlon,maxlat)
+global_ogc_bbox_coords: "16.504,59.090,17.618,59.610" 
+# CRS URI for the global_ogc_bbox_coords. For WGS84 Lon/Lat, use CRS84_URI.
+# For SWEREF99TM, use "http://www.opengis.net/def/crs/EPSG/0/3006" or just "3006"
+global_ogc_bbox_crs_uri: "http://www.opengis.net/def/crs/OGC/1.3/CRS84" 
+# Global default for CRS of output GeoJSON from OGC APIs if not determinable from service
+# Set to false if you prefer WGS84 as a general default for GeoJSON.
+use_sweref99_ogc_fallback: true        
