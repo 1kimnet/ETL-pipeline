@@ -15,7 +15,7 @@ from ..utils.naming import sanitize_for_filename
 
 # Default BBOX from your document (SWEREF99 TM) [cite: 4]
 # Values: xmin,ymin,xmax,ymax [cite: 25]
-DEFAULT_BBOX_COORDS = "586206.428348,6551159.789694,647910.442029,6610991.889353"
+DEFAULT_BBOX_COORDS = "586206,6551160,647910,6610992"
 DEFAULT_BBOX_SR = "3006"
 
 class RestApiDownloadHandler:
