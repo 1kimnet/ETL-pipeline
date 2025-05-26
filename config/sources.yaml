@@ -305,14 +305,13 @@ sources:
     enabled: true
 
 # --- SGU ---
-# In sources.yaml
+# Data sources
   - authority: "SGU"
     name: "Erosion"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/stranderosion-kust/ogc/features/v1/collections/"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["aktiv-erosion"]
       page_size: 1000
@@ -323,7 +322,6 @@ sources:
     url: "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1/collections/"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["brunnar"]
       page_size: 1000
@@ -334,7 +332,6 @@ sources:
     url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["jordskred-raviner"]
       page_size: 1000
@@ -345,11 +342,9 @@ sources:
     url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
     enabled: true
     staged_data_type: "geojson"
-    bbox: "586206,6551160,647910,6610992"  # SWEREF99 TM coordinates
     raw:
       collections: ["grus-grus", "grus-berg", "grus-moran"]
       page_size: 1000
-
 
 
   # # --- SJV ---
@@ -483,3 +478,20 @@ sources:
     type: "file"
     url: "https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip"
     enabled: true
+
+  # --- TRV ---
+  - authority: "TRV"
+    name: "Vägar"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/TV/lst_tv_fak01/MapServer"
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler ouuts geojson
+      layer_ids: [0, 1, 2, 3, 4, 5, 6, 7] # Optional: Omit to fetch all layers, or specify if needed
+  - authority: "TRV"
+    name: "Övrigt"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/TV/lst_tv_fak06/MapServer"
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
