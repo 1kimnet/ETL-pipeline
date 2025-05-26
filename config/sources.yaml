@@ -478,3 +478,20 @@ sources:
     type: "file"
     url: "https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip"
     enabled: true
+
+  # --- TRV ---
+  - authority: "TRV"
+    name: "Vägar"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/TV/lst_tv_fak01/MapServer"
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    raw:
+      format: "geojson" # Ensure handler ouuts geojson
+      layer_ids: [0, 1, 2, 3, 4, 5, 6, 7] # Optional: Omit to fetch all layers, or specify if needed
+  - authority: "TRV"
+    name: "Övrigt"
+    type: "rest_api"
+    url: "https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/TV/lst_tv_fak06/MapServer"
+    enabled: true
+    staged_data_type: "geojson" # <--- IMPORTANT for the loader
