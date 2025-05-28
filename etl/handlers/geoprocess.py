@@ -13,7 +13,7 @@ log: Final = logging.getLogger("summary")
 def geoprocess_staging_gdb(
     staging_gdb: Path | str,
     aoi_fc: Path | str,
-    target_srid: int = 3006,
+    target_srid: int = 3010,  # Changed to SWEREF99 12 00
     pp_factor: str = "100",
 ) -> None:
     """🔄 In-place geoprocessing of staging.gdb: clip and project only.
@@ -21,7 +21,7 @@ def geoprocess_staging_gdb(
     Args:
         staging_gdb: Path to staging.gdb to process in-place
         aoi_fc: Area of interest feature class for clipping
-        target_srid: Target spatial reference ID (default: 3006 = SWEREF99 TM)
+        target_srid: Target spatial reference ID (default: 3010 = SWEREF99 12 00)
         pp_factor: Parallel processing factor ("100" = all cores)
 
     Processes staging.gdb in-place: clip → project.

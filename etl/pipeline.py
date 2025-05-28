@@ -244,7 +244,12 @@ class Pipeline:
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:
         """📝 Extract SDE dataset and feature class names from staging name.
         
-        Default logic: TRV_tv_viltstangsel → dataset="TRV", fc="tv_viltstangsel"
+        Default logic: TRV_tv_viltstangsel → dataset="GNG.TRV", fc="tv_viltstangsel"
         """
-        dataset, _, rest = fc_name.partition("_")
+        dataset_suffix, _, rest = fc_name.partition("_")
+        
+        # Get schema prefix from config (default: GNG)
+        schema_prefix = self.global_cfg.get("sde_schema", "GNG")
+        dataset = f"{schema_prefix}.{dataset_suffix}"
+        
         return dataset, rest.lower()

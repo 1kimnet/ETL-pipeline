@@ -16,7 +16,7 @@ ogc_api_delay: 0.1  # Seconds between requests (default: 0.1)
 geoprocessing:
   enabled: true
   aoi_boundary: "data/connections/municipality_boundary.shp"
-  target_srid: 3006
+  target_srid: 3010
   parallel_processing_factor: "100"
   cleanup_intermediate: true  # Remove processed GDBs after SDE load
 
@@ -28,5 +28,7 @@ source_overrides:
     sde_dataset: "PLANNING"
     sde_fc: "national_interests"
 
+
 # SDE connection settings
 sde_connection_file: "data/connections/prod.sde"
+sde_schema: "GNG"  # Schema prefix for datasets
