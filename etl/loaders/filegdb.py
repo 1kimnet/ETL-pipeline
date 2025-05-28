@@ -20,6 +20,7 @@ import arcpy  # ArcGIS Pro / Server Python ships with this
 from ..utils import paths, ensure_dirs
 from ..utils.naming import sanitize_for_filename, generate_fc_name
 from ..models import Source
+from etl.utils.run_summary import Summary
 
 log: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -39,14 +40,16 @@ class ArcPyFileGDBLoader:
 
     def __init__(
         self, 
+        summary: Summary,                         # ← NEW
         gdb_path: Optional[Path] = None, 
-        sources_yaml_path: Optional[Path] = None
+        sources_yaml_path: Optional[Path] = None,
     ) -> None:
         """Initialize the FileGDB loader with optional custom paths."""
         ensure_dirs()
         self.gdb_path: Path = gdb_path or paths.GDB
         self.sources: List[Source] = []
-        
+        self.summary = summary
+
         if sources_yaml_path:
             self._load_sources_configuration(sources_yaml_path)
         else:
@@ -71,6 +74,7 @@ class ArcPyFileGDBLoader:
     def load_from_staging(self, staging_root: Path) -> None:
         """Recreate the FileGDB and copy content based on Source configurations."""
         self._reset_gdb()
+        self.summary.staging.clear()     # Reset staging counter once per run
 
         used_names_in_staging_gdb: Set[str] = set()
         arcpy.env.overwriteOutput = True  # type: ignore[attr-defined]
@@ -196,7 +200,7 @@ class ArcPyFileGDBLoader:
             log.warning("⚠️ Staging directory not found for JSON/GeoJSON source '%s': %s",
                        source.name, source_staging_dir)
             return
-        
+        lg_sum = logging.getLogger("summary")
         # Look for both .geojson and .json files
         geojson_files: List[Path] = list(source_staging_dir.glob("*.geojson"))
         json_files: List[Path] = list(source_staging_dir.glob("*.json"))
@@ -207,6 +211,8 @@ class ArcPyFileGDBLoader:
                      len(all_json_files), source.name, source_staging_dir.name)
             for json_file_path in all_json_files:
                 self._process_json_geojson_file(json_file_path, source.authority, used_names_set)
+                lg_sum.info("   📄 JSON ➜ staged : %s", json_file_path.name)
+                self.summary.log_staging("done")
         else:
             log.info("No JSON/GeoJSON files found for source '%s' in %s.", source.name, source_staging_dir)
 
@@ -274,9 +280,12 @@ class ArcPyFileGDBLoader:
     def _process_json_geojson_file(self, json_file_path: Path, authority: str, used_names_set: Set[str]) -> None:
         """Process a single JSON/GeoJSON file using JSONToFeatures with comprehensive error handling."""
         log.debug("[DEBUG] Processing JSON/GeoJSON - Authority: '%s' for file: %s", authority, json_file_path.name)
+        lg_sum = logging.getLogger("summary")
         
         if not json_file_path.exists():
             log.error("❌ JSON/GeoJSON file does not exist: %s", json_file_path)
+            self.summary.log_staging("error")
+            self.summary.log_error(json_file_path.name, "File does not exist")
             return
         
         # Initialize variables before try block to ensure they're always bound
@@ -297,22 +306,31 @@ class ArcPyFileGDBLoader:
                 out_features=out_fc_full_path
             )
             log.info("✅ SUCCESS: Converted JSON/GeoJSON '%s' to '%s'", json_file_path.name, tgt_name)
+            lg_sum.info("   📄 JSON ➜ staged : %s", tgt_name)
+            self.summary.log_staging("done")
             
         except arcpy.ExecuteError as arc_error:
             arcpy_messages: str = arcpy.GetMessages(2)
             log.error("❌ arcpy.conversion.JSONToFeatures failed for JSON/GeoJSON %s → %s: %s. ArcPy Messages: %s",
                       json_file_path.name, tgt_name, arc_error, arcpy_messages, exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(json_file_path.name, f"JSONToFeatures failed: {arc_error}")
         except Exception as generic_error:
             log.error("❌ Unexpected error processing JSON/GeoJSON %s → %s: %s",
                       json_file_path.name, out_fc_full_path, generic_error, exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(json_file_path.name, f"Unexpected error: {generic_error}")
 
     def _process_single_shapefile(self, shp_file_path: Path, authority: str, used_names_set: Set[str]) -> None:
         """Process a single shapefile into the GDB with comprehensive error handling and validation."""
         log.debug("[DEBUG] Processing shapefile - Authority: '%s' for file: %s", authority, shp_file_path.name)
+        lg_sum = logging.getLogger("summary")
         original_workspace: Optional[str] = arcpy.env.workspace  # type: ignore[attr-defined]
         
         if not shp_file_path.exists():
             log.error("❌ Shapefile does not exist: %s", shp_file_path)
+            self.summary.log_staging("error")
+            self.summary.log_error(shp_file_path.name, "File does not exist")
             return
         
         # Initialize variables before try block to ensure they're always bound
@@ -325,6 +343,8 @@ class ArcPyFileGDBLoader:
         if not validation_result.is_valid:
             log.warning("⚠️ Shapefile validation failed for %s: %s", 
                        shp_file_path.name, validation_result.error_message)
+            self.summary.log_staging("error")
+            self.summary.log_error(shp_file_path.name, f"Validation failed: {validation_result.error_message}")
             
             # List what files are actually present for debugging
             self._log_directory_contents(shp_file_path.parent, "shapefile validation failed")
@@ -359,11 +379,15 @@ class ArcPyFileGDBLoader:
                 out_feature_class=out_fc_full_path
             )
             log.info("✅ SUCCESS: Copied shapefile '%s' to '%s'", shp_file_path.name, tgt_name)
+            lg_sum.info("   📄 SHP  ➜ staged : %s", tgt_name)
+            self.summary.log_staging("done")
             
         except arcpy.ExecuteError as arc_error:
             arcpy_messages: str = arcpy.GetMessages(2)
             log.error("❌ arcpy.management.CopyFeatures failed for SHP %s → %s: %s. ArcPy Messages: %s",
                        (shp_file_path.name, tgt_name, arc_error, arcpy_messages), exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(shp_file_path.name, f"CopyFeatures failed: {arc_error}")
             # Try alternative approach with full path if workspace method fails
             if "000732" in arcpy_messages:  # Dataset does not exist error
                 self._retry_shapefile_with_full_path(shp_file_path, out_fc_full_path, tgt_name)
@@ -371,11 +395,14 @@ class ArcPyFileGDBLoader:
         except Exception as generic_error:
             log.error("❌ Unexpected error processing SHP %s → %s: %s", 
                      shp_file_path.name, out_fc_full_path, generic_error, exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(shp_file_path.name, f"Unexpected error: {generic_error}")
         finally:
             arcpy.env.workspace = original_workspace  # type: ignore[attr-defined]
 
     def _retry_shapefile_with_full_path(self, shp_file_path: Path, out_fc_full_path: str, tgt_name: str) -> None:
         """Retry shapefile processing with full path approach."""
+        lg_sum = logging.getLogger("summary")
         log.info("🔄 Retrying with full path approach for shapefile: %s", shp_file_path.name)
         try:
             input_shp_full_path: str = str(shp_file_path.resolve())
@@ -384,12 +411,164 @@ class ArcPyFileGDBLoader:
                 out_feature_class=out_fc_full_path
             )
             log.info("✅ SUCCESS (retry): Copied shapefile '%s' to '%s'", shp_file_path.name, tgt_name)
+            lg_sum.info("   📄 SHP  ➜ staged : %s", tgt_name)
+            self.summary.log_staging("done")
         except arcpy.ExecuteError as retry_arc_error:
             log.error("❌ Retry also failed for SHP %s → %s: %s", 
                      shp_file_path.name, tgt_name, arcpy.GetMessages(2), exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(shp_file_path.name, f"Retry failed: {retry_arc_error}")
         except Exception as retry_generic_error:
             log.error("❌ Unexpected error on retry for SHP %s → %s: %s", 
                      shp_file_path.name, out_fc_full_path, retry_generic_error, exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(shp_file_path.name, f"Retry unexpected error: {retry_generic_error}")
+
+    def _copy_gpkg_feature_class(self, input_fc_name: str, target_name: str) -> None:
+        """Copy a single feature class from GPKG to GDB with retry logic and comprehensive error handling."""
+        lg_sum = logging.getLogger("summary")
+        copied_successfully: bool = False
+        
+        log.info("Attempt 1: GPKG FC copy using input '%s' (listed name) → STAGING_GDB:/'%s'",
+                 input_fc_name, target_name)
+        
+        try:
+            arcpy.conversion.FeatureClassToFeatureClass(
+                in_features=input_fc_name, 
+                out_path=str(self.gdb_path), 
+                out_name=target_name
+            )
+            log.info("✅ Attempt 1 SUCCESS: Copied GPKG FC '%s' to '%s'", input_fc_name, target_name)
+            lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
+            self.summary.log_staging("done")
+            copied_successfully = True
+            
+        except arcpy.ExecuteError as attempt1_error:
+            arcpy_messages_e1: str = arcpy.GetMessages(2)
+            log.warning("⚠️ Attempt 1 FAILED for input '%s': %s. ArcPy Messages: %s",
+                       input_fc_name, attempt1_error, arcpy_messages_e1)
+            
+            if "000732" in arcpy_messages_e1 and _MAIN_RE.match(input_fc_name):
+                copied_successfully = self._retry_gpkg_with_stripped_name(input_fc_name, target_name)
+            
+            if not copied_successfully:
+                self.summary.log_staging("error")
+                self.summary.log_error(input_fc_name, f"GPKG FC copy failed: {attempt1_error}")
+        except Exception as attempt1_generic_error:
+            log.error("❌ Unexpected error on Attempt 1 for input '%s': %s",
+                      input_fc_name, attempt1_generic_error, exc_info=True)
+            self.summary.log_staging("error")
+            self.summary.log_error(input_fc_name, f"GPKG FC unexpected error: {attempt1_generic_error}")
+        
+        if not copied_successfully:
+            log.error("❗ Ultimately FAILED to copy GPKG FC '%s' to staging GDB.", input_fc_name)
+
+    def _retry_gpkg_with_stripped_name(self, input_fc_name: str, target_name: str) -> bool:
+        """Retry GPKG feature class copy with stripped name."""
+        lg_sum = logging.getLogger("summary")
+        input_fc_name_attempt2: str = _MAIN_RE.sub("", input_fc_name)
+        if input_fc_name_attempt2 != input_fc_name:
+            log.info("Attempt 2: GPKG FC copy using input '%s' (stripped name) → STAGING_GDB:/'%s'",
+                     input_fc_name_attempt2, target_name)
+            try:
+                arcpy.conversion.FeatureClassToFeatureClass(
+                    in_features=input_fc_name_attempt2, 
+                    out_path=str(self.gdb_path), 
+                    out_name=target_name
+                )
+                log.info("✅ Attempt 2 SUCCESS: Copied GPKG FC '%s' (listed as '%s') to '%s'",
+                         input_fc_name_attempt2, input_fc_name, target_name)
+                lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
+                self.summary.log_staging("done")
+                return True
+            except arcpy.ExecuteError as attempt2_error:
+                arcpy_messages_e2: str = arcpy.GetMessages(2)
+                log.error("❌ Attempt 2 FAILED for input '%s': %s. ArcPy Messages: %s",
+                          input_fc_name_attempt2, attempt2_error, arcpy_messages_e2, exc_info=True)
+                self.summary.log_staging("error")
+                self.summary.log_error(input_fc_name_attempt2, f"GPKG FC retry failed: {attempt2_error}")
+            except Exception as attempt2_generic_error:
+                log.error("❌ Unexpected error on Attempt 2 for input '%s': %s",
+                          input_fc_name_attempt2, attempt2_generic_error, exc_info=True)
+                self.summary.log_staging("error")
+                self.summary.log_error(input_fc_name_attempt2, f"GPKG FC retry unexpected error: {attempt2_generic_error}")
+        return False
+
+    def _glob_and_load_shapefiles(self, staging_root: Path, used_names_set: Set[str]) -> None:
+        """Fallback: glob and load all shapefiles if no sources are defined for loader."""
+        shp_files: List[Path] = list(staging_root.rglob("*.shp"))
+        if shp_files:
+            log.info("🔍 Fallback: Found %d shapefile(s) to process via globbing.", len(shp_files))
+            for shp_file_path in shp_files:
+                derived_authority_from_path: str = self._derive_authority_from_path(shp_file_path, staging_root)
+                self._process_single_shapefile(shp_file_path, derived_authority_from_path, used_names_set)
+        else:
+            log.info("🔍 Fallback: No shapefiles found in staging area via globbing.")
+
+    def _glob_and_load_geopackages(self, staging_root: Path, used_names_set: Set[str], 
+                                  include_filter: Optional[List[str]]) -> None:
+        """Fallback: glob and load all geopackages if no sources are defined for loader."""
+        gpkg_files: List[Path] = list(staging_root.rglob("*.gpkg"))
+        if gpkg_files:
+            log.info("🔍 Fallback: Found %d GeoPackage(s) to process via globbing.", len(gpkg_files))
+            for gpkg_file_path in gpkg_files:
+                derived_authority_from_path: str = self._derive_authority_from_path(gpkg_file_path, staging_root)
+                self._copy_gpkg_contents_to_staging_gdb(
+                    gpkg_file_path, derived_authority_from_path, used_names_set, include_filter
+                )
+        else:
+            log.info("🔍 Fallback: No GeoPackages found in staging area via globbing.")
+
+    def _glob_and_load_geojsonfiles(self, staging_root: Path, used_names_set: Set[str]) -> None:
+        """Fallback: glob and load all GeoJSON and JSON files if no sources are defined for loader."""
+        geojson_files: List[Path] = list(staging_root.rglob("*.geojson"))
+        json_files: List[Path] = list(staging_root.rglob("*.json"))
+        all_json_files: List[Path] = geojson_files + json_files
+        
+        if all_json_files:
+            log.info("🔍 Fallback: Found %d JSON/GeoJSON file(s) to process via globbing.", len(all_json_files))
+            for json_file_path in all_json_files:
+                derived_authority_from_path: str = self._derive_authority_from_path(json_file_path, staging_root)
+                self._process_json_geojson_file(json_file_path, derived_authority_from_path, used_names_set)
+        else:
+            log.info("🔍 Fallback: No JSON/GeoJSON files found in staging area via globbing.")
+
+    def _derive_authority_from_path(self, file_path: Path, staging_root: Path) -> str:
+        """Helper to derive authority from file path structure."""
+        try:
+            path_parts: tuple[str, ...] = file_path.relative_to(staging_root).parts
+            return path_parts[0] if len(path_parts) > 1 else "UNKNOWN_GLOB_AUTH"
+        except (IndexError, ValueError):
+            return "UNKNOWN_GLOB_AUTH_EXC"
+
+    @staticmethod
+    def _ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 64) -> str:
+        """Ensure the name is unique within the GDB, with simplified logic."""
+        candidate: str = base_name[:max_length]  # Truncate to max length first
+        
+        if not candidate:
+            raise ValueError(f"Base name '{base_name}' resulted in empty string after truncation")
+        
+        final_candidate: str = candidate
+        idx: int = 1
+        
+        while final_candidate.lower() in (n.lower() for n in used_names):
+            suffix: str = f"_{idx}"
+            # Calculate available space for the base part
+            available_length: int = max_length - len(suffix)
+            
+            if available_length <= 0:
+                raise ValueError(f"Cannot generate unique name for '{base_name}' within {max_length} characters")
+            
+            truncated_base: str = candidate[:available_length]
+            final_candidate = f"{truncated_base}{suffix}"
+            idx += 1
+            
+            if idx > 9999:
+                raise ValueError(f"Could not find unique name for '{base_name}' after {idx-1} attempts")
+        
+        used_names.add(final_candidate)
+        return final_candidate
 
     def _validate_shapefile_components(self, shp_file_path: Path) -> ShapefileValidationResult:
         """Validate that all required shapefile components exist with corrected path logic."""
@@ -589,133 +768,3 @@ class ArcPyFileGDBLoader:
         tgt_name: str = self._ensure_unique_name(base_name, used_names_set)
         
         self._copy_gpkg_feature_class(fc_name_listed_by_arcpy, tgt_name)
-
-    def _copy_gpkg_feature_class(self, input_fc_name: str, target_name: str) -> None:
-        """Copy a single feature class from GPKG to GDB with retry logic and comprehensive error handling."""
-        copied_successfully: bool = False
-        
-        log.info("Attempt 1: GPKG FC copy using input '%s' (listed name) → STAGING_GDB:/'%s'",
-                 input_fc_name, target_name)
-        
-        try:
-            arcpy.conversion.FeatureClassToFeatureClass(
-                in_features=input_fc_name, 
-                out_path=str(self.gdb_path), 
-                out_name=target_name
-            )
-            log.info("✅ Attempt 1 SUCCESS: Copied GPKG FC '%s' to '%s'", input_fc_name, target_name)
-            copied_successfully = True
-            
-        except arcpy.ExecuteError as attempt1_error:
-            arcpy_messages_e1: str = arcpy.GetMessages(2)
-            log.warning("⚠️ Attempt 1 FAILED for input '%s': %s. ArcPy Messages: %s",
-                       input_fc_name, attempt1_error, arcpy_messages_e1)
-            
-            if "000732" in arcpy_messages_e1 and _MAIN_RE.match(input_fc_name):
-                copied_successfully = self._retry_gpkg_with_stripped_name(input_fc_name, target_name)
-        except Exception as attempt1_generic_error:
-            log.error("❌ Unexpected error on Attempt 1 for input '%s': %s",
-                      input_fc_name, attempt1_generic_error, exc_info=True)
-        
-        if not copied_successfully:
-            log.error("❗ Ultimately FAILED to copy GPKG FC '%s' to staging GDB.", input_fc_name)
-
-    def _retry_gpkg_with_stripped_name(self, input_fc_name: str, target_name: str) -> bool:
-        """Retry GPKG feature class copy with stripped name."""
-        input_fc_name_attempt2: str = _MAIN_RE.sub("", input_fc_name)
-        if input_fc_name_attempt2 != input_fc_name:
-            log.info("Attempt 2: GPKG FC copy using input '%s' (stripped name) → STAGING_GDB:/'%s'",
-                     input_fc_name_attempt2, target_name)
-            try:
-                arcpy.conversion.FeatureClassToFeatureClass(
-                    in_features=input_fc_name_attempt2, 
-                    out_path=str(self.gdb_path), 
-                    out_name=target_name
-                )
-                log.info("✅ Attempt 2 SUCCESS: Copied GPKG FC '%s' (listed as '%s') to '%s'",
-                         input_fc_name_attempt2, input_fc_name, target_name)
-                return True
-            except arcpy.ExecuteError as attempt2_error:
-                arcpy_messages_e2: str = arcpy.GetMessages(2)
-                log.error("❌ Attempt 2 FAILED for input '%s': %s. ArcPy Messages: %s",
-                          input_fc_name_attempt2, attempt2_error, arcpy_messages_e2, exc_info=True)
-            except Exception as attempt2_generic_error:
-                log.error("❌ Unexpected error on Attempt 2 for input '%s': %s",
-                          input_fc_name_attempt2, attempt2_generic_error, exc_info=True)
-        return False
-
-    def _glob_and_load_shapefiles(self, staging_root: Path, used_names_set: Set[str]) -> None:
-        """Fallback: glob and load all shapefiles if no sources are defined for loader."""
-        shp_files: List[Path] = list(staging_root.rglob("*.shp"))
-        if shp_files:
-            log.info("🔍 Fallback: Found %d shapefile(s) to process via globbing.", len(shp_files))
-            for shp_file_path in shp_files:
-                derived_authority_from_path: str = self._derive_authority_from_path(shp_file_path, staging_root)
-                self._process_single_shapefile(shp_file_path, derived_authority_from_path, used_names_set)
-        else:
-            log.info("🔍 Fallback: No shapefiles found in staging area via globbing.")
-
-    def _glob_and_load_geopackages(self, staging_root: Path, used_names_set: Set[str], 
-                                  include_filter: Optional[List[str]]) -> None:
-        """Fallback: glob and load all geopackages if no sources are defined for loader."""
-        gpkg_files: List[Path] = list(staging_root.rglob("*.gpkg"))
-        if gpkg_files:
-            log.info("🔍 Fallback: Found %d GeoPackage(s) to process via globbing.", len(gpkg_files))
-            for gpkg_file_path in gpkg_files:
-                derived_authority_from_path: str = self._derive_authority_from_path(gpkg_file_path, staging_root)
-                self._copy_gpkg_contents_to_staging_gdb(
-                    gpkg_file_path, derived_authority_from_path, used_names_set, include_filter
-                )
-        else:
-            log.info("🔍 Fallback: No GeoPackages found in staging area via globbing.")
-
-    def _glob_and_load_geojsonfiles(self, staging_root: Path, used_names_set: Set[str]) -> None:
-        """Fallback: glob and load all GeoJSON and JSON files if no sources are defined for loader."""
-        geojson_files: List[Path] = list(staging_root.rglob("*.geojson"))
-        json_files: List[Path] = list(staging_root.rglob("*.json"))
-        all_json_files: List[Path] = geojson_files + json_files
-        
-        if all_json_files:
-            log.info("🔍 Fallback: Found %d JSON/GeoJSON file(s) to process via globbing.", len(all_json_files))
-            for json_file_path in all_json_files:
-                derived_authority_from_path: str = self._derive_authority_from_path(json_file_path, staging_root)
-                self._process_json_geojson_file(json_file_path, derived_authority_from_path, used_names_set)
-        else:
-            log.info("🔍 Fallback: No JSON/GeoJSON files found in staging area via globbing.")
-
-    def _derive_authority_from_path(self, file_path: Path, staging_root: Path) -> str:
-        """Helper to derive authority from file path structure."""
-        try:
-            path_parts: tuple[str, ...] = file_path.relative_to(staging_root).parts
-            return path_parts[0] if len(path_parts) > 1 else "UNKNOWN_GLOB_AUTH"
-        except (IndexError, ValueError):
-            return "UNKNOWN_GLOB_AUTH_EXC"
-
-    @staticmethod
-    def _ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 64) -> str:
-        """Ensure the name is unique within the GDB, with simplified logic."""
-        candidate: str = base_name[:max_length]  # Truncate to max length first
-        
-        if not candidate:
-            raise ValueError(f"Base name '{base_name}' resulted in empty string after truncation")
-        
-        final_candidate: str = candidate
-        idx: int = 1
-        
-        while final_candidate.lower() in (n.lower() for n in used_names):
-            suffix: str = f"_{idx}"
-            # Calculate available space for the base part
-            available_length: int = max_length - len(suffix)
-            
-            if available_length <= 0:
-                raise ValueError(f"Cannot generate unique name for '{base_name}' within {max_length} characters")
-            
-            truncated_base: str = candidate[:available_length]
-            final_candidate = f"{truncated_base}{suffix}"
-            idx += 1
-            
-            if idx > 9999:
-                raise ValueError(f"Could not find unique name for '{base_name}' after {idx-1} attempts")
-        
-        used_names.add(final_candidate)
-        return final_candidate

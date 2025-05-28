@@ -309,7 +309,7 @@ sources:
     name: "Erosion"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/stranderosion-kust/ogc/features/v1/collections/"
-    enabled: true
+    enabled: false
     staged_data_type: "geojson"
     raw:
       collections: ["aktiv-erosion"]
@@ -320,7 +320,7 @@ sources:
     name: "Brunnar"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/brunnar/ogc/features/v1/collections/"
-    enabled: true
+    enabled: false
     staged_data_type: "geojson"
     raw:
       collections: ["brunnar"]
@@ -331,7 +331,7 @@ sources:
     name: "Jordskred och raviner"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/jordskred-raviner/ogc/features/v1/collections/"
-    enabled: true
+    enabled: false
     staged_data_type: "geojson"
     raw:
       collections: ["jordskred-raviner"]
@@ -342,7 +342,7 @@ sources:
     name: "Grus Krossberg"
     type: "ogc_api"
     url: "https://api.sgu.se/oppnadata/grus-krossberg/ogc/features/v1/collections"
-    enabled: true
+    enabled: false
     staged_data_type: "geojson"
     raw:
       collections: ["grus-grus", "grus-berg", "grus-moran"]

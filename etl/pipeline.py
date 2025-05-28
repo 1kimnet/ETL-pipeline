@@ -79,10 +79,12 @@ class Pipeline:
         # ---------- Consolidate into FileGDB ------------------------------
         lg_sum.info("📦 Staging complete → building FileGDB …")
         try:
-            ArcPyFileGDBLoader(
+            loader = ArcPyFileGDBLoader(
+                summary=self.summary,  # ← 1st positional or keyword!
                 gdb_path=paths.GDB,
                 sources_yaml_path=self.sources_yaml_path,
-            ).load_from_staging(paths.STAGING)
+            )
+            loader.load_from_staging(paths.STAGING)
             self.summary.log_staging("done")
         except Exception as exc:
             self.summary.log_staging("error")
