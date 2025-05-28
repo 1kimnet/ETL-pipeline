@@ -1,8 +1,7 @@
-# etl/pipeline.py (correct pipeline flow)
+# etl/pipeline.py (complete working version)
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -93,7 +92,6 @@ class Pipeline:
             lg_sum.error("❌ GDB load failed (%s)", exc, exc_info=True)
             if not self.global_cfg.get("continue_on_failure", True):
                 raise
-                return
 
         # ---------- 3. GEOPROCESS staging.gdb IN-PLACE -------------------
         self._apply_geoprocessing_inplace()
@@ -105,7 +103,7 @@ class Pipeline:
         self.summary.dump()
 
     def _apply_geoprocessing_inplace(self) -> None:
-        """🔄 Step 3: In-place geoprocessing of staging.gdb"""
+        """🔄 Step 3: In-place geoprocessing of staging.gdb (clip + project only)"""
         lg_sum = logging.getLogger("summary")
         
         # Check if geoprocessing is enabled
@@ -123,19 +121,14 @@ class Pipeline:
             return
             
         try:
-            lg_sum.info("🔄 Geoprocessing staging.gdb in-place: clip + project + rename + organize")
+            lg_sum.info("🔄 Geoprocessing staging.gdb in-place: clip + project")
             
-            # Create naming rules from config
-            naming_rules = geoprocess.create_naming_rules_from_config(self.global_cfg)
-            
-            # Perform in-place geoprocessing
+            # Perform simplified in-place geoprocessing (clip + project only)
             geoprocess.geoprocess_staging_gdb(
                 staging_gdb=paths.GDB,
                 aoi_fc=aoi_boundary,
                 target_srid=geoprocessing_config.get("target_srid", 3006),
-                pp_factor=geoprocessing_config.get("parallel_processing_factor", "100"),
-                create_datasets=geoprocessing_config.get("create_datasets", True),
-                naming_rules=naming_rules
+                pp_factor=geoprocessing_config.get("parallel_processing_factor", "100")
             )
             
             lg_sum.info("✅ In-place geoprocessing complete")
@@ -165,53 +158,87 @@ class Pipeline:
         
         # Use EnvManager for clean environment handling
         with arcpy.EnvManager(workspace=str(source_gdb), overwriteOutput=True):
-            feature_classes = arcpy.ListFeatureClasses()
-            if not feature_classes:
+            # List all feature classes (from root and datasets)
+            all_feature_classes = []
+            
+            # Get standalone feature classes from root
+            standalone_fcs = arcpy.ListFeatureClasses()
+            if standalone_fcs:
+                lg_sum.info("📄 Found %d feature classes in root of GDB", len(standalone_fcs))
+                for fc in standalone_fcs:
+                    all_feature_classes.append((fc, fc))  # (path, name)
+            
+            # Get feature classes from datasets (if any exist)
+            feature_datasets = arcpy.ListDatasets(feature_type="Feature")
+            if feature_datasets:
+                lg_sum.info("📁 Found %d feature datasets", len(feature_datasets))
+                for dataset in feature_datasets:
+                    dataset_fcs = arcpy.ListFeatureClasses(feature_dataset=dataset)
+                    if dataset_fcs:
+                        for fc in dataset_fcs:
+                            fc_path = f"{dataset}\\{fc}"
+                            all_feature_classes.append((fc_path, fc))
+            
+            if not all_feature_classes:
                 lg_sum.warning("⚠️ No feature classes found in %s", source_gdb)
                 return
                 
-            lg_sum.info("📋 Found %d feature classes to load", len(feature_classes))
+            lg_sum.info("📋 Found %d total feature classes to load", len(all_feature_classes))
             
             loaded_count = 0
             error_count = 0
             
-            for fc_name in feature_classes:
+            for fc_path, fc_name in all_feature_classes:
                 try:
-                    self._append_fc_to_sde(fc_name, sde_connection)
+                    self._load_fc_to_sde(fc_path, fc_name, sde_connection)
                     loaded_count += 1
                 except Exception as exc:
                     error_count += 1
-                    lg_sum.error("❌ Failed to load %s to SDE: %s", fc_name, exc)
+                    lg_sum.error("❌ Failed to load %s to SDE: %s", fc_path, exc)
                     if not self.global_cfg.get("continue_on_failure", True):
                         raise
                         
             lg_sum.info("📊 SDE loading complete: %d loaded, %d errors", loaded_count, error_count)
 
-    def _append_fc_to_sde(self, staging_fc_name: str, sde_connection: str) -> None:
-        """🚚 Append single FC to SDE with proper naming."""
+    def _load_fc_to_sde(self, source_fc_path: str, fc_name: str, sde_connection: str) -> None:
+        """🚚 Load single FC to SDE with create-if-not-exists logic."""
         lg_sum = logging.getLogger("summary")
         
-        # Apply naming logic: TRV_tv_viltstangsel → TRV\tv_viltstangsel
-        dataset, fc_name = self._get_sde_names(staging_fc_name)
-        target_path = f"{sde_connection}\\{dataset}\\{fc_name}"
+        # Apply naming logic: TRV_viltstangsel → TRV\viltstangsel
+        dataset, sde_fc_name = self._get_sde_names(fc_name)
+        sde_dataset_path = f"{sde_connection}\\{dataset}"
+        target_path = f"{sde_dataset_path}\\{sde_fc_name}"
         
         try:
-            # Check if target exists
-            if not arcpy.Exists(target_path):
-                lg_sum.warning("⚠️ Target FC does not exist: %s\\%s", dataset, fc_name)
+            # Check if target dataset exists in SDE
+            if not arcpy.Exists(sde_dataset_path):
+                lg_sum.error("❌ SDE dataset does not exist: %s", dataset)
+                lg_sum.error("   Create the dataset '%s' in SDE first, then re-run the pipeline", dataset)
                 return
                 
-            # Perform append
-            arcpy.management.Append(
-                inputs=staging_fc_name,
-                target=target_path,
-                schema_type="NO_TEST"  # Assume schema matches
-            )
-            
-            lg_sum.info("🚚→  %s\\%s", dataset, fc_name)
-            
+            # Check if target FC exists
+            if arcpy.Exists(target_path):
+                # FC exists - append data
+                lg_sum.info("📄 Appending to existing FC: %s\\%s", dataset, sde_fc_name)
+                arcpy.management.Append(
+                    inputs=source_fc_path,
+                    target=target_path,
+                    schema_type="NO_TEST"  # Assume schema matches
+                )
+                lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
+                
+            else:
+                # FC doesn't exist - copy to create new
+                lg_sum.info("🆕 Creating new FC: %s\\%s", dataset, sde_fc_name)
+                arcpy.conversion.FeatureClassToFeatureClass(
+                    in_features=source_fc_path,
+                    out_path=sde_dataset_path,
+                    out_name=sde_fc_name
+                )
+                lg_sum.info("🚚→  %s\\%s (created)", dataset, sde_fc_name)
+                
         except arcpy.ExecuteError:
-            lg_sum.error("❌ Append failed for %s: %s", staging_fc_name, arcpy.GetMessages(2))
+            lg_sum.error("❌ SDE operation failed for %s: %s", source_fc_path, arcpy.GetMessages(2))
             raise
 
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:

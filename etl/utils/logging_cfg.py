@@ -13,7 +13,7 @@ LOG_DIR: Final = Path("logs")         # <— adjust if you want a different fold
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def configure_logging(level_on_console: str = "INFO") -> None:
+def configure_logging(level_on_console: str = "VERBOSE") -> None:
     """Initialise two log files + console summary output."""
     today = datetime.now().strftime("%Y%m%d")
 
