@@ -363,8 +363,7 @@ class ArcPyFileGDBLoader:
         except arcpy.ExecuteError as arc_error:
             arcpy_messages: str = arcpy.GetMessages(2)
             log.error("❌ arcpy.management.CopyFeatures failed for SHP %s → %s: %s. ArcPy Messages: %s",
-                      shp_file_path.name, tgt_name, arcpy_messages, exc_info=True)
-            
+                       (shp_file_path.name, tgt_name, arc_error, arcpy_messages), exc_info=True)
             # Try alternative approach with full path if workspace method fails
             if "000732" in arcpy_messages:  # Dataset does not exist error
                 self._retry_shapefile_with_full_path(shp_file_path, out_fc_full_path, tgt_name)

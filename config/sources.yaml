@@ -55,9 +55,8 @@ sources:
     name: "Vindkraftskollen: Vindkraftverk"
     type: "atom_feed"
     url: "https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml"
-    staged_data_type: "shapefile_collection"
+    staged_data_type: "gpkg"
     enabled: true
-    BBOX: 
 
 
   - authority: "LST"
@@ -315,6 +314,7 @@ sources:
     raw:
       collections: ["aktiv-erosion"]
       page_size: 1000
+      supports_bbox_crs: false  # Add this line
 
   - authority: "SGU"
     name: "Brunnar"
@@ -325,6 +325,7 @@ sources:
     raw:
       collections: ["brunnar"]
       page_size: 1000
+      supports_bbox_crs: false  # Add this line      
 
   - authority: "SGU"
     name: "Jordskred och raviner"
@@ -335,6 +336,7 @@ sources:
     raw:
       collections: ["jordskred-raviner"]
       page_size: 1000
+      supports_bbox_crs: false  # Add this line
 
   - authority: "SGU"
     name: "Grus Krossberg"
@@ -345,6 +347,7 @@ sources:
     raw:
       collections: ["grus-grus", "grus-berg", "grus-moran"]
       page_size: 1000
+      supports_bbox_crs: false  # Add this line
 
 
   # # --- SJV ---
