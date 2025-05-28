@@ -12,3 +12,21 @@ global_ogc_bbox_coords: "16.5008129,59.0906713,17.6220373,59.6050281"
 global_ogc_bbox_crs_uri: "CRS84"  # or "4326"
 ogc_api_delay: 0.1  # Seconds between requests (default: 0.1)
 
+# Geoprocessing settings
+geoprocessing:
+  enabled: true
+  aoi_boundary: "data/connections/municipality_boundary.shp"
+  target_srid: 3006
+  parallel_processing_factor: "100"
+  cleanup_intermediate: true  # Remove processed GDBs after SDE load
+
+  
+# Optional: Source-specific SDE overrides
+source_overrides:
+  - name: "Riksintressen"
+    authority: "LST" 
+    sde_dataset: "PLANNING"
+    sde_fc: "national_interests"
+
+# SDE connection settings
+sde_connection_file: "data/connections/prod.sde"

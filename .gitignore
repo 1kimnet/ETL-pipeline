@@ -178,3 +178,4 @@ config/sources_rest.yaml
 docs/test.py
 config/sources_ogc_api.yaml
 config/sources_test.yaml
+scripts/arcpy_function_test.py
