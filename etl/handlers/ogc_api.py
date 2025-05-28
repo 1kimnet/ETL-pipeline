@@ -17,30 +17,25 @@ from ..utils.naming import sanitize_for_filename
 
 log: Final = logging.getLogger(__name__)
 
-# Constants for OGC API
-CRS84_URI: Final = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"  # WGS84 Lon/Lat
-SWEREF99TM_URI: Final = "http://www.opengis.net/def/crs/EPSG/0/3006"  # SWEREF99 TM
-DEFAULT_OGC_BBOX_COORDS: Final = "16.504,59.090,17.618,59.610"  # WGS84 coords
+# Constants
+CRS84_URI: Final = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+SWEREF99TM_URI: Final = "http://www.opengis.net/def/crs/EPSG/0/3006"
+DEFAULT_OGC_BBOX_COORDS: Final = "16.504,59.090,17.618,59.610"
 DEFAULT_OGC_BBOX_CRS_URI: Final = CRS84_URI
-DEFAULT_TIMEOUT: Final = 60
+DEFAULT_TIMEOUT: Final = 10  # seconds
 
 class OgcApiDownloadHandler:
-    """🔄 Downloads data from OGC API Features endpoints with proper BBOX and CRS handling."""
+    """🔄 Downloads data from OGC API Features endpoints with BBOX filtering."""
     
     def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
         self.bbox_params: Dict[str, str] = {}
-        ensure_dirs()
-        log.info("🚀 Initializing OgcApiDownloadHandler for source: %s", self.src.name)
-        
         self.session = requests.Session()
         self.session.headers.update({
-            "User-Agent": "ETL-Pipeline/1.0 (+https://your-contact-info-or-project-url)",
-            "Accept": "application/geo+json, application/json;q=0.9, application/vnd.ogc.fg+json;q=0.8"
+            "User-Agent": "ETL-Pipeline/1.0",
+            "Accept": "application/geo+json, application/json;q=0.9"
         })
-        
-        # 🔧 Pre-calculate BBOX parameters once
         self._setup_bbox_params()
         
     def _setup_bbox_params(self) -> None:
@@ -49,53 +44,93 @@ class OgcApiDownloadHandler:
             log.info("    BBOX filtering disabled for source '%s'", self.src.name)
             return
             
-        # Get BBOX coordinates
-        bbox_coords_str = self.src.raw.get("ogc_bbox", 
-                            self.global_config.get("global_ogc_bbox_coords", DEFAULT_OGC_BBOX_COORDS))
+        bbox_coords_str = self.src.raw.get(
+            "ogc_bbox", 
+            self.global_config.get("global_ogc_bbox_coords", DEFAULT_OGC_BBOX_COORDS)
+        )
         
-        # Get CRS for BBOX
-        bbox_crs_input = str(self.src.raw.get("ogc_bbox_crs", 
-                               self.global_config.get("global_ogc_bbox_crs_uri", DEFAULT_OGC_BBOX_CRS_URI)))
-
-        # Normalize CRS URI
+        bbox_crs_input = str(self.src.raw.get(
+            "ogc_bbox_crs", 
+            self.global_config.get("global_ogc_bbox_crs_uri", DEFAULT_OGC_BBOX_CRS_URI)
+        ))
+        
         bbox_crs_uri_str = self._normalize_crs_uri(bbox_crs_input)
         
         if bbox_coords_str:
-            self.bbox_params = {
-                "bbox": bbox_coords_str,
-                "bbox-crs": bbox_crs_uri_str
-            }
-            log.info("    🗺️ BBOX configured for source '%s': %s (CRS: %s)",
-                     self.src.name, bbox_coords_str, bbox_crs_uri_str)
+            self.bbox_params = {"bbox": bbox_coords_str}
+            
+            # Only add bbox-crs if not using the default CRS84
+            # Many OGC APIs assume CRS84 for BBOX when bbox-crs is omitted
+            if bbox_crs_uri_str != CRS84_URI:
+                # Check if service supports bbox-crs (can be configured per source)
+                if self.src.raw.get("supports_bbox_crs", True):
+                    self.bbox_params["bbox-crs"] = bbox_crs_uri_str
+                else:
+                    log.warning(
+                        "    ⚠️ Source '%s' doesn't support bbox-crs. "
+                        "BBOX will be interpreted as CRS84 (WGS84 lon/lat)",
+                        self.src.name
+                    )
+            
+            log.info(
+                "    🗺️ BBOX configured for source '%s': %s (CRS: %s)",
+                self.src.name, bbox_coords_str, 
+                bbox_crs_uri_str if "bbox-crs" in self.bbox_params else "CRS84 (default)"
+            )
+    
+    def _add_bbox_to_url(self, url: str) -> str:
+        """🔧 Add BBOX parameters to URL, preserving existing parameters."""
+        if not self.bbox_params:
+            return url
+            
+        parsed = urlparse(url)
+        query_params = parse_qs(parsed.query, keep_blank_values=True)
         
+        for key, value in self.bbox_params.items():
+            query_params[key] = [value]
+        
+        new_query = urlencode(query_params, doseq=True)
+        new_parsed = parsed._replace(query=new_query)
+        return urlunparse(new_parsed)
+    
     def _normalize_crs_uri(self, crs_input: str) -> str:
         """🔧 Normalize CRS input to proper URI format."""
         if crs_input.upper() == "CRS84":
             return CRS84_URI
-        elif crs_input.isdigit():
-            return f"http://www.opengis.net/def/crs/EPSG/0/{crs_input}"
         elif crs_input == "3006":
             return SWEREF99TM_URI
+        elif crs_input.isdigit():
+            return f"http://www.opengis.net/def/crs/EPSG/0/{crs_input}"
         else:
             return crs_input
-        
-    def _add_bbox_to_url(self, url: str) -> str:
-        """🔧 Add BBOX parameters to any URL, preserving existing parameters."""
-        if not self.bbox_params:
-            return url
+    
+    def _test_bbox_support(self, test_url: str) -> bool:
+        """🔧 Test if service supports bbox-crs parameter."""
+        try:
+            # Try a minimal request with bbox-crs
+            test_params = {
+                "bbox": "0,0,1,1",
+                "bbox-crs": CRS84_URI,
+                "limit": "1",
+                "f": "json"
+            }
             
-        # Parse URL
-        parsed = urlparse(url)
-        query_params = parse_qs(parsed.query, keep_blank_values=True)
-        
-        # Add BBOX params (will override if they exist)
-        for key, value in self.bbox_params.items():
-            query_params[key] = [value]
-        
-        # Rebuild URL
-        new_query = urlencode(query_params, doseq=True)
-        new_parsed = parsed._replace(query=new_query)
-        return urlunparse(new_parsed)
+            response = self.session.get(test_url, params=test_params, timeout=10)
+            
+            # If we get 500 or 400 with bbox-crs, try without it
+            if response.status_code in [400, 500]:
+                test_params.pop("bbox-crs")
+                response2 = self.session.get(test_url, params=test_params, timeout=10)
+                
+                # If it works without bbox-crs, the service doesn't support it
+                if response2.status_code == 200:
+                    return False
+            
+            return response.status_code == 200
+            
+        except Exception:
+            # Assume it supports bbox-crs if we can't determine
+            return True
         
     def fetch(self) -> bool:
         """🔄 Main entry point - downloads OGC API data, one file per collection."""
