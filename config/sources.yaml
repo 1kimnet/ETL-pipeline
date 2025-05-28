@@ -362,7 +362,7 @@ sources:
     name: "Jordbruksskiften (senaste året)"
     type: "rest_api"
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false
+    enabled: true
     staged_data_type: "geojson" # <--- IMPORTANT for the loader
     raw:
       format: "geojson" # Ensure handler outputs geojson
