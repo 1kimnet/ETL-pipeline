@@ -6,7 +6,7 @@ continue_on_failure: true
 
 # Optional: Define a global BBOX here if use_bbox_filter is true
 # These would be used if a source of type 'rest_api' doesn't define its own bbox in sources.yaml
-#global_ogc_bbox_coords: "586206,6551160,647910,6610992"  # Your SWEREF99 coords
-global_ogc_bbox_coords: "16.500,59.0906713,17.6220373,59.6050281"  # Example coordinates
+global_ogc_bbox_coords: "586206,6551160,647910,6610992"  # Your SWEREF99 coords
+#global_ogc_bbox_coords: "16.5008129,59.0906713,17.6220373,59.6050281"  # Example coordinates
 global_ogc_bbox_crs_uri: "http://www.opengis.net/def/crs/EPSG/0/3006"  # SWEREF99 TM
 ogc_api_delay: 0.1  # Seconds between requests (default: 0.1)
