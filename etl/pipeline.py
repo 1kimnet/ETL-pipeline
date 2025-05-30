@@ -204,10 +204,13 @@ class Pipeline:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
         lg_sum = logging.getLogger("summary")
         
-        # Apply naming logic: TRV_viltstangsel → TRV\viltstangsel
+        # Apply naming logic: RAA_byggnader_sverige_point → GNG.RAA\byggnader_sverige_point
         dataset, sde_fc_name = self._get_sde_names(fc_name)
         sde_dataset_path = f"{sde_connection}\\{dataset}"
         target_path = f"{sde_dataset_path}\\{sde_fc_name}"
+        
+        lg_sum.info("🔍 SDE mapping: '%s' → dataset='%s', fc='%s'", fc_name, dataset, sde_fc_name)
+        lg_sum.info("🔍 Target paths: dataset='%s', fc='%s'", sde_dataset_path, target_path)
         
         # Get load strategy from config (default: truncate_and_load)
         load_strategy = self.global_cfg.get("sde_load_strategy", "truncate_and_load")
@@ -217,7 +220,25 @@ class Pipeline:
             if not arcpy.Exists(sde_dataset_path):
                 lg_sum.error("❌ SDE dataset does not exist: %s", dataset)
                 lg_sum.error("   Create the dataset '%s' in SDE first, then re-run the pipeline", dataset)
+                lg_sum.error("   Run: python scripts/create_sde_datasets.py")
                 return
+                
+            # Verify source FC exists and get its properties
+            if not arcpy.Exists(source_fc_path):
+                lg_sum.error("❌ Source FC does not exist: %s", source_fc_path)
+                return
+                
+            # Get source FC geometry type for debugging
+            desc = arcpy.Describe(source_fc_path)
+            try:
+                count_result = arcpy.management.GetCount(source_fc_path)
+                record_count_str = str(count_result.getOutput(0))
+                record_count = int(record_count_str) if record_count_str.isdigit() else 0
+            except (ValueError, AttributeError):
+                record_count = 0
+                
+            lg_sum.info("🔍 Source FC info: type=%s, geom=%s, records=%d", 
+                       desc.dataType, desc.shapeType, record_count)
                 
             # Check if target FC exists
             if arcpy.Exists(target_path):
@@ -264,6 +285,9 @@ class Pipeline:
             else:
                 # FC doesn't exist - copy to create new
                 lg_sum.info("🆕 Creating new FC: %s\\%s", dataset, sde_fc_name)
+                lg_sum.info("🔍 Using: in_features='%s', out_path='%s', out_name='%s'", 
+                           source_fc_path, sde_dataset_path, sde_fc_name)
+                           
                 arcpy.conversion.FeatureClassToFeatureClass(
                     in_features=source_fc_path,
                     out_path=sde_dataset_path,
@@ -273,6 +297,7 @@ class Pipeline:
                 
         except arcpy.ExecuteError:
             lg_sum.error("❌ SDE operation failed for %s: %s", source_fc_path, arcpy.GetMessages(2))
+            lg_sum.error("❌ Check SDE permissions and ensure dataset '%s' exists", dataset)
             raise
 
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:
