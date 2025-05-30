@@ -201,13 +201,16 @@ class Pipeline:
             lg_sum.info("📊 SDE loading complete: %d loaded, %d errors", loaded_count, error_count)
 
     def _load_fc_to_sde(self, source_fc_path: str, fc_name: str, sde_connection: str) -> None:
-        """🚚 Load single FC to SDE with create-if-not-exists logic."""
+        """🚚 Load single FC to SDE with truncate-and-load strategy."""
         lg_sum = logging.getLogger("summary")
         
         # Apply naming logic: TRV_viltstangsel → TRV\viltstangsel
         dataset, sde_fc_name = self._get_sde_names(fc_name)
         sde_dataset_path = f"{sde_connection}\\{dataset}"
         target_path = f"{sde_dataset_path}\\{sde_fc_name}"
+        
+        # Get load strategy from config (default: truncate_and_load)
+        load_strategy = self.global_cfg.get("sde_load_strategy", "truncate_and_load")
         
         try:
             # Check if target dataset exists in SDE
@@ -218,15 +221,46 @@ class Pipeline:
                 
             # Check if target FC exists
             if arcpy.Exists(target_path):
-                # FC exists - append data
-                lg_sum.info("📄 Appending to existing FC: %s\\%s", dataset, sde_fc_name)
-                arcpy.management.Append(
-                    inputs=source_fc_path,
-                    target=target_path,
-                    schema_type="NO_TEST"  # Assume schema matches
-                )
-                lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
-                
+                if load_strategy == "truncate_and_load":
+                    # FC exists - truncate then append
+                    lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
+                    arcpy.management.TruncateTable(target_path)
+                    
+                    lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
+                    arcpy.management.Append(
+                        inputs=source_fc_path,
+                        target=target_path,
+                        schema_type="NO_TEST"
+                    )
+                    lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
+                    
+                elif load_strategy == "replace":
+                    # Delete and recreate FC
+                    lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
+                    arcpy.management.Delete(target_path)
+                    
+                    lg_sum.info("🆕 Creating replacement FC: %s\\%s", dataset, sde_fc_name)
+                    arcpy.conversion.FeatureClassToFeatureClass(
+                        in_features=source_fc_path,
+                        out_path=sde_dataset_path,
+                        out_name=sde_fc_name
+                    )
+                    lg_sum.info("🚚→  %s\\%s (replaced)", dataset, sde_fc_name)
+                    
+                elif load_strategy == "append":
+                    # Legacy behavior - append only (creates duplicates)
+                    lg_sum.warning("⚠️ Appending to existing FC (may create duplicates): %s\\%s", dataset, sde_fc_name)
+                    arcpy.management.Append(
+                        inputs=source_fc_path,
+                        target=target_path,
+                        schema_type="NO_TEST"
+                    )
+                    lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
+                    
+                else:
+                    lg_sum.error("❌ Unknown sde_load_strategy: %s", load_strategy)
+                    return
+                    
             else:
                 # FC doesn't exist - copy to create new
                 lg_sum.info("🆕 Creating new FC: %s\\%s", dataset, sde_fc_name)

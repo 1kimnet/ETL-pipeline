@@ -32,3 +32,4 @@ source_overrides:
 # SDE connection settings
 sde_connection_file: "data/connections/prod.sde"
 sde_schema: "GNG"  # Schema prefix for datasets
+sde_load_strategy: "truncate_and_load"  # Options: "truncate_and_load", "replace", "append"

@@ -315,7 +315,7 @@ sources:
       collections: ["aktiv-erosion"]
       page_size: 1000
       supports_bbox_crs: false  # Add this line
-
+      #TODO: Check if this is correct, or it it should be a point feature collection
   - authority: "SGU"
     name: "Brunnar"
     type: "ogc_api"
