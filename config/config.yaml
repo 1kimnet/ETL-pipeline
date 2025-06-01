@@ -22,12 +22,12 @@ geoprocessing:
 
   
 # Optional: Source-specific SDE overrides
-source_overrides:
-  - name: "Riksintressen"
-    authority: "LST" 
-    sde_dataset: "PLANNING"
-    sde_fc: "national_interests"
-
+# source_overrides:
+#   - name: "Riksintressen"
+#     authority: "LST" 
+#     sde_dataset: "LST"
+#     sde_fc: "Riksintressen"
+#     sde_schema: "GNG"  # Optional, defaults to GNG
 
 # SDE connection settings
 sde_connection_file: "data/connections/prod.sde"

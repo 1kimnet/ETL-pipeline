@@ -376,12 +376,7 @@ class ArcPyFileGDBLoader:
                     if geom_type:
                         geometry_types.add(geom_type)
                         log.debug("🔍 Feature %d: geometry type = %s", i, geom_type)
-                        
-                        # Log first feature's coordinates for debugging
-                        if i == 0:
-                            coords = geom.get("coordinates")
-                            log.debug("🔍 First feature coordinates: %s", coords)
-            
+
             # Handle single Feature
             elif data.get("type") == "Feature":
                 geom = data.get("geometry", {})
