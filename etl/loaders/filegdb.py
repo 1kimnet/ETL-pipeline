@@ -278,7 +278,7 @@ class ArcPyFileGDBLoader:
             log.info("No shapefiles found for source '%s' in %s.", source.name, source_staging_dir)
 
     def _process_json_geojson_file(self, json_file_path: Path, authority: str, used_names_set: Set[str]) -> None:
-        """Process a single JSON/GeoJSON file using JSONToFeatures with comprehensive error handling."""
+        """Process a single JSON/GeoJSON file using JSONToFeatures with geometry type detection."""
         log.debug("[DEBUG] Processing JSON/GeoJSON - Authority: '%s' for file: %s", authority, json_file_path.name)
         lg_sum = logging.getLogger("summary")
         
@@ -293,19 +293,52 @@ class ArcPyFileGDBLoader:
         out_fc_full_path: str = "UNKNOWN_PATH"
         
         try:
+            # Detect geometry type from GeoJSON content
+            geometry_type = self._detect_geojson_geometry_type(json_file_path)
+            log.info("📍 Detected geometry type: %s for %s", geometry_type, json_file_path.name)
+            
             input_json_full_path: str = str(json_file_path.resolve())
             base_name: str = generate_fc_name(authority, json_file_path.stem)
-            tgt_name = self._ensure_unique_name(base_name, used_names_set)
+            
+            # Append geometry type to name for clarity
+            base_name_with_geom = f"{base_name}_{geometry_type.lower()}"
+            tgt_name = self._ensure_unique_name(base_name_with_geom, used_names_set)
             out_fc_full_path = str(self.gdb_path / tgt_name)
             
-            log.info("📥 Converting JSON/GeoJSON ('%s') → GDB:/'%s' (Authority: '%s')",
-                     json_file_path.name, tgt_name, authority)
+            log.info("📥 Converting JSON/GeoJSON ('%s') → GDB:/'%s' (Authority: '%s', Geom: %s)",
+                     json_file_path.name, tgt_name, authority, geometry_type)
             
+            # Log file size and first few lines for debugging
+            file_size = json_file_path.stat().st_size
+            log.info("🔍 Input file size: %d bytes", file_size)
+            
+            # Use geometry_type parameter to ensure correct FC creation
+            log.info("🔧 Calling arcpy.conversion.JSONToFeatures with geometry_type='%s'", geometry_type.upper())
             arcpy.conversion.JSONToFeatures(
                 in_json_file=input_json_full_path, 
-                out_features=out_fc_full_path
+                out_features=out_fc_full_path,
+                geometry_type=geometry_type.upper()
             )
-            log.info("✅ SUCCESS: Converted JSON/GeoJSON '%s' to '%s'", json_file_path.name, tgt_name)
+            
+            # Verify the output was created and has records
+            if arcpy.Exists(out_fc_full_path):
+                try:
+                    count_result = arcpy.management.GetCount(out_fc_full_path)
+                    record_count_str = str(count_result.getOutput(0))
+                    record_count = int(record_count_str) if record_count_str.isdigit() else 0
+                    
+                    desc = arcpy.Describe(out_fc_full_path)
+                    log.info("✅ SUCCESS: Created FC '%s' with %d records, geometry type: %s", 
+                             tgt_name, record_count, desc.shapeType)
+                    
+                    if record_count == 0:
+                        log.warning("⚠️ Created feature class is empty! Check input data and CRS compatibility.")
+                        
+                except Exception as verify_error:
+                    log.warning("⚠️ Could not verify output FC: %s", verify_error)
+            else:
+                log.error("❌ Output feature class was not created: %s", out_fc_full_path)
+                
             lg_sum.info("   📄 JSON ➜ staged : %s", tgt_name)
             self.summary.log_staging("done")
             
@@ -320,6 +353,73 @@ class ArcPyFileGDBLoader:
                       json_file_path.name, out_fc_full_path, generic_error, exc_info=True)
             self.summary.log_staging("error")
             self.summary.log_error(json_file_path.name, f"Unexpected error: {generic_error}")
+
+    def _detect_geojson_geometry_type(self, json_file_path: Path) -> str:
+        """🔍 Detect the primary geometry type from GeoJSON file."""
+        try:
+            import json
+            with json_file_path.open('r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            log.debug("🔍 GeoJSON data structure: type=%s", data.get("type"))
+            
+            geometry_types = set()
+            
+            # Handle FeatureCollection
+            if data.get("type") == "FeatureCollection":
+                features = data.get("features", [])
+                log.debug("🔍 Found %d features in FeatureCollection", len(features))
+                
+                for i, feature in enumerate(features[:10]):  # Sample first 10 features
+                    geom = feature.get("geometry", {})
+                    geom_type = geom.get("type")
+                    if geom_type:
+                        geometry_types.add(geom_type)
+                        log.debug("🔍 Feature %d: geometry type = %s", i, geom_type)
+                        
+                        # Log first feature's coordinates for debugging
+                        if i == 0:
+                            coords = geom.get("coordinates")
+                            log.debug("🔍 First feature coordinates: %s", coords)
+            
+            # Handle single Feature
+            elif data.get("type") == "Feature":
+                geom = data.get("geometry", {})
+                geom_type = geom.get("type")
+                if geom_type:
+                    geometry_types.add(geom_type)
+                    log.debug("🔍 Single feature: geometry type = %s", geom_type)
+            
+            log.info("🔍 Detected geometry types in %s: %s", json_file_path.name, geometry_types)
+            
+            # Map GeoJSON types to ArcGIS types
+            type_mapping = {
+                "Point": "POINT",
+                "MultiPoint": "MULTIPOINT", 
+                "LineString": "POLYLINE",
+                "MultiLineString": "POLYLINE",
+                "Polygon": "POLYGON",
+                "MultiPolygon": "POLYGON"
+            }
+            
+            if len(geometry_types) == 1:
+                geojson_type = list(geometry_types)[0]
+                arcgis_type = type_mapping.get(geojson_type, "POLYGON")
+                log.info("🔍 Mapping %s → %s for %s", geojson_type, arcgis_type, json_file_path.name)
+                return arcgis_type
+            elif len(geometry_types) > 1:
+                log.warning("⚠️ Mixed geometry types found in %s: %s. Using POLYGON as default.", 
+                           json_file_path.name, geometry_types)
+                return "POLYGON"
+            else:
+                log.warning("⚠️ No geometry type detected in %s. Using POLYGON as default.", 
+                           json_file_path.name)
+                return "POLYGON"
+                
+        except Exception as e:
+            log.error("❌ Failed to detect geometry type for %s: %s", 
+                       json_file_path.name, e, exc_info=True)
+            return "POLYGON"
 
     def _process_single_shapefile(self, shp_file_path: Path, authority: str, used_names_set: Set[str]) -> None:
         """Process a single shapefile into the GDB with comprehensive error handling and validation."""

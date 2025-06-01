@@ -295,7 +295,7 @@ sources:
     enabled: true
     include:
       - "varldsarv_sverige_polygon" # Only attempt to load this valid layer
-      
+#TODO! Fixa RAA
 # --- SGI ---
   - authority: "SGI"
     name: "Inträffade skred, ras och övriga jordrörelser (skreddatabas)"

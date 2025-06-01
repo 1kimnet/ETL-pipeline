@@ -32,4 +32,12 @@ source_overrides:
 # SDE connection settings
 sde_connection_file: "data/connections/prod.sde"
 sde_schema: "GNG"  # Schema prefix for datasets
+sde_dataset_pattern: "Underlag_{authority}"  # Pattern for dataset names
 sde_load_strategy: "truncate_and_load"  # Options: "truncate_and_load", "replace", "append"
+
+# Handle potential duplicates in existing datasets
+sde_duplicate_handling: "warn_and_proceed"  # Options: "warn_and_proceed", "fail_on_duplicates", "ignore"
+
+# Authority to dataset mapping (overrides pattern for special cases)
+sde_authority_mapping:
+  LSTD: "GNG.Underlag_LstD"  # Special case: LSTD → LstD

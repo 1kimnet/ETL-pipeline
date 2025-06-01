@@ -303,12 +303,23 @@ class Pipeline:
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:
         """📝 Extract SDE dataset and feature class names from staging name.
         
-        Default logic: TRV_tv_viltstangsel → dataset="GNG.TRV", fc="tv_viltstangsel"
+        Logic: SKS_naturvarden_point → dataset="GNG.Underlag_SKS", fc="naturvarden_point"
         """
-        dataset_suffix, _, rest = fc_name.partition("_")
+        parts = fc_name.split("_", 1)
+        if len(parts) < 2:
+            dataset_suffix = "MISC"
+            fc_name_clean = fc_name.lower()
+        else:
+            dataset_suffix, fc_name_clean = parts
+            fc_name_clean = fc_name_clean.lower()
         
-        # Get schema prefix from config (default: GNG)
-        schema_prefix = self.global_cfg.get("sde_schema", "GNG")
-        dataset = f"{schema_prefix}.{dataset_suffix}"
+        # Use your existing Underlag pattern
+        schema = self.global_cfg.get("sde_schema", "GNG")
         
-        return dataset, rest.lower()
+        # Special case for LSTD → LstD
+        if dataset_suffix == "LSTD":
+            dataset = f"{schema}.Underlag_LstD"
+        else:
+            dataset = f"{schema}.Underlag_{dataset_suffix}"
+            
+        return dataset, fc_name_clean
