@@ -185,20 +185,19 @@ class Pipeline:
                 
             lg_sum.info("📋 Found %d total feature classes to load", len(all_feature_classes))
             
-            loaded_count = 0
-            error_count = 0
-            
             for fc_path, fc_name in all_feature_classes:
                 try:
                     self._load_fc_to_sde(fc_path, fc_name, sde_connection)
-                    loaded_count += 1
+                    self.summary.log_sde("done")  # Track success
                 except Exception as exc:
-                    error_count += 1
+                    self.summary.log_sde("error")  # Track error
+                    self.summary.log_error(fc_name, f"SDE load failed: {exc}")
                     lg_sum.error("❌ Failed to load %s to SDE: %s", fc_path, exc)
                     if not self.global_cfg.get("continue_on_failure", True):
                         raise
-                        
-            lg_sum.info("📊 SDE loading complete: %d loaded, %d errors", loaded_count, error_count)
+                
+            lg_sum.info("📊 SDE loading complete: %d loaded, %d errors", 
+                        self.summary.sde["done"], self.summary.sde["error"])
 
     def _load_fc_to_sde(self, source_fc_path: str, fc_name: str, sde_connection: str) -> None:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
