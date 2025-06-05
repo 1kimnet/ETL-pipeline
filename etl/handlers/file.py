@@ -44,67 +44,95 @@ class FileDownloadHandler:
         )
 
         if self.src.include and not is_single_direct_download_gpkg:
-            log.info("🔗 Multi-part download mode for '%s' (%d archives from base URL '%s')…",
-                     self.src.name, len(self.src.include), self.src.url)
-
-            for included_filename_stem in self._iter_included_file_stems():
-                file_ext_from_format = ".zip"  # Default for collections
-                if self.src.download_format:
-                    fmt = self.src.download_format.lower().lstrip('.')
-                    if fmt:
-                        file_ext_from_format = f".{fmt}"
-
-                actual_filename_for_download_part = included_filename_stem + file_ext_from_format
-                base_url = self.src.url.rstrip("/") + "/"
-                download_url_for_part = base_url + actual_filename_for_download_part
-
-                sanitized_included_stem = sanitize_for_filename(included_filename_stem)
-                self._download_and_stage_one(
-                    download_url=download_url_for_part,
-                    explicit_local_filename_stem=sanitized_included_stem,
-                    explicit_local_file_ext=file_ext_from_format,
-                    staging_subdir_name_override=sanitized_included_stem
-                )
+            self._download_multiple_files()
         elif self.src.url:
-            log.info("🔗 Single resource download mode for '%s' from URL: %s", self.src.name, self.src.url)
-
-            true_stem_from_web, true_ext_from_web = fetch_true_filename_parts(self.src.url)
-            consistent_local_stem = sanitize_for_filename(self.src.name)
-            final_extension = true_ext_from_web
-
-            if self.src.download_format:
-                expected_ext_from_format = f".{self.src.download_format.lower().lstrip('.')}"
-                if final_extension and expected_ext_from_format != final_extension:
-                    log.warning(
-                        "For source '%s', download_format ('%s') differs from determined true extension ('%s'). "
-                        "Using determined true extension: '%s'.",
-                        self.src.name, expected_ext_from_format, final_extension, final_extension
-                    )
-                elif not final_extension:
-                    log.info("Could not determine true extension for '%s', using download_format: '%s'.", 
-                            self.src.name, expected_ext_from_format)
-                    final_extension = expected_ext_from_format
-
-            if not final_extension:
-                # Try to infer from URL if all else fails
-                path_ext = Path(unquote(self.src.url)).suffix.lower()
-                if path_ext in [".zip", ".gpkg", ".geojson", ".json"]:
-                    final_extension = path_ext
-                    log.info("Could not determine true extension for '%s', inferred from URL path: '%s'.", 
-                            self.src.name, final_extension)
-                else:
-                    final_extension = ".data"  # Ultimate fallback
-                    log.warning("Could not determine any extension for '%s', defaulting to '%s'.", 
-                               self.src.name, final_extension)
-
-            self._download_and_stage_one(
-                download_url=self.src.url,
-                explicit_local_filename_stem=consistent_local_stem,
-                explicit_local_file_ext=final_extension,
-                staging_subdir_name_override=consistent_local_stem
-            )
+            self._download_single_resource()
         else:
             log.warning("🤷 Source '%s' (type: '%s') has no URL. Cannot fetch.", self.src.name, self.src.type)
+
+    def _download_multiple_files(self) -> None:
+        """Handle multi-part downloads defined by src.include."""
+        log.info(
+            "🔗 Multi-part download mode for '%s' (%d archives from base URL '%s')…",
+            self.src.name,
+            len(self.src.include),
+            self.src.url,
+        )
+
+        for included_filename_stem in self._iter_included_file_stems():
+            file_ext_from_format = ".zip"  # Default for collections
+            if self.src.download_format:
+                fmt = self.src.download_format.lower().lstrip(".")
+                if fmt:
+                    file_ext_from_format = f".{fmt}"
+
+            actual_filename_for_download_part = included_filename_stem + file_ext_from_format
+            base_url = self.src.url.rstrip("/") + "/"
+            download_url_for_part = base_url + actual_filename_for_download_part
+
+            sanitized_included_stem = sanitize_for_filename(included_filename_stem)
+            self._download_and_stage_one(
+                download_url=download_url_for_part,
+                explicit_local_filename_stem=sanitized_included_stem,
+                explicit_local_file_ext=file_ext_from_format,
+                staging_subdir_name_override=sanitized_included_stem,
+            )
+
+    def _download_single_resource(self) -> None:
+        """Handle downloading a single resource from src.url."""
+        log.info(
+            "🔗 Single resource download mode for '%s' from URL: %s",
+            self.src.name,
+            self.src.url,
+        )
+
+        true_stem_from_web, true_ext_from_web = fetch_true_filename_parts(self.src.url)
+        consistent_local_stem = sanitize_for_filename(self.src.name)
+        final_extension = true_ext_from_web
+
+        if self.src.download_format:
+            expected_ext_from_format = f".{self.src.download_format.lower().lstrip('.')}"
+            if final_extension and expected_ext_from_format != final_extension:
+                log.warning(
+                    "For source '%s', download_format ('%s') differs from determined true extension ('%s'). "
+                    "Using determined true extension: '%s'.",
+                    self.src.name,
+                    expected_ext_from_format,
+                    final_extension,
+                    final_extension,
+                )
+            elif not final_extension:
+                log.info(
+                    "Could not determine true extension for '%s', using download_format: '%s'.",
+                    self.src.name,
+                    expected_ext_from_format,
+                )
+                final_extension = expected_ext_from_format
+
+        if not final_extension:
+            # Try to infer from URL if all else fails
+            path_ext = Path(unquote(self.src.url)).suffix.lower()
+            if path_ext in [".zip", ".gpkg", ".geojson", ".json"]:
+                final_extension = path_ext
+                log.info(
+                    "Could not determine true extension for '%s', inferred from URL path: '%s'.",
+                    self.src.name,
+                    final_extension,
+                )
+            else:
+                final_extension = ".data"  # Ultimate fallback
+                log.warning(
+                    "Could not determine any extension for '%s', defaulting to '%s'.",
+                    self.src.name,
+                    final_extension,
+                )
+
+        self._download_and_stage_one(
+            download_url=self.src.url,
+            explicit_local_filename_stem=consistent_local_stem,
+            explicit_local_file_ext=final_extension,
+            staging_subdir_name_override=consistent_local_stem,
+        )
 
     def _iter_included_file_stems(self) -> Iterable[str]:
         """Yields stems from the source's include list."""
