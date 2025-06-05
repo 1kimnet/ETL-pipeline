@@ -10,8 +10,6 @@ from pathlib import Path
 from typing import Tuple, Optional, Final
 from urllib.parse import unquote
 from urllib.request import Request, urlopen
-from http.client import HTTPResponse # For type hinting urlopen response
-import ssl # For creating unverified context if needed, though generally not recommended
 
 # Regex to find filename in Content-Disposition header
 # Handles filename="fname.ext" and filename*=UTF-8''fname.ext (URL encoded)
@@ -98,7 +96,7 @@ def fetch_true_filename_parts(download_url: str, timeout: int = 10) -> Tuple[str
         else:
             logging.warning("    Could not derive filename from URL path for %s", final_url_after_redirects)
             # Fallback to a generic name if all else fails
-            return f"downloaded_file_from_url", ".unknown"
+            return "downloaded_file_from_url", ".unknown"
 
     if not true_filename_str: # Should be extremely rare if URL has a path component
          return "unknown_filename", ".tmp"
