@@ -107,7 +107,7 @@ def _create_new_gdb(gdb_path: Path) -> None:
     try:
         arcpy.management.CreateFileGDB(str(gdb_path.parent), gdb_path.name)
         log.info("✅ Successfully created new GDB: %s", gdb_path.resolve())
-    except arcpy.ExecuteError as gdb_creation_error:
+    except arcpy.ExecuteError:
         msg: str = arcpy.GetMessages(2)
         log.error("❌ arcpy.management.CreateFileGDB failed for '%s': %s", gdb_path.resolve(), msg, exc_info=True)
         raise RuntimeError(f"CreateFileGDB failed for '{gdb_path.resolve()}': {msg}") from None
@@ -117,18 +117,3 @@ def _create_new_gdb(gdb_path: Path) -> None:
         raise RuntimeError(f"Unexpected error during CreateFileGDB for '{gdb_path.resolve()}': {unexpected_gdb_error}") from unexpected_gdb_error
 
 
-def derive_authority_from_path(file_path: Path, staging_root: Path) -> str:
-    """🔍 Helper to derive authority from file path structure.
-    
-    Args:
-        file_path: Path to the file.
-        staging_root: Root staging directory.
-        
-    Returns:
-        Authority string derived from path structure.
-    """
-    try:
-        path_parts: tuple[str, ...] = file_path.relative_to(staging_root).parts
-        return path_parts[0] if len(path_parts) > 1 else "UNKNOWN_GLOB_AUTH"
-    except (IndexError, ValueError):
-        return "UNKNOWN_GLOB_AUTH_EXC"
