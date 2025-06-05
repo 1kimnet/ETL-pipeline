@@ -210,13 +210,11 @@ class RestApiDownloadHandler:
             )
             return None
 
-    @staticmethod
     def _append_features(
         accumulator: List[Dict[str, Any]], new_features: List[Dict[str, Any]]
-    ) -> int:
-        """Extend feature list and return count of new features."""
+    ) -> None:
+        """Extend feature list."""
         accumulator.extend(new_features)
-        return len(new_features)
 
     def fetch(self) -> None:
         """Main fetch method for REST API sources."""
