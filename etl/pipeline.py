@@ -146,58 +146,65 @@ class Pipeline:
             lg_sum.error("❌ Source GDB not found: %s", source_gdb)
             return
 
-        # Get SDE connection from config
-        sde_connection = self.global_cfg.get("sde_connection_file", "data/connections/prod.sde")
+        # Get SDE connection from config and validate
+        sde_connection = self.global_cfg.get(
+            "sde_connection_file",
+            "data/connections/prod.sde",
+        )
         sde_connection_path = Path(sde_connection)
-        
-        if not sde_connection_path.exists():
-            lg_sum.error("❌ SDE connection file not found: %s", sde_connection_path)
+
+        if not self._validate_sde_connection_file(sde_connection_path):
             return
 
         lg_sum.info("🚚 Loading to SDE from processed %s", source_gdb.name)
         
-        # Use EnvManager for clean environment handling
-        with arcpy.EnvManager(workspace=str(source_gdb), overwriteOutput=True):
-            # List all feature classes (from root and datasets)
-            all_feature_classes = []
-            
-            # Get standalone feature classes from root
-            standalone_fcs = arcpy.ListFeatureClasses()
-            if standalone_fcs:
-                lg_sum.info("📄 Found %d feature classes in root of GDB", len(standalone_fcs))
-                for fc in standalone_fcs:
-                    all_feature_classes.append((fc, fc))  # (path, name)
-            
-            # Get feature classes from datasets (if any exist)
-            feature_datasets = arcpy.ListDatasets(feature_type="Feature")
-            if feature_datasets:
-                lg_sum.info("📁 Found %d feature datasets", len(feature_datasets))
-                for dataset in feature_datasets:
-                    dataset_fcs = arcpy.ListFeatureClasses(feature_dataset=dataset)
-                    if dataset_fcs:
-                        for fc in dataset_fcs:
-                            fc_path = f"{dataset}\\{fc}"
-                            all_feature_classes.append((fc_path, fc))
-            
-            if not all_feature_classes:
-                lg_sum.warning("⚠️ No feature classes found in %s", source_gdb)
-                return
-                
-            lg_sum.info("📋 Found %d total feature classes to load", len(all_feature_classes))
-            
-            for fc_path, fc_name in all_feature_classes:
-                try:
-                    self._load_fc_to_sde(fc_path, fc_name, sde_connection)
-                    self.summary.log_sde("done")  # Track success
-                except Exception as exc:
-                    self.summary.log_sde("error")  # Track error
-                    self.summary.log_error(fc_name, f"SDE load failed: {exc}")
-                    lg_sum.error("❌ Failed to load %s to SDE: %s", fc_path, exc)
-                    if not self.global_cfg.get("continue_on_failure", True):
-                        raise
-                
-            lg_sum.info("📊 SDE loading complete: %d loaded, %d errors", 
-                        self.summary.sde["done"], self.summary.sde["error"])
+        all_feature_classes = self._discover_feature_classes(source_gdb)
+        if not all_feature_classes:
+            lg_sum.warning("⚠️ No feature classes found in %s", source_gdb)
+            return
+
+        lg_sum.info("📋 Found %d total feature classes to load", len(all_feature_classes))
+
+        for fc_path, fc_name in all_feature_classes:
+            try:
+                self._load_fc_to_sde(fc_path, fc_name, sde_connection)
+                self.summary.log_sde("done")
+            except Exception as exc:
+                self.summary.log_sde("error")
+                self.summary.log_error(fc_name, f"SDE load failed: {exc}")
+                lg_sum.error("❌ Failed to load %s to SDE: %s", fc_path, exc)
+                if not self.global_cfg.get("continue_on_failure", True):
+                    raise
+
+        lg_sum.info("📊 SDE loading complete: %d loaded, %d errors",
+                    self.summary.sde["done"], self.summary.sde["error"])
+
+    def _validate_sde_connection_file(self, path: Path) -> bool:
+        lg_sum = logging.getLogger("summary")
+        if not path.exists():
+            lg_sum.error("❌ SDE connection file not found: %s", path)
+            return False
+        return True
+
+    def _discover_feature_classes(self, gdb: Path) -> list[tuple[str, str]]:
+        lg_sum = logging.getLogger("summary")
+        with arcpy.EnvManager(workspace=str(gdb), overwriteOutput=True):
+            all_fcs: list[tuple[str, str]] = []
+            standalone = arcpy.ListFeatureClasses()
+            if standalone:
+                lg_sum.info("📄 Found %d feature classes in root of GDB", len(standalone))
+                for fc in standalone:
+                    all_fcs.append((fc, fc))
+            datasets = arcpy.ListDatasets(feature_type="Feature")
+            if datasets:
+                lg_sum.info("📁 Found %d feature datasets", len(datasets))
+                for ds in datasets:
+                    ds_fcs = arcpy.ListFeatureClasses(feature_dataset=ds)
+                    if ds_fcs:
+                        for fc in ds_fcs:
+                            all_fcs.append((f"{ds}\\{fc}", fc))
+        return all_fcs
+
 
     def _load_fc_to_sde(self, source_fc_path: str, fc_name: str, sde_connection: str) -> None:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
@@ -239,65 +246,73 @@ class Pipeline:
             lg_sum.info("🔍 Source FC info: type=%s, geom=%s, records=%d", 
                        desc.dataType, desc.shapeType, record_count)
                 
-            # Check if target FC exists
-            if arcpy.Exists(target_path):
-                if load_strategy == "truncate_and_load":
-                    # FC exists - truncate then append
-                    lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
-                    arcpy.management.TruncateTable(target_path)
-                    
-                    lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
-                    arcpy.management.Append(
-                        inputs=source_fc_path,
-                        target=target_path,
-                        schema_type="NO_TEST"
-                    )
-                    lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
-                    
-                elif load_strategy == "replace":
-                    # Delete and recreate FC
-                    lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
-                    arcpy.management.Delete(target_path)
-                    
-                    lg_sum.info("🆕 Creating replacement FC: %s\\%s", dataset, sde_fc_name)
-                    arcpy.conversion.FeatureClassToFeatureClass(
-                        in_features=source_fc_path,
-                        out_path=sde_dataset_path,
-                        out_name=sde_fc_name
-                    )
-                    lg_sum.info("🚚→  %s\\%s (replaced)", dataset, sde_fc_name)
-                    
-                elif load_strategy == "append":
-                    # Legacy behavior - append only (creates duplicates)
-                    lg_sum.warning("⚠️ Appending to existing FC (may create duplicates): %s\\%s", dataset, sde_fc_name)
-                    arcpy.management.Append(
-                        inputs=source_fc_path,
-                        target=target_path,
-                        schema_type="NO_TEST"
-                    )
-                    lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
-                    
-                else:
-                    lg_sum.error("❌ Unknown sde_load_strategy: %s", load_strategy)
-                    return
-                    
-            else:
-                # FC doesn't exist - copy to create new
-                lg_sum.info("🆕 Creating new FC: %s\\%s", dataset, sde_fc_name)
-                lg_sum.info("🔍 Using: in_features='%s', out_path='%s', out_name='%s'", 
-                           source_fc_path, sde_dataset_path, sde_fc_name)
-                           
-                arcpy.conversion.FeatureClassToFeatureClass(
-                    in_features=source_fc_path,
-                    out_path=sde_dataset_path,
-                    out_name=sde_fc_name
-                )
-                lg_sum.info("🚚→  %s\\%s (created)", dataset, sde_fc_name)
+            self._load_single_feature_class(
+                source_fc_path,
+                target_path,
+                sde_dataset_path,
+                dataset,
+                sde_fc_name,
+                load_strategy,
+            )
+
                 
         except arcpy.ExecuteError:
             lg_sum.error("❌ SDE operation failed for %s: %s", source_fc_path, arcpy.GetMessages(2))
             lg_sum.error("❌ Check SDE permissions and ensure dataset '%s' exists", dataset)
             raise
+
+    def _load_single_feature_class(
+        self,
+        source_fc_path: str,
+        target_path: str,
+        sde_dataset_path: str,
+        dataset: str,
+        sde_fc_name: str,
+        load_strategy: str,
+    ) -> None:
+        lg_sum = logging.getLogger("summary")
+
+        if arcpy.Exists(target_path):
+            if load_strategy == "truncate_and_load":
+                lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
+                arcpy.management.TruncateTable(target_path)
+                lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
+                arcpy.management.Append(inputs=source_fc_path, target=target_path, schema_type="NO_TEST")
+                lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
+            elif load_strategy == "replace":
+                lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
+                arcpy.management.Delete(target_path)
+                lg_sum.info("🆕 Creating replacement FC: %s\\%s", dataset, sde_fc_name)
+                arcpy.conversion.FeatureClassToFeatureClass(
+                    in_features=source_fc_path,
+                    out_path=sde_dataset_path,
+                    out_name=sde_fc_name,
+                )
+                lg_sum.info("🚚→  %s\\%s (replaced)", dataset, sde_fc_name)
+            elif load_strategy == "append":
+                lg_sum.warning(
+                    "⚠️ Appending to existing FC (may create duplicates): %s\\%s",
+                    dataset,
+                    sde_fc_name,
+                )
+                arcpy.management.Append(inputs=source_fc_path, target=target_path, schema_type="NO_TEST")
+                lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
+            else:
+                lg_sum.error("❌ Unknown sde_load_strategy: %s", load_strategy)
+        else:
+            lg_sum.info("🆕 Creating new FC: %s\\%s", dataset, sde_fc_name)
+            lg_sum.info(
+                "🔍 Using: in_features='%s', out_path='%s', out_name='%s'",
+                source_fc_path,
+                sde_dataset_path,
+                sde_fc_name,
+            )
+            arcpy.conversion.FeatureClassToFeatureClass(
+                in_features=source_fc_path,
+                out_path=sde_dataset_path,
+                out_name=sde_fc_name,
+            )
+            lg_sum.info("🚚→  %s\\%s (created)", dataset, sde_fc_name)
 
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:
         """📝 Extract SDE dataset and feature class names from staging name.
