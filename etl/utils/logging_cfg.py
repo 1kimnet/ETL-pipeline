@@ -56,27 +56,17 @@ def configure_logging(level_on_console: str = "VERBOSE") -> None:
                 "formatter": "debug",
             },
         },
-        "loggers": {                       # extra named loggers go here
+        "loggers": {
             "summary": {
                 "level": "INFO",
                 "handlers": ["console", "summary_file"],
                 "propagate": False,
             },
-       # root: catch-all for everything, but ONLY into debug_file
-       "root": {
-           "level": "DEBUG",
-           "handlers": ["debug_file"],
-       },
-
-       # human-readable milestones & final block
-       "loggers": {
-           "summary": {
-               "level": "INFO",
-               "handlers": ["console", "summary_file"],
-               "propagate": False,             # don’t bubble to root
-            },
         },
-    }
+        "root": {
+            "level": "DEBUG",
+            "handlers": ["debug_file"],
+        },
     }
     logging.config.dictConfig(cfg)
     logging.getLogger("summary").info("🟢 Logging initialised → %s", LOG_DIR)
