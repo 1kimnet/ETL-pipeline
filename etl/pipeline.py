@@ -205,7 +205,7 @@ class Pipeline:
                     dataset_fcs = arcpy.ListFeatureClasses(feature_dataset=dataset)
                     if dataset_fcs:
                         for fc in dataset_fcs:
-                            fc_path = f"{dataset}\\{fc}"
+                            fc_path = str(Path(dataset) / fc)  # Or os.path.join(dataset, fc)
                             all_feature_classes.append((fc_path, fc))
         return all_feature_classes
 
