@@ -115,12 +115,14 @@ def process_geojson_file(
         log.info("📥 Converting JSON/GeoJSON ('%s') → GDB:/'%s' (Authority: '%s', Geom: %s)",
                  json_file_path.name, tgt_name, authority, geometry_type)
         
-        # Use geometry_type parameter to ensure correct FC creation
-        arcpy.conversion.JSONToFeatures(
-            in_json_file=input_json_full_path, 
-            out_features=out_fc_full_path,
-            geometry_type=geometry_type.upper()
-        )
+        # Use EnvManager to ensure overwrite is enabled
+        with arcpy.EnvManager(overwriteOutput=True):
+            # Use geometry_type parameter to ensure correct FC creation
+            arcpy.conversion.JSONToFeatures(
+                in_json_file=input_json_full_path, 
+                out_features=out_fc_full_path,
+                geometry_type=geometry_type.upper()
+            )
         
         # Verify the output was created
         if arcpy.Exists(out_fc_full_path):

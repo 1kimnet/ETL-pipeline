@@ -69,11 +69,12 @@ def _attempt_copy_with_name(source_name: str, target_name: str, gdb_path: Path) 
             return False
         
         log.info("📥 Copying GPKG FC ('%s') → GDB:/'%s'", source_name, target_name)
-        arcpy.conversion.FeatureClassToFeatureClass(
-            in_features=source_name,
-            out_path=str(gdb_path),
-            out_name=target_name
-        )
+        with arcpy.EnvManager(overwriteOutput=True):
+            arcpy.conversion.FeatureClassToFeatureClass(
+                in_features=source_name,
+                out_path=str(gdb_path),
+                out_name=target_name
+            )
         return True
         
     except arcpy.ExecuteError as arc_error:
@@ -150,6 +151,30 @@ def process_gpkg_contents(
         log.info("Found %d feature classes in %s: %s",
                  len(feature_classes_in_gpkg), gpkg_file_path.name, feature_classes_in_gpkg)
         
+        # Normalize include filter for comparison BEFORE validation
+        normalized_include_filter: Optional[Set[str]] = None
+        if include_filter:
+            normalized_include_filter = {_MAIN_RE.sub("", item).lower() for item in include_filter if item}
+            log.info("Normalized include filter for %s: %s", gpkg_file_path.name, normalized_include_filter)
+            
+            # Pre-filter feature classes based on include filter
+            if normalized_include_filter:
+                filtered_feature_classes = []
+                for fc_name in feature_classes_in_gpkg:
+                    stem_for_comparison = _MAIN_RE.sub("", fc_name).lower()
+                    if stem_for_comparison in normalized_include_filter:
+                        filtered_feature_classes.append(fc_name)
+                        log.info("✅ Including GPKG FC '%s' (matches filter)", fc_name)
+                    else:
+                        log.info("⏭️ Excluding GPKG FC '%s' (not in include filter)", fc_name)
+                
+                feature_classes_in_gpkg = filtered_feature_classes
+                log.info("📦 After applying include filter: %d feature classes remain", len(feature_classes_in_gpkg))
+        
+        if not feature_classes_in_gpkg:
+            log.info("ℹ️ No feature classes match the include filter in GeoPackage: %s", gpkg_file_path.name)
+            return
+        
         # Validate that feature classes actually exist and can be accessed
         valid_feature_classes: List[str] = []
         for fc_name in feature_classes_in_gpkg:
@@ -165,12 +190,6 @@ def process_gpkg_contents(
             
         log.info("📦 Processing %d valid feature classes from %s", 
                  len(valid_feature_classes), gpkg_file_path.name)
-        
-        # Normalize include filter for comparison
-        normalized_include_filter: Optional[Set[str]] = None
-        if include_filter:
-            normalized_include_filter = {_MAIN_RE.sub("", item).lower() for item in include_filter if item}
-            log.info("Normalized include filter for %s: %s", gpkg_file_path.name, normalized_include_filter)
         
         for fc_name_listed_by_arcpy in valid_feature_classes:
             process_gpkg_feature_class(

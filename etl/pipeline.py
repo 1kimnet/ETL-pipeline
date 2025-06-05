@@ -74,30 +74,48 @@ class Pipeline:
                 self.summary.log_error(src.name, str(exc))
                 lg_sum.error("❌ Failed        : %s  (%s)", src.name, exc)
                 if not self.global_cfg.get("continue_on_failure", True):
-                    raise
-
-        # ---------- 2. STAGE → staging.gdb --------------------------------
+                    raise        # ---------- 2. STAGE → staging.gdb --------------------------------
         lg_sum.info("📦 Staging complete → building FileGDB …")
+        
+        # Reset staging GDB to avoid conflicts with existing feature classes
+        try:
+            from .utils.gdb_utils import reset_gdb
+            if paths.GDB.exists():
+                lg_sum.info("🗑️ Resetting existing staging.gdb to avoid conflicts")
+                reset_gdb(paths.GDB)
+            lg_sum.info("✅ Staging GDB reset complete")
+        except Exception as reset_exc:
+            lg_sum.warning("⚠️ Failed to reset staging GDB: %s", reset_exc)
+            if not self.global_cfg.get("continue_on_failure", True):
+                raise
+        
+        staging_success = True
         try:
             loader = ArcPyFileGDBLoader(
                 summary=self.summary,
                 gdb_path=paths.GDB,
                 sources_yaml_path=self.sources_yaml_path,
             )
-            loader.load_from_staging(paths.STAGING)
+            loader.run()
             lg_sum.info("✅ Staging.gdb built successfully")
         except Exception as exc:
+            staging_success = False
             self.summary.log_staging("error")
             self.summary.log_error("GDB loader", str(exc))
             lg_sum.error("❌ GDB load failed (%s)", exc, exc_info=True)
             if not self.global_cfg.get("continue_on_failure", True):
                 raise
+            else:
+                lg_sum.warning("⚠️ Continuing despite staging failures due to continue_on_failure=True")
 
         # ---------- 3. GEOPROCESS staging.gdb IN-PLACE -------------------
-        self._apply_geoprocessing_inplace()
+        if staging_success or self.global_cfg.get("continue_on_failure", True):
+            self._apply_geoprocessing_inplace()
 
-        # ---------- 4. LOAD TO SDE from staging.gdb -----------------------
-        self._load_to_sde(paths.GDB)
+            # ---------- 4. LOAD TO SDE from staging.gdb -----------------------
+            self._load_to_sde(paths.GDB)
+        else:
+            lg_sum.warning("⚠️ Skipping geoprocessing and SDE loading due to staging failures")
 
         lg_sum.info("🏁 Pipeline finished – data live in PROD SDE")
         self.summary.dump()
@@ -194,7 +212,9 @@ class Pipeline:
             if standalone:
                 lg_sum.info("📄 Found %d feature classes in root of GDB", len(standalone))
                 for fc in standalone:
-                    all_fcs.append((fc, fc))
+                    # Use full path for source, just name for target
+                    fc_full_path = str(gdb / fc)
+                    all_fcs.append((fc_full_path, fc))
             datasets = arcpy.ListDatasets(feature_type="Feature")
             if datasets:
                 lg_sum.info("📁 Found %d feature datasets", len(datasets))
@@ -202,21 +222,23 @@ class Pipeline:
                     ds_fcs = arcpy.ListFeatureClasses(feature_dataset=ds)
                     if ds_fcs:
                         for fc in ds_fcs:
-                            all_fcs.append((f"{ds}\\{fc}", fc))
+                            # Use full path for source, just name for target
+                            fc_full_path = str(gdb / ds / fc)
+                            all_fcs.append((fc_full_path, fc))
         return all_fcs
 
 
     def _load_fc_to_sde(self, source_fc_path: str, fc_name: str, sde_connection: str) -> None:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
         lg_sum = logging.getLogger("summary")
-        
-        # Apply naming logic: RAA_byggnader_sverige_point → GNG.RAA\byggnader_sverige_point
+          # Apply naming logic: RAA_byggnader_sverige_point → GNG.RAA\byggnader_sverige_point
         dataset, sde_fc_name = self._get_sde_names(fc_name)
         sde_dataset_path = f"{sde_connection}\\{dataset}"
         target_path = f"{sde_dataset_path}\\{sde_fc_name}"
         
         lg_sum.info("🔍 SDE mapping: '%s' → dataset='%s', fc='%s'", fc_name, dataset, sde_fc_name)
         lg_sum.info("🔍 Target paths: dataset='%s', fc='%s'", sde_dataset_path, target_path)
+        lg_sum.info("🔍 DEBUG: source_fc_path='%s'", source_fc_path)
         
         # Get load strategy from config (default: truncate_and_load)
         load_strategy = self.global_cfg.get("sde_load_strategy", "truncate_and_load")
@@ -274,11 +296,27 @@ class Pipeline:
 
         if arcpy.Exists(target_path):
             if load_strategy == "truncate_and_load":
-                lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
-                arcpy.management.TruncateTable(target_path)
-                lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
-                arcpy.management.Append(inputs=source_fc_path, target=target_path, schema_type="NO_TEST")
-                lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
+                try:
+                    lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
+                    arcpy.management.TruncateTable(target_path)
+                    lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
+                    arcpy.management.Append(inputs=source_fc_path, target=target_path, schema_type="NO_TEST")
+                    lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
+                except arcpy.ExecuteError as exc:
+                    # If truncate_and_load fails (e.g., geometry type mismatch), try replace strategy
+                    if "shape type" in str(exc).lower() or "geometry" in str(exc).lower():
+                        lg_sum.warning("⚠️ Geometry type mismatch, switching to replace strategy: %s\\%s", dataset, sde_fc_name)
+                        lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
+                        arcpy.management.Delete(target_path)
+                        lg_sum.info("🆕 Creating replacement FC: %s\\%s", dataset, sde_fc_name)
+                        arcpy.conversion.FeatureClassToFeatureClass(
+                            in_features=source_fc_path,
+                            out_path=sde_dataset_path,
+                            out_name=sde_fc_name,
+                        )
+                        lg_sum.info("🚚→  %s\\%s (replaced due to geometry mismatch)", dataset, sde_fc_name)
+                    else:
+                        raise
             elif load_strategy == "replace":
                 lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
                 arcpy.management.Delete(target_path)
@@ -326,6 +364,13 @@ class Pipeline:
         else:
             dataset_suffix, fc_name_clean = parts
             fc_name_clean = fc_name_clean.lower()
+        
+        # SDE has stricter name length limits (20-22 chars) - truncate if needed
+        sde_name_limit = self.global_cfg.get("sde_name_limit", 22)
+        if len(fc_name_clean) > sde_name_limit:
+            fc_name_clean = fc_name_clean[:sde_name_limit]
+            lg_sum = logging.getLogger("summary")
+            lg_sum.warning("⚠️ SDE FC name truncated to %d chars: %s", sde_name_limit, fc_name_clean)
         
         # Use your existing Underlag pattern
         schema = self.global_cfg.get("sde_schema", "GNG")

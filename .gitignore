@@ -209,3 +209,6 @@ scripts/truncate_authority_tables.py
 debug_gpkg.py
 test_gpkg_fix.py
 GPKG_FIX_SUMMARY.md
+ETL_FIXES_SUMMARY.md
+OVERWRITE_FIXES_SUMMARY.md
+validate_fixes.py

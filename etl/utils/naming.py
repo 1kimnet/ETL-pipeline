@@ -9,7 +9,7 @@ from typing import Final
 from .sanitize import slugify  # central helper keeps hyphens for readability
 
 _ILLEGAL_ARCGIS: Final = re.compile(r"[^A-Za-z0-9_]")   # stricter pattern
-_ARCGIS_MAX_LEN: Final = 64                             # FGDB limit
+_ARCGIS_MAX_LEN: Final = 31                             # FGDB feature class limit
 
 # ---------------------------------------------------------------------------
 # Public helpers
@@ -21,7 +21,7 @@ def sanitize_for_filename(name: str) -> str:
 
 
 def sanitize_for_arcgis_name(name: str) -> str:
-    """Return an FGDB-safe identifier (letters, digits, underscores, ≤64 chars)."""
+    """Return an FGDB-safe identifier (letters, digits, underscores, ≤31 chars)."""
     txt = slugify(name).replace("-", "_")       # 1) drop hyphens
     txt = _ILLEGAL_ARCGIS.sub("_", txt)         # 2) strip anything else
     txt = re.sub(r"__+", "_", txt).strip("_")   # 3) collapse repeats
@@ -31,7 +31,7 @@ def sanitize_for_arcgis_name(name: str) -> str:
 
 def generate_fc_name(authority: str, source: str) -> str:
     """
-    Combine authority + source → FGDB-safe name, ≤64 chars.
+    Combine authority + source → FGDB-safe name, ≤31 chars.
     """
     base = f"{authority}_{sanitize_for_arcgis_name(source)}"
     return base[:_ARCGIS_MAX_LEN].rstrip("_")

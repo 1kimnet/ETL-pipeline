@@ -13,7 +13,7 @@ import arcpy
 log: Final = logging.getLogger(__name__)
 
 
-def ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 64) -> str:
+def ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 31) -> str:
     """🔧 Ensure the name is unique within the GDB.
     
     Args:

@@ -200,11 +200,11 @@ def process_shapefile(
                 "❌ No valid alternative shapefiles found in directory: %s",
                 shp_file_path.parent,
             )
-            return
-
+            return    # Initialize variables before try block to ensure they're available in finally
+    working_path: Path = shp_file_path
+    temp_dir: Optional[TemporaryDirectory] = None
+    
     try:
-        working_path: Path = shp_file_path
-        temp_dir: Optional[TemporaryDirectory] = None
         if not _is_arcgis_compatible_name(shp_file_path.stem):
             log.info(
                 "⚠️ Shapefile name '%s' incompatible with ArcGIS. Using temporary copy.",
@@ -222,7 +222,7 @@ def process_shapefile(
         base_name: str = generate_fc_name(authority, shp_file_path.stem)
         tgt_name = ensure_unique_name(base_name, used_names_set)
         out_fc_full_path = str(gdb_path / tgt_name)
-
+        
         log.info(
             "📥 Copying SHP ('%s') → GDB:/'%s' (Authority: '%s')",
             working_path.name,
@@ -230,10 +230,11 @@ def process_shapefile(
             authority,
         )
 
-        arcpy.management.CopyFeatures(
-            in_features=input_shp_name,  # Use filename only
-            out_feature_class=out_fc_full_path,
-        )
+        with arcpy.EnvManager(overwriteOutput=True):
+            arcpy.management.CopyFeatures(
+                in_features=input_shp_name,  # Use filename only
+                out_feature_class=out_fc_full_path,
+            )
         log.info(
             "✅ SUCCESS: Copied shapefile '%s' to '%s'",
             working_path.name,

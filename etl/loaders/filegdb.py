@@ -105,11 +105,19 @@ class ArcPyFileGDBLoader:
         source_staging_dir = staging_root / source.authority / sanitize_for_filename(source.name)
         normalized_data_type = self._normalize_staged_data_type(source.staged_data_type)
         
+        log.info("🔍 Processing source '%s': staged_data_type='%s', normalized='%s'", 
+                 source.name, source.staged_data_type, normalized_data_type)
+        
         if normalized_data_type == "gpkg":
+            # ALWAYS use GPKG loader when configured as GPKG, regardless of other files present
+            log.info("📦 Source '%s' configured for GPKG - using GPKG loader exclusively", source.name)
             self._handle_gpkg_source(source, source_staging_dir, used_names_set)
         elif normalized_data_type in ("geojson", "json"):
             self._handle_geojson_source(source, source_staging_dir, used_names_set)
-        elif normalized_data_type == "shapefile_collection" or not normalized_data_type:
+        elif normalized_data_type == "shapefile_collection":
+            self._handle_shapefile_source(source, source_staging_dir, staging_root, used_names_set)
+        elif not normalized_data_type:
+            # When no staged_data_type is specified, fall back to shapefile processing
             self._handle_shapefile_source(source, source_staging_dir, staging_root, used_names_set)
         else:
             log.warning("🤷 Unknown staged_data_type '%s' for source '%s'. Skipping.",
@@ -186,6 +194,7 @@ class ArcPyFileGDBLoader:
         used_names_set: Set[str]
     ) -> None:
         """📐 Handle shapefile collection source loading."""
+        # Process shapefiles based on configuration
         if source.include and source.type == "file":
             self._process_multi_part_shapefile_collection(source, staging_root, used_names_set)
         else:
