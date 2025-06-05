@@ -107,7 +107,7 @@ def _create_new_gdb(gdb_path: Path) -> None:
     try:
         arcpy.management.CreateFileGDB(str(gdb_path.parent), gdb_path.name)
         log.info("✅ Successfully created new GDB: %s", gdb_path.resolve())
-    except arcpy.ExecuteError as gdb_creation_error:
+    except arcpy.ExecuteError:
         msg: str = arcpy.GetMessages(2)
         log.error("❌ arcpy.management.CreateFileGDB failed for '%s': %s", gdb_path.resolve(), msg, exc_info=True)
         raise RuntimeError(f"CreateFileGDB failed for '{gdb_path.resolve()}': {msg}") from None
