@@ -205,3 +205,4 @@ quick_raa_test.py
 quick_verify.py
 raa_issue_summary.md
 test_raa_fix.py
+scripts/truncate_authority_tables.py
