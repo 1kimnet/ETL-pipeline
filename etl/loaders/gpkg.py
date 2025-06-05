@@ -61,12 +61,29 @@ def load_gpkg_contents(
         log.info("📦 Found %d feature classes in %s: %s",
                  len(feature_classes_in_gpkg), gpkg_file_path.name, feature_classes_in_gpkg)
         
+        # Filter out feature classes that don't actually exist
+        valid_feature_classes: List[str] = []
+        for fc_name in feature_classes_in_gpkg:
+            if _validate_fc_exists(fc_name):
+                valid_feature_classes.append(fc_name)
+                log.debug("✅ Validated FC exists: %s", fc_name)
+            else:
+                log.warning("⚠️ Skipping non-existent FC from listing: %s", fc_name)
+        
+        if not valid_feature_classes:
+            log.warning("⚠️ No valid feature classes found in GeoPackage: %s", gpkg_file_path.name)
+            return
+        
+        log.info("📦 Processing %d valid feature classes from %s",
+                 len(valid_feature_classes), gpkg_file_path.name)
+        
         normalized_include_filter: Optional[Set[str]] = None
         if include_filter:
             normalized_include_filter = {_MAIN_RE.sub("", item).lower() for item in include_filter if item}
             log.info("📦 Normalized include filter for %s: %s", gpkg_file_path.name, normalized_include_filter)
         
-        for fc_name_listed_by_arcpy in feature_classes_in_gpkg:
+        
+        for fc_name_listed_by_arcpy in valid_feature_classes:
             _process_feature_class(
                 fc_name_listed_by_arcpy, 
                 authority, 
@@ -118,9 +135,15 @@ def _process_feature_class(
 
 
 def _copy_feature_class(input_fc_name: str, target_name: str, gdb_path: Path, summary: Summary) -> None:
-    """📦 Copy a single feature class from GPKG to GDB with retry logic."""
+    """📦 Copy a single feature class from GPKG to GDB with robust retry logic."""
     lg_sum = logging.getLogger("summary")
     copied_successfully: bool = False
+    
+    # First, validate that the feature class actually exists
+    if not _validate_fc_exists(input_fc_name):
+        log.warning("⚠️ Feature class '%s' does not exist - skipping", input_fc_name)
+        summary.log_staging("skipped")
+        return
     
     log.info("📦 Attempt 1: GPKG FC copy using input '%s' (listed name) → STAGING_GDB:/'%s'",
              input_fc_name, target_name)
@@ -141,8 +164,8 @@ def _copy_feature_class(input_fc_name: str, target_name: str, gdb_path: Path, su
         log.warning("⚠️ Attempt 1 FAILED for input '%s': %s. ArcPy Messages: %s",
                    input_fc_name, attempt1_error, arcpy_messages_e1)
         
-        if "000732" in arcpy_messages_e1 and _MAIN_RE.match(input_fc_name):
-            copied_successfully = _retry_with_stripped_name(input_fc_name, target_name, gdb_path, summary)
+        if "000732" in arcpy_messages_e1:
+            copied_successfully = _retry_with_alternatives(input_fc_name, target_name, gdb_path, summary)
         
         if not copied_successfully:
             summary.log_staging("error")
@@ -157,33 +180,109 @@ def _copy_feature_class(input_fc_name: str, target_name: str, gdb_path: Path, su
         log.error("❗ Ultimately FAILED to copy GPKG FC '%s' to staging GDB.", input_fc_name)
 
 
-def _retry_with_stripped_name(input_fc_name: str, target_name: str, gdb_path: Path, summary: Summary) -> bool:
-    """📦 Retry GPKG feature class copy with stripped name."""
+def _validate_fc_exists(fc_name: str) -> bool:
+    """🔍 Validate that a feature class actually exists in the current workspace."""
+    try:
+        exists = arcpy.Exists(fc_name)
+        if not exists:
+            # Try alternative checks for GPKG
+            try:
+                desc = arcpy.Describe(fc_name)
+                exists = desc is not None
+                log.debug("🔍 arcpy.Describe successful for '%s'", fc_name)
+            except Exception:
+                # Try with stripped name if it has main. prefix
+                if _MAIN_RE.match(fc_name):
+                    stripped_name = _MAIN_RE.sub("", fc_name)
+                    try:
+                        exists = arcpy.Exists(stripped_name)
+                        if exists:
+                            log.debug("🔍 Found FC with stripped name: '%s' → '%s'", fc_name, stripped_name)
+                    except Exception:
+                        pass
+        
+        log.debug("🔍 FC validation for '%s': %s", fc_name, "EXISTS" if exists else "NOT_FOUND")
+        return exists
+    except Exception as validation_error:
+        log.debug("🔍 Feature class validation failed for '%s': %s", fc_name, validation_error)
+        return False
+
+
+def _retry_with_alternatives(input_fc_name: str, target_name: str, gdb_path: Path, summary: Summary) -> bool:
+    """🔄 Try multiple alternative approaches to access GPKG feature class."""
     lg_sum = logging.getLogger("summary")
-    input_fc_name_attempt2: str = _MAIN_RE.sub("", input_fc_name)
-    if input_fc_name_attempt2 != input_fc_name:
-        log.info("� Attempt 2: GPKG FC copy using input '%s' (stripped name) → STAGING_GDB:/'%s'",
-                 input_fc_name_attempt2, target_name)
-        try:
-            arcpy.conversion.FeatureClassToFeatureClass(
-                in_features=input_fc_name_attempt2, 
-                out_path=str(gdb_path), 
-                out_name=target_name
-            )
-            log.info("✅ Attempt 2 SUCCESS: Copied GPKG FC '%s' (listed as '%s') to '%s'",
-                     input_fc_name_attempt2, input_fc_name, target_name)
-            lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
-            summary.log_staging("done")
-            return True
-        except arcpy.ExecuteError as attempt2_error:
-            arcpy_messages_e2: str = arcpy.GetMessages(2)
-            log.error("❌ Attempt 2 FAILED for input '%s': %s. ArcPy Messages: %s",
-                      input_fc_name_attempt2, attempt2_error, arcpy_messages_e2, exc_info=True)
-            summary.log_staging("error")
-            summary.log_error(input_fc_name_attempt2, f"GPKG FC retry failed: {attempt2_error}")
-        except Exception as attempt2_generic_error:
-            log.error("❌ Unexpected error on Attempt 2 for input '%s': %s",
-                      input_fc_name_attempt2, attempt2_generic_error, exc_info=True)
-            summary.log_staging("error")
-            summary.log_error(input_fc_name_attempt2, f"GPKG FC retry unexpected error: {attempt2_generic_error}")
+    
+    # Strategy 1: Try with stripped name (remove 'main.' prefix)
+    if _MAIN_RE.match(input_fc_name):
+        stripped_name = _MAIN_RE.sub("", input_fc_name)
+        log.info("🔄 Attempt 2: Trying stripped name '%s'", stripped_name)
+        
+        if _validate_fc_exists(stripped_name):
+            try:
+                arcpy.conversion.FeatureClassToFeatureClass(
+                    in_features=stripped_name, 
+                    out_path=str(gdb_path), 
+                    out_name=target_name
+                )
+                log.info("✅ Attempt 2 SUCCESS: Copied GPKG FC '%s' (stripped from '%s') to '%s'",
+                         stripped_name, input_fc_name, target_name)
+                lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
+                summary.log_staging("done")
+                return True
+            except arcpy.ExecuteError as attempt2_error:
+                log.debug("🔄 Attempt 2 failed: %s", attempt2_error)
+    
+    # Strategy 2: Try with full workspace path
+    current_workspace = arcpy.env.workspace  # type: ignore[attr-defined]
+    if current_workspace:
+        full_path_name = f"{current_workspace}\\{input_fc_name}"
+        log.info("🔄 Attempt 3: Trying full path '%s'", full_path_name)
+        
+        if _validate_fc_exists(full_path_name):
+            try:
+                arcpy.conversion.FeatureClassToFeatureClass(
+                    in_features=full_path_name, 
+                    out_path=str(gdb_path), 
+                    out_name=target_name
+                )
+                log.info("✅ Attempt 3 SUCCESS: Copied GPKG FC '%s' to '%s'", full_path_name, target_name)
+                lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
+                summary.log_staging("done")
+                return True
+            except arcpy.ExecuteError as attempt3_error:
+                log.debug("🔄 Attempt 3 failed: %s", attempt3_error)
+    
+    # Strategy 3: Try to find similar named feature classes
+    try:
+        all_fcs = arcpy.ListFeatureClasses()
+        base_name = _MAIN_RE.sub("", input_fc_name).lower()
+        
+        for fc in all_fcs:
+            fc_lower = fc.lower()
+            if base_name in fc_lower and fc != input_fc_name:
+                log.info("🔄 Attempt 4: Trying similar FC '%s' (contains '%s')", fc, base_name)
+                
+                if _validate_fc_exists(fc):
+                    try:
+                        arcpy.conversion.FeatureClassToFeatureClass(
+                            in_features=fc, 
+                            out_path=str(gdb_path), 
+                            out_name=target_name
+                        )
+                        log.info("✅ Attempt 4 SUCCESS: Copied similar GPKG FC '%s' to '%s'", fc, target_name)
+                        lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
+                        summary.log_staging("done")
+                        return True
+                    except arcpy.ExecuteError as attempt4_error:
+                        log.debug("🔄 Attempt 4 failed for '%s': %s", fc, attempt4_error)
+                        continue
+    except Exception as similarity_error:
+        log.debug("🔄 Similarity search failed: %s", similarity_error)
+    
+    log.error("❌ All retry attempts failed for GPKG FC '%s'", input_fc_name)
+    summary.log_staging("error")
+    summary.log_error(input_fc_name, "All retry strategies failed")
     return False
+
+
+

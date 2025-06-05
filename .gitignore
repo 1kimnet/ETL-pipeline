@@ -206,3 +206,6 @@ quick_verify.py
 raa_issue_summary.md
 test_raa_fix.py
 scripts/truncate_authority_tables.py
+debug_gpkg.py
+test_gpkg_fix.py
+GPKG_FIX_SUMMARY.md
