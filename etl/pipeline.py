@@ -356,6 +356,7 @@ class Pipeline:
         """📝 Extract SDE dataset and feature class names from staging name.
         
         Logic: SKS_naturvarden_point → dataset="GNG.Underlag_SKS", fc="naturvarden_point"
+        Focuses on sanitization, not truncation (max 128 chars per Esri docs).
         """
         parts = fc_name.split("_", 1)
         if len(parts) < 2:
@@ -365,12 +366,8 @@ class Pipeline:
             dataset_suffix, fc_name_clean = parts
             fc_name_clean = fc_name_clean.lower()
         
-        # SDE has stricter name length limits (20-22 chars) - truncate if needed
-        sde_name_limit = self.global_cfg.get("sde_name_limit", 22)
-        if len(fc_name_clean) > sde_name_limit:
-            fc_name_clean = fc_name_clean[:sde_name_limit]
-            lg_sum = logging.getLogger("summary")
-            lg_sum.warning("⚠️ SDE FC name truncated to %d chars: %s", sde_name_limit, fc_name_clean)
+        # Sanitize name for SDE compatibility (remove/replace invalid chars)
+        fc_name_clean = self._sanitize_sde_name(fc_name_clean)
         
         # Use your existing Underlag pattern
         schema = self.global_cfg.get("sde_schema", "GNG")
@@ -382,3 +379,38 @@ class Pipeline:
             dataset = f"{schema}.Underlag_{dataset_suffix}"
             
         return dataset, fc_name_clean
+
+    def _sanitize_sde_name(self, name: str) -> str:
+        """🧹 Sanitize feature class name for SDE compatibility.
+        
+        SDE naming rules:
+        - Must start with letter or underscore
+        - Can contain letters, numbers, underscores
+        - No spaces, hyphens, or special characters
+        - Max 128 characters (plenty of room)
+        """
+        import re
+        
+        original_name = name
+        
+        # Replace problematic characters
+        # Convert common problematic chars to underscores
+        name = re.sub(r'[-\s\.]+', '_', name)  # hyphens, spaces, dots → underscore
+        name = re.sub(r'[åäö]', lambda m: {'å': 'a', 'ä': 'a', 'ö': 'o'}[m.group()], name)  # Swedish chars
+        name = re.sub(r'[^\w]', '_', name)  # Any remaining non-word chars → underscore
+        name = re.sub(r'_{2,}', '_', name)  # Multiple underscores → single underscore
+        name = name.strip('_')  # Remove leading/trailing underscores
+        
+        # Ensure it starts with letter or underscore (not number)
+        if name and name[0].isdigit():
+            name = f"fc_{name}"
+        
+        # Ensure not empty
+        if not name:
+            name = "unnamed_fc"
+            
+        lg_sum = logging.getLogger("summary")
+        if name != original_name:  # If any changes were made
+            lg_sum.info("🧹 Sanitized SDE name: %s → %s", original_name, name)
+            
+        return name

@@ -13,7 +13,7 @@ import arcpy
 log: Final = logging.getLogger(__name__)
 
 
-def ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 31) -> str:
+def ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 128) -> str:
     """🔧 Ensure the name is unique within the GDB.
     
     Args:
@@ -27,10 +27,31 @@ def ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 3
     Raises:
         ValueError: If unable to generate unique name within constraints.
     """
-    candidate: str = base_name[:max_length]  # Truncate to max length first
+    import re
+    
+    # Sanitize the base name first
+    sanitized_name = base_name
+    
+    # Replace problematic characters
+    sanitized_name = re.sub(r'[-\s\.]+', '_', sanitized_name)  # hyphens, spaces, dots → underscore
+    sanitized_name = re.sub(r'[åäö]', lambda m: {'å': 'a', 'ä': 'a', 'ö': 'o'}[m.group()], sanitized_name)  # Swedish chars
+    sanitized_name = re.sub(r'[^\w]', '_', sanitized_name)  # Any remaining non-word chars → underscore
+    sanitized_name = re.sub(r'_{2,}', '_', sanitized_name)  # Multiple underscores → single underscore
+    sanitized_name = sanitized_name.strip('_')  # Remove leading/trailing underscores
+    
+    # Ensure it starts with letter or underscore (not number)
+    if sanitized_name and sanitized_name[0].isdigit():
+        sanitized_name = f"fc_{sanitized_name}"
+    
+    # Ensure not empty
+    if not sanitized_name:
+        sanitized_name = "unnamed_fc"
+    
+    # Only truncate if necessary (rarely should happen with 128 chars)
+    candidate: str = sanitized_name[:max_length] if len(sanitized_name) > max_length else sanitized_name
     
     if not candidate:
-        raise ValueError(f"Base name '{base_name}' resulted in empty string after truncation")
+        raise ValueError(f"Base name '{base_name}' resulted in empty string after sanitization")
     
     final_candidate: str = candidate
     idx: int = 1
@@ -51,6 +72,11 @@ def ensure_unique_name(base_name: str, used_names: Set[str], max_length: int = 3
             raise ValueError(f"Could not find unique name for '{base_name}' after {idx-1} attempts")
     
     used_names.add(final_candidate)
+    
+    # Log sanitization if name changed
+    if final_candidate != base_name:
+        log.info("🧹 Sanitized GDB name: %s → %s", base_name, final_candidate)
+    
     return final_candidate
 
 
