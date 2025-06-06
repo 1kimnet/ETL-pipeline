@@ -165,6 +165,7 @@ def _copy_feature_class(input_fc_name: str, target_name: str, gdb_path: Path, su
                    input_fc_name, attempt1_error, arcpy_messages_e1)
         
         if "000732" in arcpy_messages_e1:
+            # Retry with alternative approaches if the initial copy fails due to dataset existence issues
             copied_successfully = _retry_with_alternatives(input_fc_name, target_name, gdb_path, summary)
         
         if not copied_successfully:
@@ -254,28 +255,58 @@ def _retry_with_alternatives(input_fc_name: str, target_name: str, gdb_path: Pat
     
     # Strategy 3: Try to find similar named feature classes
     try:
-        all_fcs = arcpy.ListFeatureClasses()
-        base_name = _MAIN_RE.sub("", input_fc_name).lower()
+        all_fcs: List[str] = arcpy.ListFeatureClasses()
+        base_name: str = _MAIN_RE.sub("", input_fc_name).lower()
         
-        for fc in all_fcs:
-            fc_lower = fc.lower()
-            if base_name in fc_lower and fc != input_fc_name:
-                log.info("🔄 Attempt 4: Trying similar FC '%s' (contains '%s')", fc, base_name)
+        similar_fcs: List[str] = []
+        for fc_candidate in all_fcs:
+            # Check if base_name is in the candidate's lowercased name
+            # and ensure the candidate is not the same as the original input_fc_name
+            if base_name in fc_candidate.lower() and fc_candidate != input_fc_name:
+                similar_fcs.append(fc_candidate)
+
+        max_similar_to_try: Final[int] = 5  # Max number of similar FCs to attempt
+        
+        if not similar_fcs:
+            log.info("ℹ️ No similar feature classes found for '%s' (base name: '%s') to attempt in Strategy 3.",
+                     input_fc_name, base_name)
+        else:
+            log.info("Found %d potential similar feature classes for '%s' (base name: '%s'): %s",
+                     len(similar_fcs), input_fc_name, base_name, similar_fcs)
+            if len(similar_fcs) > max_similar_to_try:
+                log.warning(
+                    "⚠️ Found %d similar feature classes for '%s'. Limiting trial to the first %d: %s",
+                    len(similar_fcs),
+                    input_fc_name,
+                    max_similar_to_try,
+                    similar_fcs[:max_similar_to_try]
+                )
+                similar_fcs = similar_fcs[:max_similar_to_try]
+        
+        for fc in similar_fcs:
+            log.info("🔄 Attempt 4: Trying similar FC '%s' (for original input '%s', base_name '%s')",
+                     fc, input_fc_name, base_name)
+            
+            if _validate_fc_exists(fc):
+                try:
+                    arcpy.conversion.FeatureClassToFeatureClass(
+                        in_features=fc, 
+                        out_path=str(gdb_path), 
+                        out_name=target_name
+                    )
+                    log.info("✅ Attempt 4 SUCCESS: Copied similar GPKG FC '%s' (found for '%s') to '%s'",
+                             fc, input_fc_name, target_name)
+                    lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
+                    summary.log_staging("done")
+                    return True  # Successfully copied
+                except arcpy.ExecuteError as attempt4_error:
+                    arcpy_messages_e4: str = arcpy.GetMessages(2)
+                    log.warning("⚠️ Attempt 4 FAILED for similar FC '%s': %s. ArcPy Messages: %s",
+                               fc, attempt4_error, arcpy_messages_e4)
+                    # Loop will continue to the next similar_fc
+            else:
+                log.warning("⚠️ Similar FC '%s' was listed but could not be validated by _validate_fc_exists. Skipping.", fc)
                 
-                if _validate_fc_exists(fc):
-                    try:
-                        arcpy.conversion.FeatureClassToFeatureClass(
-                            in_features=fc, 
-                            out_path=str(gdb_path), 
-                            out_name=target_name
-                        )
-                        log.info("✅ Attempt 4 SUCCESS: Copied similar GPKG FC '%s' to '%s'", fc, target_name)
-                        lg_sum.info("   📄 GPKG FC ➜ staged : %s", target_name)
-                        summary.log_staging("done")
-                        return True
-                    except arcpy.ExecuteError as attempt4_error:
-                        log.debug("🔄 Attempt 4 failed for '%s': %s", fc, attempt4_error)
-                        continue
     except Exception as similarity_error:
         log.debug("🔄 Similarity search failed: %s", similarity_error)
     

@@ -38,7 +38,11 @@ def _is_arcgis_compatible_name(stem: str) -> bool:
 def _copy_to_temp_shapefile(original: Path) -> tuple[Path, TemporaryDirectory]:
     """Return a temporary shapefile path with an ArcGIS-compatible name."""
     temp_dir = TemporaryDirectory(prefix="shpfix_")
-    sanitized: str = generate_fc_name("tmp", original.stem).split("_", 1)[1][:13]
+    generated_name = generate_fc_name("tmp", original.stem)
+    if "_" not in generated_name:
+        log.error("Generated feature class name does not contain an underscore: %s", generated_name)
+        raise ValueError(f"Invalid feature class name format: {generated_name}")
+    sanitized: str = generated_name.split("_", 1)[1][:13]
     for comp in original.parent.glob(f"{original.stem}.*"):
         shutil.copy2(comp, Path(temp_dir.name) / f"{sanitized}{comp.suffix}")
     return Path(temp_dir.name) / f"{sanitized}.shp", temp_dir

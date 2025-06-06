@@ -115,6 +115,7 @@ class ArcPyFileGDBLoader:
         elif normalized_data_type in ("geojson", "json"):
             self._handle_geojson_source(source, source_staging_dir, used_names_set)
         elif normalized_data_type == "shapefile_collection":
+            log.info("📐 Handling shapefile collection source '%s'", source.name)
             self._handle_shapefile_source(source, source_staging_dir, staging_root, used_names_set)
         elif not normalized_data_type:
             # When no staged_data_type is specified, fall back to shapefile processing
