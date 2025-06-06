@@ -1,4 +1,4 @@
-/data/*
+pyt/data/*
 ETL-pipeline.code-workspace
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -206,3 +206,17 @@ quick_verify.py
 raa_issue_summary.md
 test_raa_fix.py
 scripts/truncate_authority_tables.py
+NAMING_SANITIZATION_SUMMARY.md
+data/connections/municipality_boundary.CPG
+data/connections/municipality_boundary.dbf
+data/connections/municipality_boundary.prj
+data/connections/municipality_boundary.sbn
+data/connections/municipality_boundary.sbx
+data/connections/municipality_boundary.shp
+data/connections/municipality_boundary.shp.xml
+data/connections/municipality_boundary.shx
+PROJECTION_SDE_FIXES.md
+OVERWRITE_FIXES_SUMMARY.md
+test_sde_naming.py
+validate_fixes.py
+data/connections/prod.sde
