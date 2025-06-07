@@ -411,81 +411,55 @@ class RestApiDownloadHandler:
                 layer_metadata_from_service=layer_info_to_query.get("metadata"),
             )
 
-    def _fetch_layer_data(
+    def _determine_max_record_count(
         self,
-        layer_info: Dict[str, Any],
-        layer_metadata_from_service: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        """Fetches data for a single layer."""
-        layer_id = layer_info.get("id")
-        layer_name_original = layer_info.get("name", f"layer_{layer_id}")
-        layer_name_sanitized = sanitize_for_filename(layer_name_original)
-
-        query_url = f"{self.src.url.rstrip('/')}/{layer_id}/query"
-        log.info(
-            "Querying Layer ID: %s (Sanitized Name: %s, Original: %s) from %s",
-            layer_id,
-            layer_name_sanitized,
-            layer_name_original,
-            query_url,
-        )
-
-        # Determine maxRecordCount
+        layer_id: str,
+        layer_meta: Optional[Dict[str, Any]],
+    ) -> tuple[int, Optional[Dict[str, Any]]]:
+        """Resolve maxRecordCount using config or service metadata."""
         max_record_count_from_config = self.src.raw.get("max_record_count")
-        layer_meta_to_use = layer_metadata_from_service
-
         if max_record_count_from_config is not None:
             try:
                 max_record_count = int(max_record_count_from_config)
-                log.info(
-                    "Using max_record_count from source.raw config: %d",
-                    max_record_count,
-                )
+                log.info("Using max_record_count from config: %d", max_record_count)
+                return max_record_count, layer_meta
             except ValueError:
                 log.warning(
-                    "Invalid 'max_record_count' in source.raw: '%s'. Falling back to metadata or default.",
+                    "Invalid 'max_record_count' in source.raw: '%s'. Falling back to metadata.",
                     max_record_count_from_config,
                 )
-                max_record_count = None
-        else:
-            max_record_count = None
 
-        if max_record_count is None:
-            if not layer_meta_to_use:
-                layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
-                log.debug(
-                    "Fetching specific layer metadata for layer ID %s to determine maxRecordCount.",
-                    layer_id,
-                )
-                layer_meta_to_use = self._get_layer_metadata(layer_metadata_url)
+        if not layer_meta:
+            layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
+            log.debug(
+                "Fetching specific layer metadata for layer ID %s to determine maxRecordCount.",
+                layer_id,
+            )
+            layer_meta = self._get_layer_metadata(layer_metadata_url)
 
-            if layer_meta_to_use:
-                if layer_meta_to_use.get("maxRecordCount") is not None:
-                    max_record_count = layer_meta_to_use["maxRecordCount"]
-                    log.info(
-                        "Service layer metadata indicates maxRecordCount: %d",
-                        max_record_count,
-                    )
-                elif layer_meta_to_use.get("standardMaxRecordCount") is not None:
-                    max_record_count = layer_meta_to_use["standardMaxRecordCount"]
-                    log.info(
-                        "Service layer metadata indicates standardMaxRecordCount: %d",
-                        max_record_count,
-                    )
-                else:
-                    max_record_count = 2000
-                    log.info(
-                        "maxRecordCount not found in specific layer metadata, using default: %d",
-                        max_record_count,
-                    )
-            else:
-                max_record_count = 2000
-                log.warning(
-                    "Could not fetch specific layer metadata for maxRecordCount, using default: %d",
+        if layer_meta:
+            if layer_meta.get("maxRecordCount") is not None:
+                max_record_count = layer_meta["maxRecordCount"]
+                log.info("Service metadata maxRecordCount: %d", max_record_count)
+            elif layer_meta.get("standardMaxRecordCount") is not None:
+                max_record_count = layer_meta["standardMaxRecordCount"]
+                log.info(
+                    "Service metadata standardMaxRecordCount: %d",
                     max_record_count,
                 )
+            else:
+                max_record_count = 2000
+                log.info(
+                    "maxRecordCount not found in layer metadata, using default: %d",
+                    max_record_count,
+                )
+        else:
+            max_record_count = 2000
+            log.warning(
+                "Could not fetch specific layer metadata for maxRecordCount, using default: %d",
+                max_record_count,
+            )
 
-        # Ensure max_record_count is an integer after all determinations
         if not isinstance(max_record_count, int):
             log.warning(
                 "max_record_count ended up non-integer: '%s'. Defaulting to 2000.",
@@ -493,28 +467,23 @@ class RestApiDownloadHandler:
             )
             max_record_count = 2000
 
-        # Setup Query Parameters
-        params = self._prepare_query_params()
+        return max_record_count, layer_meta
 
-        # Staging Path
-        source_name_sanitized = sanitize_for_filename(self.src.name)
-        staging_dir = paths.STAGING / self.src.authority / source_name_sanitized
-        staging_dir.mkdir(parents=True, exist_ok=True)
-
-        output_filename = f"{layer_name_sanitized}.{params['f']}"
-        output_path = staging_dir / output_filename
-
-        # Pagination and Data Fetching
+    def _pagination_loop(
+        self,
+        query_url: str,
+        params: Dict[str, Any],
+        layer_name_sanitized: str,
+        max_record_count: int,
+    ) -> tuple[List[Dict[str, Any]], int]:
+        """Return all features for a layer via paginated requests."""
         current_offset = 0
         features_written_total = 0
-        all_features = []
+        all_features: List[Dict[str, Any]] = []
         page_num = 1
 
         while True:
-            effective_page_limit = max_record_count
-            if max_record_count == 0:
-                effective_page_limit = 2000
-
+            effective_page_limit = 2000 if max_record_count == 0 else max_record_count
             log.info(
                 "Fetching page %d for layer %s (offset %d, limit %d)",
                 page_num,
@@ -544,7 +513,7 @@ class RestApiDownloadHandler:
                     data["error"],
                 )
                 log.error(
-                    "❌ API_ERROR_REPORTED: Breaking from pagination loop for this layer."
+                    "❌ API_ERROR_REPORTED: Breaking from pagination loop for this layer.",
                 )
                 break
 
@@ -563,40 +532,102 @@ class RestApiDownloadHandler:
 
             page_num += 1
 
-        if all_features:
-            final_output_data = {
-                "type": "FeatureCollection",
-                "features": all_features,
-            }
+        return all_features, features_written_total
 
-            # Add CRS information if output is GeoJSON
-            if params["f"] == "geojson":
-                if not layer_meta_to_use:
-                    layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
-                    log.debug(
-                        "Fetching specific layer metadata for layer ID %s (for CRS info).",
-                        layer_id,
-                    )
-                    layer_meta_to_use = self._get_layer_metadata(layer_metadata_url)
+    def _add_crs_info(
+        self,
+        collection: Dict[str, Any],
+        layer_id: str,
+        layer_meta: Optional[Dict[str, Any]],
+        output_format: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Attach CRS metadata when appropriate."""
+        if output_format != "geojson":
+            return layer_meta
 
-                if layer_meta_to_use and layer_meta_to_use.get("spatialReference"):
-                    sr_info = layer_meta_to_use.get("spatialReference")
-                    if sr_info and sr_info.get("wkid") == 3006:  # SWEREF99 TM
-                        final_output_data["crs"] = {
-                            "type": "name",
-                            "properties": {"name": "urn:ogc:def:crs:EPSG::3006"},
-                        }
-
-            self._write_output_data(
-                output_path=output_path,
-                final_output_data=final_output_data,
-                layer_name_sanitized=layer_name_sanitized,
-                features_written_total=features_written_total,
-                output_format=params["f"],
+        if not layer_meta:
+            layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
+            log.debug(
+                "Fetching specific layer metadata for layer ID %s (for CRS info).",
+                layer_id,
             )
-        elif page_num == 1 and not all_features:
-            log.info(
-                "ℹ️ No features found or written for layer %s for source '%s'.",
-                layer_name_sanitized,
-                self.src.name,
-            )
+            layer_meta = self._get_layer_metadata(layer_metadata_url)
+
+        if layer_meta and layer_meta.get("spatialReference"):
+            sr_info = layer_meta.get("spatialReference")
+            if sr_info and sr_info.get("wkid") == 3006:
+                collection["crs"] = {
+                    "type": "name",
+                    "properties": {"name": "urn:ogc:def:crs:EPSG::3006"},
+                }
+
+        return layer_meta
+
+    def _fetch_layer_data(
+        self,
+        layer_info: Dict[str, Any],
+        layer_metadata_from_service: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Fetches data for a single layer."""
+        layer_id = layer_info.get("id")
+        layer_name_original = layer_info.get("name", f"layer_{layer_id}")
+        layer_name_sanitized = sanitize_for_filename(layer_name_original)
+
+        query_url = f"{self.src.url.rstrip('/')}/{layer_id}/query"
+        log.info(
+            "Querying Layer ID: %s (Sanitized Name: %s, Original: %s) from %s",
+            layer_id,
+            layer_name_sanitized,
+            layer_name_original,
+            query_url,
+        )
+
+        max_record_count, layer_meta_to_use = self._determine_max_record_count(
+            layer_id=layer_id,
+            layer_meta=layer_metadata_from_service,
+        )
+
+        params = self._prepare_query_params()
+
+        source_name_sanitized = sanitize_for_filename(self.src.name)
+        staging_dir = paths.STAGING / self.src.authority / source_name_sanitized
+        staging_dir.mkdir(parents=True, exist_ok=True)
+
+        output_filename = f"{layer_name_sanitized}.{params['f']}"
+        output_path = staging_dir / output_filename
+
+        all_features, features_written_total = self._pagination_loop(
+            query_url=query_url,
+            params=params,
+            layer_name_sanitized=layer_name_sanitized,
+            max_record_count=max_record_count,
+        )
+
+        if not all_features:
+            if features_written_total == 0:
+                log.info(
+                    "ℹ️ No features found or written for layer %s for source '%s'.",
+                    layer_name_sanitized,
+                    self.src.name,
+                )
+            return
+
+        final_output_data = {
+            "type": "FeatureCollection",
+            "features": all_features,
+        }
+
+        self._add_crs_info(
+            collection=final_output_data,
+            layer_id=layer_id,
+            layer_meta=layer_meta_to_use,
+            output_format=params["f"],
+        )
+
+        self._write_output_data(
+            output_path=output_path,
+            final_output_data=final_output_data,
+            layer_name_sanitized=layer_name_sanitized,
+            features_written_total=features_written_total,
+            output_format=params["f"],
+        )
