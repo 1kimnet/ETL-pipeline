@@ -40,8 +40,12 @@ class Pipeline:
                 with config_yaml_path.open(encoding="utf-8") as fh:
                     self.global_cfg = yaml.safe_load(fh) or {}
                 logging.getLogger("summary").info("🛠  Using global config %s", config_yaml_path)
-            except Exception as exc:
-                logging.getLogger("summary").warning("⚠️  Could not load %s (%s) – using defaults", config_yaml_path, exc)
+            except (yaml.YAMLError, OSError) as exc:
+                logging.getLogger("summary").warning(
+                    "⚠️  Could not load %s (%s) – using defaults",
+                    config_yaml_path,
+                    exc,
+                )
                 self.global_cfg = {}
         else:
             self.global_cfg = {}
@@ -69,7 +73,7 @@ class Pipeline:
                 lg_sum.info("🚚 Downloading : %s", src.name)
                 handler_cls(src, global_config=self.global_cfg).fetch()
                 self.summary.log_download("done")
-            except Exception as exc:
+            except (FileNotFoundError, arcpy.ExecuteError) as exc:
                 self.summary.log_download("error")
                 self.summary.log_error(src.name, str(exc))
                 lg_sum.error("❌ Failed        : %s  (%s)", src.name, exc)
@@ -84,7 +88,7 @@ class Pipeline:
                 lg_sum.info("🗑️ Resetting existing staging.gdb to avoid conflicts")
                 reset_gdb(paths.GDB)
             lg_sum.info("✅ Staging GDB reset complete")
-        except Exception as reset_exc:
+        except (ImportError, arcpy.ExecuteError, OSError) as reset_exc:
             lg_sum.warning("⚠️ Failed to reset staging GDB: %s", reset_exc)
             if not self.global_cfg.get("continue_on_failure", True):
                 raise
@@ -98,7 +102,7 @@ class Pipeline:
             )
             loader.run()
             lg_sum.info("✅ Staging.gdb built successfully")
-        except Exception as exc:
+        except (arcpy.ExecuteError, FileNotFoundError) as exc:
             staging_success = False
             self.summary.log_staging("error")
             self.summary.log_error("GDB loader", str(exc))
@@ -151,7 +155,7 @@ class Pipeline:
             
             lg_sum.info("✅ In-place geoprocessing complete")
             
-        except Exception as exc:
+        except arcpy.ExecuteError as exc:
             lg_sum.error("❌ Geoprocessing failed: %s", exc, exc_info=True)
             if not self.global_cfg.get("continue_on_failure", True):
                 raise
@@ -187,7 +191,7 @@ class Pipeline:
             try:
                 self._load_fc_to_sde(fc_path, fc_name, sde_connection)
                 self.summary.log_sde("done")
-            except Exception as exc:
+            except arcpy.ExecuteError as exc:
                 self.summary.log_sde("error")
                 self.summary.log_error(fc_name, f"SDE load failed: {exc}")
                 lg_sum.error("❌ Failed to load %s to SDE: %s", fc_path, exc)
