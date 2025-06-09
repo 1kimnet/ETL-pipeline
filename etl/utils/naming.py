@@ -9,7 +9,7 @@ from typing import Final
 from .sanitize import slugify  # central helper keeps hyphens for readability
 
 _ILLEGAL_ARCGIS: Final = re.compile(r"[^A-Za-z0-9_]")   # stricter pattern
-_ARCGIS_MAX_LEN: Final = 31                             # FGDB feature class limit
+_ARCGIS_MAX_LEN: Final = 160                             # FGDB feature class limit
 
 # ---------------------------------------------------------------------------
 # Public helpers
