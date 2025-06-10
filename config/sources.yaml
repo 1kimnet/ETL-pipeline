@@ -359,17 +359,12 @@ sources:
     raw:
       format: "geojson" # Ensure handler outputs geojson
       layer_ids: [18]
-
   - authority: "SJV"
     name: "Jordbruksskiften (senaste året)"
-    type: "rest_api"  # Note: This WFS service is incompatible with REST API handler
-    url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: false  # Disabled: WFS services require different handler than rest_api
+    type: "file"
+    url: "https://epub.sjv.se/inspire/inspire/wfs?service=WFS&request=GetFeature&typeName=inspire:senaste_arslager_skifte&outputFormat=application/json"
+    enabled: true
     staged_data_type: "geojson"
-    raw:
-      format: "geojson"
-      layer_ids: [18]
-    # TODO: Create WFS handler or use file download approach for this service
 
   - authority: "SJV"
     name: "Produktionsplatser för djurhållning"
