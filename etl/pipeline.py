@@ -15,6 +15,7 @@ from .models import Source
 from .utils import ensure_dirs, paths
 from .utils.run_summary import Summary
 from .utils.naming import sanitize_sde_name
+from .utils.cleanup import cleanup_before_pipeline_run
 
 
 class Pipeline:
@@ -51,15 +52,22 @@ class Pipeline:
                 self.global_cfg = {}
         else:
             self.global_cfg = {}
-            logging.getLogger("summary").info("ℹ️  No global config file supplied – using defaults")
-
-        # Note: mappings_yaml_path parameter preserved for compatibility but not currently used
+            logging.getLogger("summary").info("ℹ️  No global config file supplied – using defaults")        # Note: mappings_yaml_path parameter preserved for compatibility but not currently used
         self.mappings_yaml_path = mappings_yaml_path
 
         ensure_dirs()
 
     def run(self) -> None:
         lg_sum = logging.getLogger("summary")
+        
+        # ---------- 0. PRE-PIPELINE CLEANUP -------------------------------
+        # Clean downloads and staging folders for fresh data
+        cleanup_downloads = self.global_cfg.get("cleanup_downloads_before_run", True)
+        cleanup_staging = self.global_cfg.get("cleanup_staging_before_run", True)
+        
+        if cleanup_downloads or cleanup_staging:
+            lg_sum.info("🧹 Starting pre-pipeline cleanup...")
+            cleanup_before_pipeline_run(cleanup_downloads, cleanup_staging)
 
         # ---------- 1. DOWNLOAD & STAGING ---------------------------------
         for src in Source.load_all(self.sources_yaml_path):
