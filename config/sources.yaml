@@ -349,7 +349,6 @@ sources:
       page_size: 1000
       supports_bbox_crs: false  # Add this line
 
-
   # # --- SJV ---
   - authority: "SJV"
     name: "Jordbruksblock (2024)"
@@ -363,13 +362,14 @@ sources:
 
   - authority: "SJV"
     name: "Jordbruksskiften (senaste året)"
-    type: "rest_api"
+    type: "rest_api"  # Note: This WFS service is incompatible with REST API handler
     url: "https://epub.sjv.se/inspire/inspire/wfs"
-    enabled: true
-    staged_data_type: "geojson" # <--- IMPORTANT for the loader
+    enabled: false  # Disabled: WFS services require different handler than rest_api
+    staged_data_type: "geojson"
     raw:
-      format: "geojson" # Ensure handler outputs geojson
-      layer_ids: [18] 
+      format: "geojson"
+      layer_ids: [18]
+    # TODO: Create WFS handler or use file download approach for this service
 
   - authority: "SJV"
     name: "Produktionsplatser för djurhållning"
