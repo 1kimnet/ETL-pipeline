@@ -1,5 +1,5 @@
 # etl/loaders/geojson_loader.py
-"""🌍 GeoJSON/JSON format loader - clean architecture."""
+"""🌍 GeoJSON/JSON format loader."""
 
 from __future__ import annotations
 

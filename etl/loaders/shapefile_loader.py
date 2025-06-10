@@ -1,5 +1,5 @@
 # etl/loaders/shapefile_loader.py
-"""📐 Shapefile format loader - clean architecture."""
+"""📐 Shapefile format loader."""
 
 from __future__ import annotations
 

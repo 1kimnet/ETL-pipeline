@@ -1,0 +1,27 @@
+sources:
+  - name: "Test REST API Source"
+    authority: "TEST"
+    type: "rest_api"
+    url: "https://api.example.com/features"
+    enabled: true
+    output_format: "geojson"
+    retry_attempts: 2
+    timeout: 15
+    
+  - name: "Test File Source"
+    authority: "TEST"
+    type: "file"
+    url: "https://example.com/data.zip"
+    enabled: true
+    download_format: "zip"
+    output_format: "shapefile"
+    
+  - name: "Test OGC API Source"
+    authority: "TEST"
+    type: "ogc_api"
+    url: "https://ogc.example.com/collections/features/items"
+    enabled: false
+    output_format: "gpkg"
+    parameters:
+      limit: 1000
+      bbox: "17.5,59.0,18.5,60.0"

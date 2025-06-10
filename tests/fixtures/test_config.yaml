@@ -1,0 +1,24 @@
+logging:
+  level: "DEBUG"
+  summary_file: "test_summary.log"
+  debug_file: "test_debug.log"
+  console_level: "INFO"
+
+retry:
+  max_attempts: 2
+  backoff_factor: 1.5
+  timeout: 10
+
+paths:
+  download: "test_downloads"
+  staging: "test_staging"
+  output: "test_output"
+
+processing:
+  chunk_size: 100
+  parallel_workers: 2
+  memory_limit_mb: 512
+
+validation:
+  strict_mode: false
+  schema_validation: true

@@ -1,5 +1,5 @@
 # etl/loaders/gpkg_loader.py
-"""📦 GeoPackage format loader - clean architecture."""
+"""📦 GeoPackage format loader."""
 
 from __future__ import annotations
 

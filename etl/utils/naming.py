@@ -35,5 +35,34 @@ def generate_fc_name(authority: str, source: str) -> str:
     """
     base = f"{authority}_{sanitize_for_arcgis_name(source)}"
     return base[:_ARCGIS_MAX_LEN].rstrip("_")
-# Ensure the name is not empty and does not end with an underscore
+
+
+def sanitize_sde_name(name: str) -> str:
+    """🧹 Sanitize feature class name for SDE compatibility.
+    
+    SDE naming rules:
+    - Must start with letter or underscore
+    - Can contain letters, numbers, underscores
+    - No spaces, hyphens, or special characters
+    - Max 128 characters (plenty of room)
+    """
+    original_name = name
+    
+    # Replace problematic characters
+    # Convert common problematic chars to underscores
+    name = re.sub(r'[-\s\.]+', '_', name)  # hyphens, spaces, dots → underscore
+    name = re.sub(r'[åäö]', lambda m: {'å': 'a', 'ä': 'a', 'ö': 'o'}[m.group()], name)  # Swedish chars
+    name = re.sub(r'[^\w]', '_', name)  # Any remaining non-word chars → underscore
+    name = re.sub(r'_{2,}', '_', name)  # Multiple underscores → single underscore
+    name = name.strip('_')  # Remove leading/trailing underscores
+    
+    # Ensure it starts with letter or underscore (not number)
+    if name and name[0].isdigit():
+        name = f"fc_{name}"
+    
+    # Ensure not empty
+    if not name:
+        name = "unnamed_fc"
+        
+    return name
 

@@ -13,7 +13,7 @@ from ..models import Source
 from ..utils import paths, ensure_dirs
 from ..utils.naming import sanitize_for_filename
 from ..utils.gdb_utils import reset_gdb
-from ..utils.path_utils import derive_authority_from_path
+from ..utils.paths import derive_authority_from_path
 from ..utils.run_summary import Summary
 from .geojson_loader import process_geojson_file
 from .gpkg_loader import process_gpkg_contents

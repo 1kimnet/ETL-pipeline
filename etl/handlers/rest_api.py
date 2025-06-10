@@ -7,11 +7,19 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 import re
-import time
 
 from ..models import Source
 from ..utils import paths, ensure_dirs
 from ..utils.naming import sanitize_for_filename
+from ..utils.retry import retry_with_backoff, RetryConfig, CircuitBreaker
+from ..exceptions import (
+    HTTPError,
+    NetworkError,
+    SourceUnavailableError,
+    RateLimitError,
+    DataFormatError,
+    format_error_context
+)
 
 log = logging.getLogger(__name__)
 
@@ -27,103 +35,98 @@ class RestApiDownloadHandler:
         self.src = src
         self.global_config = global_config or {}
         ensure_dirs()
+        
+        # Initialize retry configuration
+        retry_config = self.global_config.get("retry", {})
+        self.retry_config = RetryConfig(
+            max_attempts=retry_config.get("max_attempts", 3),
+            base_delay=retry_config.get("base_delay", 1.0),
+            backoff_factor=retry_config.get("backoff_factor", 2.0),
+            max_delay=retry_config.get("max_delay", 300.0)
+        )
+        
+        # Initialize circuit breaker for this service
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=retry_config.get("circuit_breaker_threshold", 5),
+            recovery_timeout=retry_config.get("circuit_breaker_timeout", 60.0),
+            expected_exception=Exception
+        )
+        
         log.info("🚀 Initializing RestApiDownloadHandler for source: %s", self.src.name)
 
+    @retry_with_backoff()
     def _get_service_metadata(self, service_url: str) -> Optional[Dict[str, Any]]:
         """Fetches base metadata for the service (MapServer/FeatureServer) with retries."""
+        return self._fetch_service_metadata_impl(service_url)
+    
+    @CircuitBreaker(failure_threshold=5, recovery_timeout=60.0)
+    def _fetch_service_metadata_impl(self, service_url: str) -> Dict[str, Any]:
+        """Implementation of service metadata fetching with circuit breaker."""
         params = {"f": "json"}
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
         }
-
+        
         try:
-            total_attempts = int(self.global_config.get("max_retries", 1))
-            if total_attempts < 1:
-                total_attempts = 1
-        except ValueError:
-            total_attempts = 1
-            log.warning(
-                "Invalid value for 'max_retries' in global_config. Defaulting to 1 attempt for metadata fetch."
+            timeout = self.global_config.get("timeout", 30)
+            response = requests.get(
+                service_url, 
+                params=params, 
+                headers=headers, 
+                timeout=timeout
             )
-
-        for attempt in range(total_attempts):
+            
+            # Handle different HTTP status codes appropriately
+            if response.status_code == 429:
+                retry_after = response.headers.get('Retry-After')
+                raise RateLimitError(
+                    f"Rate limit exceeded for {service_url}",
+                    source_name=self.src.name,
+                    retry_after=int(retry_after) if retry_after else None
+                )
+            elif 500 <= response.status_code < 600:
+                raise SourceUnavailableError(
+                    f"Service temporarily unavailable: {response.status_code}",
+                    source_name=self.src.name,
+                    context={"status_code": response.status_code, "url": service_url}
+                )
+            elif 400 <= response.status_code < 500:
+                raise HTTPError(
+                    f"Client error: {response.status_code} {response.reason}",
+                    source_name=self.src.name,
+                    status_code=response.status_code,
+                    context={"url": service_url}
+                )
+            
+            response.raise_for_status()
+            
             try:
-                log.debug(
-                    "Attempt %d/%d to fetch service metadata from %s",
-                    attempt + 1,
-                    total_attempts,
-                    service_url,
-                )
-                response = requests.get(
-                    service_url, params=params, headers=headers, timeout=30
-                )
-                response.raise_for_status()
                 return response.json()
-            except requests.exceptions.HTTPError as e:
-                log.error(
-                    "❌ HTTP error fetching service metadata from %s (Attempt %d/%d): %s",
-                    service_url,
-                    attempt + 1,
-                    total_attempts,
-                    e,
+            except json.JSONDecodeError as e:
+                raise DataFormatError(
+                    f"Invalid JSON response from {service_url}: {e}",
+                    source_name=self.src.name,
+                    format_type="json"
                 )
-                if 400 <= e.response.status_code < 500:
-                    log.warning(
-                        "Client error %d, not retrying metadata fetch for %s.",
-                        e.response.status_code,
-                        service_url,
-                    )
-                    return None
-                if attempt + 1 == total_attempts:
-                    log.error(
-                        "Final attempt failed for %s with HTTP error.", service_url
-                    )
-                    return None
-                sleep_time = 5 * (attempt + 1)
-                log.info(
-                    "Server error. Retrying metadata fetch for %s in %ds...",
-                    service_url,
-                    sleep_time,
-                )
-                time.sleep(sleep_time)
-            except requests.exceptions.RequestException as e:
-                log.error(
-                    "❌ Request exception fetching service metadata from %s (Attempt %d/%d): %s",
-                    service_url,
-                    attempt + 1,
-                    total_attempts,
-                    e,
-                )
-                if attempt + 1 == total_attempts:
-                    log.error(
-                        "Final attempt failed for %s with RequestException.",
-                        service_url,
-                    )
-                    return None
-                sleep_time = 5 * (attempt + 1)
-                log.info(
-                    "Request exception. Retrying metadata fetch for %s in %ds...",
-                    service_url,
-                    sleep_time,
-                )
-                time.sleep(sleep_time)
-            except Exception as e:
-                log.error(
-                    "❌ Unexpected error during metadata fetch for %s (Attempt %d/%d): %s",
-                    service_url,
-                    attempt + 1,
-                    total_attempts,
-                    e,
-                    exc_info=True,
-                )
-                return None
-
-        log.error(
-            "All %d attempts to fetch metadata from %s failed.",
-            total_attempts,
-            service_url,
-        )
-        return None
+                
+        except requests.exceptions.Timeout as e:
+            raise NetworkError(
+                f"Timeout fetching metadata from {service_url}",
+                source_name=self.src.name,
+                context={"timeout": timeout}
+            ) from e
+        except requests.exceptions.ConnectionError as e:
+            raise NetworkError(
+                f"Connection error fetching metadata from {service_url}",
+                source_name=self.src.name,
+                context={"error": str(e)}
+            ) from e
+        except requests.exceptions.RequestException as e:
+            raise NetworkError(
+                f"Request failed for {service_url}: {e}",
+                source_name=self.src.name,
+                context={"error": str(e)}
+            ) from e
 
     def _get_layer_metadata(self, layer_url: str) -> Optional[Dict[str, Any]]:
         """Fetches metadata for a specific layer."""
