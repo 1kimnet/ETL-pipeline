@@ -349,7 +349,6 @@ sources:
       page_size: 1000
       supports_bbox_crs: false  # Add this line
 
-
   # # --- SJV ---
   - authority: "SJV"
     name: "Jordbruksblock (2024)"
@@ -360,16 +359,12 @@ sources:
     raw:
       format: "geojson" # Ensure handler outputs geojson
       layer_ids: [18]
-
   - authority: "SJV"
     name: "Jordbruksskiften (senaste året)"
-    type: "rest_api"
-    url: "https://epub.sjv.se/inspire/inspire/wfs"
+    type: "file"
+    url: "https://epub.sjv.se/inspire/inspire/wfs?service=WFS&request=GetFeature&typeName=inspire:senaste_arslager_skifte&outputFormat=application/json"
     enabled: true
-    staged_data_type: "geojson" # <--- IMPORTANT for the loader
-    raw:
-      format: "geojson" # Ensure handler outputs geojson
-      layer_ids: [18] 
+    staged_data_type: "geojson"
 
   - authority: "SJV"
     name: "Produktionsplatser för djurhållning"

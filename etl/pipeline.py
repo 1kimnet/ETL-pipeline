@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -14,6 +15,11 @@ from .loaders import ArcPyFileGDBLoader
 from .models import Source
 from .utils import ensure_dirs, paths
 from .utils.run_summary import Summary
+from .utils.naming import sanitize_sde_name
+from .mapping import get_mapping_manager, MappingManager
+from .monitoring import get_structured_logger, get_metrics_collector, get_pipeline_monitor
+from .utils.performance import ParallelProcessor, monitor_performance
+from .utils.cleanup import cleanup_before_pipeline_run
 
 
 class Pipeline:
@@ -24,6 +30,7 @@ class Pipeline:
         sources_yaml: Path,
         *,
         config_yaml_path: Optional[Path] = None,
+        mappings_yaml_path: Optional[Path] = None,
         extra_handler_map: Dict[str, Any] | None = None,
         summary: Summary | None = None,
     ) -> None:
@@ -40,73 +47,134 @@ class Pipeline:
                 with config_yaml_path.open(encoding="utf-8") as fh:
                     self.global_cfg = yaml.safe_load(fh) or {}
                 logging.getLogger("summary").info("🛠  Using global config %s", config_yaml_path)
-            except Exception as exc:
-                logging.getLogger("summary").warning("⚠️  Could not load %s (%s) – using defaults", config_yaml_path, exc)
+            except (yaml.YAMLError, OSError) as exc:
+                logging.getLogger("summary").warning(
+                    "⚠️  Could not load %s (%s) – using defaults",
+                    config_yaml_path,
+                    exc,
+                )
                 self.global_cfg = {}
         else:
             self.global_cfg = {}
-            logging.getLogger("summary").info("ℹ️  No global config file supplied – using defaults")
+            logging.getLogger("summary").info("ℹ️  No global config file supplied – using defaults")        # Initialize mapping manager
+        self.mapping_manager = get_mapping_manager(mappings_yaml_path)
+        
+        # Initialize monitoring and metrics
+        self.logger = get_structured_logger("pipeline")
+        self.metrics = get_metrics_collector()
+        self.monitor = get_pipeline_monitor()
+        
+        # Initialize performance processor
+        max_workers = self.global_cfg.get("parallel_workers", 2)
+        self.parallel_processor = ParallelProcessor(max_workers=max_workers)
 
         ensure_dirs()
 
+    @monitor_performance("pipeline_run")
     def run(self) -> None:
         lg_sum = logging.getLogger("summary")
+        
+        # Start pipeline monitoring
+        run_id = f"pipeline_{int(time.time())}"
+        current_run = self.monitor.start_run(run_id)
+        
+        self.logger.info("🚀 Starting ETL pipeline run", run_id=run_id, sources_file=str(self.sources_yaml_path))
+        self.metrics.set_gauge("pipeline.status", 1)  # 1 = running
+        
+        # ---------- 0. PRE-PIPELINE CLEANUP -------------------------------
+        # Clean downloads and staging folders for fresh data
+        cleanup_downloads = self.global_cfg.get("cleanup_downloads_before_run", True)
+        cleanup_staging = self.global_cfg.get("cleanup_staging_before_run", True)
+        
+        if cleanup_downloads or cleanup_staging:
+            lg_sum.info("🧹 Starting pre-pipeline cleanup...")
+            cleanup_before_pipeline_run(cleanup_downloads, cleanup_staging)
 
         # ---------- 1. DOWNLOAD & STAGING ---------------------------------
-        for src in Source.load_all(self.sources_yaml_path):
+        sources = list(Source.load_all(self.sources_yaml_path))
+        self.logger.info("📋 Found sources to process", source_count=len(sources))
+        
+        for src in sources:
             if not src.enabled:
-                lg_sum.info("⏭  Skipped (disabled): %s", src.name)
+                self.logger.info("⏭ Skipped (disabled)", source_name=src.name)
                 self.summary.log_download("skip")
                 continue
 
             handler_cls = self.handler_map.get(src.type)
             if not handler_cls:
-                lg_sum.warning("🤷  Unknown type '%s' → skipped: %s", src.type, src.name)
+                self.logger.warning("🤷 Unknown type, skipped", source_name=src.name, source_type=src.type)
                 self.summary.log_download("skip")
                 continue
 
             try:
-                lg_sum.info("🚚 Downloading : %s", src.name)
+                start_time = time.time()
+                self.logger.info("🚚 %s" % src.name)
+                
                 handler_cls(src, global_config=self.global_cfg).fetch()
+                
+                download_duration = time.time() - start_time
+                self.metrics.record_timing("download.duration_ms", download_duration * 1000, 
+                                         tags={"source": src.name, "type": src.type})
+                self.metrics.increment_counter("download.success", tags={"source": src.name})
+                
                 self.summary.log_download("done")
-            except Exception as exc:
+                self.monitor.record_source_processed(success=True)
+                
+            except (FileNotFoundError, arcpy.ExecuteError) as exc:
                 self.summary.log_download("error")
                 self.summary.log_error(src.name, str(exc))
-                lg_sum.error("❌ Failed        : %s  (%s)", src.name, exc)
+                self.logger.error("❌ Download failed", source_name=src.name, error=exc)
+                
+                self.metrics.increment_counter("download.error", tags={"source": src.name})
+                self.monitor.record_source_processed(success=False, error=str(exc))
+                
                 if not self.global_cfg.get("continue_on_failure", True):
+                    self.monitor.end_run("failed")
                     raise        # ---------- 2. STAGE → staging.gdb --------------------------------
-        lg_sum.info("📦 Staging complete → building FileGDB …")
+        self.logger.info("📦 Starting staging phase")
         
         # Reset staging GDB to avoid conflicts with existing feature classes
         try:
             from .utils.gdb_utils import reset_gdb
             if paths.GDB.exists():
-                lg_sum.info("🗑️ Resetting existing staging.gdb to avoid conflicts")
+                self.logger.info("🗑️ Resetting existing staging.gdb")
                 reset_gdb(paths.GDB)
-            lg_sum.info("✅ Staging GDB reset complete")
-        except Exception as reset_exc:
-            lg_sum.warning("⚠️ Failed to reset staging GDB: %s", reset_exc)
+            self.logger.info("✅ Staging GDB reset complete")
+        except (ImportError, arcpy.ExecuteError, OSError) as reset_exc:
+            self.logger.warning("⚠️ Failed to reset staging GDB", error=reset_exc)
             if not self.global_cfg.get("continue_on_failure", True):
+                self.monitor.end_run("failed")
                 raise
         
         staging_success = True
         try:
+            start_time = time.time()
             loader = ArcPyFileGDBLoader(
                 summary=self.summary,
                 gdb_path=paths.GDB,
                 sources_yaml_path=self.sources_yaml_path,
             )
             loader.run()
-            lg_sum.info("✅ Staging.gdb built successfully")
-        except Exception as exc:
+            
+            staging_duration = time.time() - start_time
+            self.metrics.record_timing("staging.duration_ms", staging_duration * 1000)
+            self.metrics.increment_counter("staging.success")
+            
+            self.logger.info("✅ Staging.gdb built successfully", duration_seconds=staging_duration)
+            
+        except (arcpy.ExecuteError, FileNotFoundError) as exc:
             staging_success = False
             self.summary.log_staging("error")
             self.summary.log_error("GDB loader", str(exc))
-            lg_sum.error("❌ GDB load failed (%s)", exc, exc_info=True)
+            
+            self.logger.error("❌ GDB load failed", error=exc)
+            self.metrics.increment_counter("staging.error")
+            
             if not self.global_cfg.get("continue_on_failure", True):
+                self.monitor.end_run("failed")
                 raise
             else:
-                lg_sum.warning("⚠️ Continuing despite staging failures due to continue_on_failure=True")
+                self.logger.warning("⚠️ Continuing despite staging failures")
 
         # ---------- 3. GEOPROCESS staging.gdb IN-PLACE -------------------
         if staging_success or self.global_cfg.get("continue_on_failure", True):
@@ -117,29 +185,43 @@ class Pipeline:
         else:
             lg_sum.warning("⚠️ Skipping geoprocessing and SDE loading due to staging failures")
 
-        lg_sum.info("🏁 Pipeline finished – data live in PROD SDE")
+        # Pipeline completion
+        self.metrics.set_gauge("pipeline.status", 0)  # 0 = completed
+        self.monitor.end_run("completed")
+        
+        # Log final metrics
+        pipeline_stats = self.monitor.get_current_run()
+        if pipeline_stats:
+            self.logger.info("🏁 Pipeline completed successfully", 
+                           duration_seconds=pipeline_stats.duration,
+                           sources_processed=pipeline_stats.sources_processed,
+                           success_rate=pipeline_stats.success_rate)
+        
         self.summary.dump()
 
+    @monitor_performance("geoprocessing")
     def _apply_geoprocessing_inplace(self) -> None:
         """🔄 Step 3: In-place geoprocessing of staging.gdb (clip + project only)"""
-        lg_sum = logging.getLogger("summary")
         
         # Check if geoprocessing is enabled
         geoprocessing_config = self.global_cfg.get("geoprocessing", {})
         if not geoprocessing_config.get("enabled", True):
-            lg_sum.info("⏭️ Geoprocessing disabled, staging.gdb unchanged")
+            self.logger.info("⏭️ Geoprocessing disabled")
             return
             
         # Get AOI boundary path
         aoi_boundary = Path(geoprocessing_config.get("aoi_boundary", "data/connections/municipality_boundary.shp"))
         if not aoi_boundary.exists():
-            lg_sum.error("❌ AOI boundary not found: %s", aoi_boundary)
+            self.logger.error("❌ AOI boundary not found", aoi_path=str(aoi_boundary))
             if not self.global_cfg.get("continue_on_failure", True):
                 raise FileNotFoundError(f"AOI boundary not found: {aoi_boundary}")
             return
             
         try:
-            lg_sum.info("🔄 Geoprocessing staging.gdb in-place: clip + project")
+            start_time = time.time()
+            self.logger.info("🔄 Starting geoprocessing", 
+                           target_srid=geoprocessing_config.get("target_srid", 3006),
+                           aoi_path=str(aoi_boundary))
             
             # Perform simplified in-place geoprocessing (clip + project only)
             geoprocess.geoprocess_staging_gdb(
@@ -149,19 +231,24 @@ class Pipeline:
                 pp_factor=geoprocessing_config.get("parallel_processing_factor", "100")
             )
             
-            lg_sum.info("✅ In-place geoprocessing complete")
+            geoprocessing_duration = time.time() - start_time
+            self.metrics.record_timing("geoprocessing.duration_ms", geoprocessing_duration * 1000)
+            self.metrics.increment_counter("geoprocessing.success")
             
-        except Exception as exc:
-            lg_sum.error("❌ Geoprocessing failed: %s", exc, exc_info=True)
+            self.logger.info("✅ Geoprocessing complete", duration_seconds=geoprocessing_duration)
+            
+        except arcpy.ExecuteError as exc:
+            self.logger.error("❌ Geoprocessing failed", error=exc)
+            self.metrics.increment_counter("geoprocessing.error")
             if not self.global_cfg.get("continue_on_failure", True):
                 raise
 
+    @monitor_performance("sde_loading")
     def _load_to_sde(self, source_gdb: Path) -> None:
-        """🚚 Step 4: Load processed GDB to production SDE"""
-        lg_sum = logging.getLogger("summary")
+        """🚚 Step 4: Load processed GDB to production SDE with parallel processing"""
         
         if not source_gdb.exists():
-            lg_sum.error("❌ Source GDB not found: %s", source_gdb)
+            self.logger.error("❌ Source GDB not found", gdb_path=str(source_gdb))
             return
 
         # Get SDE connection from config and validate
@@ -174,50 +261,48 @@ class Pipeline:
         if not self._validate_sde_connection_file(sde_connection_path):
             return
 
-        lg_sum.info("🚚 Loading to SDE from processed %s", source_gdb.name)
+        self.logger.info("🚚 Starting SDE loading", 
+                        source_gdb=source_gdb.name,
+                        sde_connection=sde_connection)
         
         all_feature_classes = self._discover_feature_classes(source_gdb)
         if not all_feature_classes:
-            lg_sum.warning("⚠️ No feature classes found in %s", source_gdb)
+            self.logger.warning("⚠️ No feature classes found", gdb_path=str(source_gdb))
             return
 
-        lg_sum.info("📋 Found %d total feature classes to load", len(all_feature_classes))
+        self.logger.info("📋 Feature classes discovered", fc_count=len(all_feature_classes))
+        
+        # Check if parallel loading is enabled
+        use_parallel = self.global_cfg.get("parallel_sde_loading", True)
+        
+        if use_parallel and len(all_feature_classes) > 1:
+            self._load_to_sde_parallel(all_feature_classes, sde_connection)
+        else:
+            self._load_to_sde_sequential(all_feature_classes, sde_connection)
 
-        for fc_path, fc_name in all_feature_classes:
-            try:
-                self._load_fc_to_sde(fc_path, fc_name, sde_connection)
-                self.summary.log_sde("done")
-            except Exception as exc:
-                self.summary.log_sde("error")
-                self.summary.log_error(fc_name, f"SDE load failed: {exc}")
-                lg_sum.error("❌ Failed to load %s to SDE: %s", fc_path, exc)
-                if not self.global_cfg.get("continue_on_failure", True):
-                    raise
-
-        lg_sum.info("📊 SDE loading complete: %d loaded, %d errors",
-                    self.summary.sde["done"], self.summary.sde["error"])
+        self.logger.info("📊 SDE loading complete", 
+                        loaded=self.summary.sde["done"], 
+                        errors=self.summary.sde["error"])
 
     def _validate_sde_connection_file(self, path: Path) -> bool:
-        lg_sum = logging.getLogger("summary")
         if not path.exists():
-            lg_sum.error("❌ SDE connection file not found: %s", path)
+            self.logger.error("❌ SDE connection file not found", sde_path=str(path))
             return False
         return True
 
     def _discover_feature_classes(self, gdb: Path) -> list[tuple[str, str]]:
-        lg_sum = logging.getLogger("summary")
         with arcpy.EnvManager(workspace=str(gdb), overwriteOutput=True):
             all_fcs: list[tuple[str, str]] = []
             standalone = arcpy.ListFeatureClasses()
             if standalone:
-                lg_sum.info("📄 Found %d feature classes in root of GDB", len(standalone))
+                self.logger.debug("📄 Found standalone feature classes", count=len(standalone))
                 for fc in standalone:
                     # Use full path for source, just name for target
                     fc_full_path = str(gdb / fc)
                     all_fcs.append((fc_full_path, fc))
             datasets = arcpy.ListDatasets(feature_type="Feature")
             if datasets:
-                lg_sum.info("📁 Found %d feature datasets", len(datasets))
+                self.logger.debug("📁 Found feature datasets", count=len(datasets))
                 for ds in datasets:
                     ds_fcs = arcpy.ListFeatureClasses(feature_dataset=ds)
                     if ds_fcs:
@@ -227,6 +312,85 @@ class Pipeline:
                             all_fcs.append((fc_full_path, fc))
         return all_fcs
 
+    def _load_to_sde_parallel(self, feature_classes: list[tuple[str, str]], sde_connection: str) -> None:
+        """🚀 Load feature classes to SDE in parallel."""
+        self.logger.info("🚀 Using parallel SDE loading", fc_count=len(feature_classes))
+        
+        def load_single_fc(fc_data: tuple[str, str]) -> tuple[str, bool, Optional[str]]:
+            """Load a single feature class and return result."""
+            fc_path, fc_name = fc_data
+            try:
+                self._load_fc_to_sde(fc_path, fc_name, sde_connection)
+                return fc_name, True, None
+            except Exception as e:
+                return fc_name, False, str(e)
+        
+        # Process in parallel
+        start_time = time.time()
+        results = self.parallel_processor.process_sources_parallel(
+            feature_classes, load_single_fc
+        )
+        
+        # Process results
+        success_count = 0
+        error_count = 0
+        
+        for (_, fc_name), result in results:
+            # Handle cases where result might be an exception or tuple
+            if isinstance(result, Exception):
+                self.summary.log_sde("error")
+                self.summary.log_error(fc_name, f"SDE load failed: {result}")
+                error_count += 1
+                self.metrics.increment_counter("sde.load.error", tags={"fc": fc_name})
+                
+                if not self.global_cfg.get("continue_on_failure", True):
+                    raise Exception(f"SDE loading failed for {fc_name}: {result}")
+            else:
+                result_fc_name, success, error = result
+                if success:
+                    self.summary.log_sde("done")
+                    success_count += 1
+                    self.metrics.increment_counter("sde.load.success", tags={"fc": fc_name})
+                else:
+                    self.summary.log_sde("error")
+                    self.summary.log_error(fc_name, f"SDE load failed: {error}")
+                    error_count += 1
+                    self.metrics.increment_counter("sde.load.error", tags={"fc": fc_name})
+                    
+                    if not self.global_cfg.get("continue_on_failure", True):
+                        raise Exception(f"SDE loading failed for {fc_name}: {error}")
+        
+        duration = time.time() - start_time
+        self.metrics.record_timing("sde.parallel_load.duration_ms", duration * 1000)
+        
+        self.logger.info("✅ Parallel SDE loading complete", 
+                        duration_seconds=duration,
+                        success_count=success_count,
+                        error_count=error_count)
+    
+    def _load_to_sde_sequential(self, feature_classes: list[tuple[str, str]], sde_connection: str) -> None:
+        """🔄 Load feature classes to SDE sequentially."""
+        self.logger.info("🔄 Using sequential SDE loading", fc_count=len(feature_classes))
+        
+        for fc_path, fc_name in feature_classes:
+            try:
+                start_time = time.time()
+                self._load_fc_to_sde(fc_path, fc_name, sde_connection)
+                
+                duration = time.time() - start_time
+                self.metrics.record_timing("sde.load.duration_ms", duration * 1000, tags={"fc": fc_name})
+                self.metrics.increment_counter("sde.load.success", tags={"fc": fc_name})
+                
+                self.summary.log_sde("done")
+            except arcpy.ExecuteError as exc:
+                self.summary.log_sde("error")
+                self.summary.log_error(fc_name, f"SDE load failed: {exc}")
+                self.logger.error("❌ Failed to load to SDE", fc_name=fc_name, fc_path=fc_path, error=exc)
+                
+                self.metrics.increment_counter("sde.load.error", tags={"fc": fc_name})
+                
+                if not self.global_cfg.get("continue_on_failure", True):
+                    raise
 
     def _load_fc_to_sde(self, source_fc_path: str, fc_name: str, sde_connection: str) -> None:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
@@ -275,6 +439,7 @@ class Pipeline:
                 dataset,
                 sde_fc_name,
                 load_strategy,
+                record_count,
             )
 
                 
@@ -291,66 +456,76 @@ class Pipeline:
         dataset: str,
         sde_fc_name: str,
         load_strategy: str,
+        record_count: int = 0,
     ) -> None:
-        lg_sum = logging.getLogger("summary")
-
+        start_time = time.time()
+        
         if arcpy.Exists(target_path):
             if load_strategy == "truncate_and_load":
                 try:
-                    lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
+                    self.logger.info("🗑️ Truncating existing FC", dataset=dataset, fc=sde_fc_name)
                     arcpy.management.TruncateTable(target_path)
-                    lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
+                    self.logger.info("📄 Loading fresh data", dataset=dataset, fc=sde_fc_name, records=record_count)
                     arcpy.management.Append(inputs=source_fc_path, target=target_path, schema_type="NO_TEST")
-                    lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
+                    
+                    duration = time.time() - start_time
+                    self.metrics.record_timing("sde.truncate_load.duration_ms", duration * 1000)
+                    self.logger.info("🚚→ Truncated and loaded", dataset=dataset, fc=sde_fc_name, duration_seconds=duration)
                 except arcpy.ExecuteError as exc:
                     # If truncate_and_load fails (e.g., geometry type mismatch), try replace strategy
                     if "shape type" in str(exc).lower() or "geometry" in str(exc).lower():
-                        lg_sum.warning("⚠️ Geometry type mismatch, switching to replace strategy: %s\\%s", dataset, sde_fc_name)
-                        lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
+                        self.logger.warning("⚠️ Geometry type mismatch, switching to replace strategy", 
+                                          dataset=dataset, fc=sde_fc_name)
+                        self.logger.info("🗑️ Deleting existing FC", dataset=dataset, fc=sde_fc_name)
                         arcpy.management.Delete(target_path)
-                        lg_sum.info("🆕 Creating replacement FC: %s\\%s", dataset, sde_fc_name)
+                        self.logger.info("🆕 Creating replacement FC", dataset=dataset, fc=sde_fc_name)
                         arcpy.conversion.FeatureClassToFeatureClass(
                             in_features=source_fc_path,
                             out_path=sde_dataset_path,
                             out_name=sde_fc_name,
                         )
-                        lg_sum.info("🚚→  %s\\%s (replaced due to geometry mismatch)", dataset, sde_fc_name)
+                        
+                        duration = time.time() - start_time
+                        self.metrics.record_timing("sde.replace_load.duration_ms", duration * 1000)
+                        self.logger.info("🚚→ Replaced due to geometry mismatch", 
+                                        dataset=dataset, fc=sde_fc_name, duration_seconds=duration)
                     else:
                         raise
             elif load_strategy == "replace":
-                lg_sum.info("🗑️ Deleting existing FC: %s\\%s", dataset, sde_fc_name)
+                self.logger.info("🗑️ Deleting existing FC", dataset=dataset, fc=sde_fc_name)
                 arcpy.management.Delete(target_path)
-                lg_sum.info("🆕 Creating replacement FC: %s\\%s", dataset, sde_fc_name)
+                self.logger.info("🆕 Creating replacement FC", dataset=dataset, fc=sde_fc_name, records=record_count)
                 arcpy.conversion.FeatureClassToFeatureClass(
                     in_features=source_fc_path,
                     out_path=sde_dataset_path,
                     out_name=sde_fc_name,
                 )
-                lg_sum.info("🚚→  %s\\%s (replaced)", dataset, sde_fc_name)
+                
+                duration = time.time() - start_time
+                self.metrics.record_timing("sde.replace.duration_ms", duration * 1000)
+                self.logger.info("🚚→ Replaced", dataset=dataset, fc=sde_fc_name, duration_seconds=duration)
             elif load_strategy == "append":
-                lg_sum.warning(
-                    "⚠️ Appending to existing FC (may create duplicates): %s\\%s",
-                    dataset,
-                    sde_fc_name,
-                )
+                self.logger.warning("⚠️ Appending to existing FC (may create duplicates)", 
+                                  dataset=dataset, fc=sde_fc_name)
                 arcpy.management.Append(inputs=source_fc_path, target=target_path, schema_type="NO_TEST")
-                lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
+                
+                duration = time.time() - start_time
+                self.metrics.record_timing("sde.append.duration_ms", duration * 1000)
+                self.logger.info("🚚→ Appended", dataset=dataset, fc=sde_fc_name, duration_seconds=duration, records=record_count)
             else:
-                lg_sum.error("❌ Unknown sde_load_strategy: %s", load_strategy)
+                self.logger.error("❌ Unknown sde_load_strategy", strategy=load_strategy)
         else:
-            lg_sum.info("🆕 Creating new FC: %s\\%s", dataset, sde_fc_name)
-            lg_sum.info(
-                "🔍 Using: in_features='%s', out_path='%s', out_name='%s'",
-                source_fc_path,
-                sde_dataset_path,
-                sde_fc_name,
-            )
+            self.logger.info("🆕 Creating new FC", dataset=dataset, fc=sde_fc_name, records=record_count)
+            
             arcpy.conversion.FeatureClassToFeatureClass(
                 in_features=source_fc_path,
                 out_path=sde_dataset_path,
                 out_name=sde_fc_name,
             )
-            lg_sum.info("🚚→  %s\\%s (created)", dataset, sde_fc_name)
+            
+            duration = time.time() - start_time
+            self.metrics.record_timing("sde.create.duration_ms", duration * 1000)
+            self.logger.info("🚚→ Created", dataset=dataset, fc=sde_fc_name, duration_seconds=duration)
 
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:
         """📝 Extract SDE dataset and feature class names from staging name.
@@ -367,7 +542,7 @@ class Pipeline:
             fc_name_clean = fc_name_clean.lower()
         
         # Sanitize name for SDE compatibility (remove/replace invalid chars)
-        fc_name_clean = self._sanitize_sde_name(fc_name_clean)
+        fc_name_clean = sanitize_sde_name(fc_name_clean)
         
         # Use your existing Underlag pattern
         schema = self.global_cfg.get("sde_schema", "GNG")
@@ -380,37 +555,3 @@ class Pipeline:
             
         return dataset, fc_name_clean
 
-    def _sanitize_sde_name(self, name: str) -> str:
-        """🧹 Sanitize feature class name for SDE compatibility.
-        
-        SDE naming rules:
-        - Must start with letter or underscore
-        - Can contain letters, numbers, underscores
-        - No spaces, hyphens, or special characters
-        - Max 128 characters (plenty of room)
-        """
-        import re
-        
-        original_name = name
-        
-        # Replace problematic characters
-        # Convert common problematic chars to underscores
-        name = re.sub(r'[-\s\.]+', '_', name)  # hyphens, spaces, dots → underscore
-        name = re.sub(r'[åäö]', lambda m: {'å': 'a', 'ä': 'a', 'ö': 'o'}[m.group()], name)  # Swedish chars
-        name = re.sub(r'[^\w]', '_', name)  # Any remaining non-word chars → underscore
-        name = re.sub(r'_{2,}', '_', name)  # Multiple underscores → single underscore
-        name = name.strip('_')  # Remove leading/trailing underscores
-        
-        # Ensure it starts with letter or underscore (not number)
-        if name and name[0].isdigit():
-            name = f"fc_{name}"
-        
-        # Ensure not empty
-        if not name:
-            name = "unnamed_fc"
-            
-        lg_sum = logging.getLogger("summary")
-        if name != original_name:  # If any changes were made
-            lg_sum.info("🧹 Sanitized SDE name: %s → %s", original_name, name)
-            
-        return name
