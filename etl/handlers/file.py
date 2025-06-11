@@ -184,7 +184,7 @@ class FileDownloadHandler:
         final_staging_destination_dir = paths.STAGING / self.src.authority / sanitized_staging_subdir_name
         final_staging_destination_dir.mkdir(parents=True, exist_ok=True)
 
-        log.info("Attempting to download: %s \n    -> to local file: %s \n    -> staging dir: %s",
+        log.debug("Attempting to download: %s \n    -> to local file: %s \n    -> staging dir: %s",
                  download_url, download_target_path.name, final_staging_destination_dir.relative_to(paths.ROOT))
 
         try:

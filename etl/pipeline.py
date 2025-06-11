@@ -72,6 +72,8 @@ class Pipeline:
 
     @monitor_performance("pipeline_run")
     def run(self) -> None:
+        lg_sum = logging.getLogger("summary")
+        
         # Start pipeline monitoring
         run_id = f"pipeline_{int(time.time())}"
         current_run = self.monitor.start_run(run_id)
@@ -106,7 +108,7 @@ class Pipeline:
 
             try:
                 start_time = time.time()
-                self.logger.info("🚚 Downloading", source_name=src.name, source_type=src.type)
+                self.logger.info("🚚 %s" % src.name)
                 
                 handler_cls(src, global_config=self.global_cfg).fetch()
                 
@@ -333,19 +335,30 @@ class Pipeline:
         success_count = 0
         error_count = 0
         
-        for (fc_path, fc_name), (result_fc_name, success, error) in results:
-            if success:
-                self.summary.log_sde("done")
-                success_count += 1
-                self.metrics.increment_counter("sde.load.success", tags={"fc": fc_name})
-            else:
+        for (_, fc_name), result in results:
+            # Handle cases where result might be an exception or tuple
+            if isinstance(result, Exception):
                 self.summary.log_sde("error")
-                self.summary.log_error(fc_name, f"SDE load failed: {error}")
+                self.summary.log_error(fc_name, f"SDE load failed: {result}")
                 error_count += 1
                 self.metrics.increment_counter("sde.load.error", tags={"fc": fc_name})
                 
                 if not self.global_cfg.get("continue_on_failure", True):
-                    raise Exception(f"SDE loading failed for {fc_name}: {error}")
+                    raise Exception(f"SDE loading failed for {fc_name}: {result}")
+            else:
+                result_fc_name, success, error = result
+                if success:
+                    self.summary.log_sde("done")
+                    success_count += 1
+                    self.metrics.increment_counter("sde.load.success", tags={"fc": fc_name})
+                else:
+                    self.summary.log_sde("error")
+                    self.summary.log_error(fc_name, f"SDE load failed: {error}")
+                    error_count += 1
+                    self.metrics.increment_counter("sde.load.error", tags={"fc": fc_name})
+                    
+                    if not self.global_cfg.get("continue_on_failure", True):
+                        raise Exception(f"SDE loading failed for {fc_name}: {error}")
         
         duration = time.time() - start_time
         self.metrics.record_timing("sde.parallel_load.duration_ms", duration * 1000)

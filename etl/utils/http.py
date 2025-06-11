@@ -11,6 +11,8 @@ from typing import Tuple, Optional, Final
 from urllib.parse import unquote
 from urllib.request import Request, urlopen
 
+log: Final = logging.getLogger(__name__)
+
 # Regex to find filename in Content-Disposition header
 # Handles filename="fname.ext" and filename*=UTF-8''fname.ext (URL encoded)
 # Also handles cases where filename might not be quoted.
@@ -59,7 +61,7 @@ def fetch_true_filename_parts(download_url: str, timeout: int = 10) -> Tuple[str
     true_filename_str: Optional[str] = None
     final_url_after_redirects: str = download_url # Initialize with original URL
 
-    logging.debug("Attempting to determine true filename for URL: %s", download_url)
+    log.debug("Attempting to determine true filename for URL: %s", download_url)
 
     # 1. Try HEAD request for Content-Disposition
     try:
@@ -77,12 +79,12 @@ def fetch_true_filename_parts(download_url: str, timeout: int = 10) -> Tuple[str
             final_url_after_redirects = resp.geturl()
             cd_header: Optional[str] = resp.getheader("Content-Disposition")
             if cd_header:
-                logging.debug("Found Content-Disposition for %s: %s", final_url_after_redirects, cd_header)
+                log.debug("Found Content-Disposition for %s: %s", final_url_after_redirects, cd_header)
                 true_filename_str = _parse_filename_from_content_disposition(cd_header)
                 if true_filename_str:
-                    logging.info("    Derived filename from Content-Disposition: %s", true_filename_str)
+                    log.info("    Derived filename from Content-Disposition: %s", true_filename_str)
     except Exception as e: # Catching a broad range of exceptions (socket.timeout, URLError, etc.)
-        logging.warning(
+        log.warning(
             f"    HEAD request for Content-Disposition failed for {download_url}: {e}. Will fall back to URL basename."
         )
 
@@ -91,10 +93,10 @@ def fetch_true_filename_parts(download_url: str, timeout: int = 10) -> Tuple[str
         url_path_name: str = Path(final_url_after_redirects).name
         if url_path_name:
             true_filename_str = unquote(url_path_name)
-            logging.info("    Derived filename by unquoting URL basename ('%s'): %s", 
+            log.info("    Derived filename by unquoting URL basename ('%s'): %s", 
                          final_url_after_redirects, true_filename_str)
         else:
-            logging.warning("    Could not derive filename from URL path for %s", final_url_after_redirects)
+            log.warning("    Could not derive filename from URL path for %s", final_url_after_redirects)
             # Fallback to a generic name if all else fails
             return "downloaded_file_from_url", ".unknown"
 

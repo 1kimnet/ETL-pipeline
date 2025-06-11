@@ -157,7 +157,7 @@ class RestApiDownloadHandler:
             params["geometryType"] = "esriGeometryEnvelope"
             params["inSR"] = bbox_sr
             params["spatialRel"] = "esriSpatialRelIntersects"
-            log.info("Applying BBOX: %s (SRID: %s)", bbox_coords, bbox_sr)
+            log.debug("Applying BBOX: %s (SRID: %s)", bbox_coords, bbox_sr)
 
         return params
 
@@ -225,12 +225,12 @@ class RestApiDownloadHandler:
         features = data.get("features", [])
         if not features:
             if page_num == 1:
-                log.info(
+                log.debug(
                     "ℹ️ No features returned for layer %s with current parameters.",
                     layer_name_sanitized,
                 )
             else:
-                log.info(
+                log.debug(
                     "🏁 All features retrieved for layer %s (empty page).",
                     layer_name_sanitized,
                 )
@@ -242,7 +242,7 @@ class RestApiDownloadHandler:
         exceeded_transfer_limit = data.get("exceededTransferLimit", False)
 
         if exceeded_transfer_limit:
-            log.info(
+            log.debug(
                 "⚠️ Exceeded transfer limit for layer %s, fetching next page.",
                 layer_name_sanitized,
             )
@@ -251,7 +251,7 @@ class RestApiDownloadHandler:
         if (
             features_len < effective_page_limit and effective_page_limit > 0
         ) or max_record_count == 0:
-            log.info(
+            log.debug(
                 "🏁 All features likely retrieved for layer %s (less than page limit or server maxRecordCount is 0).",
                 layer_name_sanitized,
             )
@@ -271,7 +271,8 @@ class RestApiDownloadHandler:
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(final_output_data, f, ensure_ascii=False, indent=2)
-            log.info(
+            log.info("✅ %s: %d features", layer_name_sanitized, features_written_total)
+            log.debug(
                 "💾 Successfully saved %d features for layer %s to %s",
                 features_written_total,
                 layer_name_sanitized,
@@ -424,7 +425,7 @@ class RestApiDownloadHandler:
         if max_record_count_from_config is not None:
             try:
                 max_record_count = int(max_record_count_from_config)
-                log.info("Using max_record_count from config: %d", max_record_count)
+                log.debug("Using max_record_count from config: %d", max_record_count)
                 return max_record_count, layer_meta
             except ValueError:
                 log.warning(
@@ -443,16 +444,16 @@ class RestApiDownloadHandler:
         if layer_meta:
             if layer_meta.get("maxRecordCount") is not None:
                 max_record_count = layer_meta["maxRecordCount"]
-                log.info("Service metadata maxRecordCount: %d", max_record_count)
+                log.debug("Service metadata maxRecordCount: %d", max_record_count)
             elif layer_meta.get("standardMaxRecordCount") is not None:
                 max_record_count = layer_meta["standardMaxRecordCount"]
-                log.info(
+                log.debug(
                     "Service metadata standardMaxRecordCount: %d",
                     max_record_count,
                 )
             else:
                 max_record_count = 2000
-                log.info(
+                log.debug(
                     "maxRecordCount not found in layer metadata, using default: %d",
                     max_record_count,
                 )
@@ -487,7 +488,7 @@ class RestApiDownloadHandler:
 
         while True:
             effective_page_limit = 2000 if max_record_count == 0 else max_record_count
-            log.info(
+            log.debug(
                 "Fetching page %d for layer %s (offset %d, limit %d)",
                 page_num,
                 layer_name_sanitized,
@@ -575,9 +576,10 @@ class RestApiDownloadHandler:
         layer_id = layer_info.get("id")
         layer_name_original = layer_info.get("name", f"layer_{layer_id}")
         layer_name_sanitized = sanitize_for_filename(layer_name_original)
-
+        
         query_url = f"{self.src.url.rstrip('/')}/{layer_id}/query"
-        log.info(
+        log.info("🚚 %s", layer_name_sanitized)
+        log.debug(
             "Querying Layer ID: %s (Sanitized Name: %s, Original: %s) from %s",
             layer_id,
             layer_name_sanitized,
@@ -600,19 +602,14 @@ class RestApiDownloadHandler:
         output_path = staging_dir / output_filename
 
         all_features, features_written_total = self._pagination_loop(
-            query_url=query_url,
-            params=params,
+            query_url=query_url,            params=params,
             layer_name_sanitized=layer_name_sanitized,
             max_record_count=max_record_count,
         )
-
+        
         if not all_features:
             if features_written_total == 0:
-                log.info(
-                    "ℹ️ No features found or written for layer %s for source '%s'.",
-                    layer_name_sanitized,
-                    self.src.name,
-                )
+                log.info("ℹ️ %s: no features", layer_name_sanitized)
             return
 
         final_output_data = {
