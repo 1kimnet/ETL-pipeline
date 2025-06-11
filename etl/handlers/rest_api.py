@@ -452,7 +452,7 @@ class RestApiDownloadHandler:
                     max_record_count,
                 )
             else:
-                max_record_count = 2000
+                max_record_count = DEFAULT_MAX_RECORDS
                 log.debug(
                     "maxRecordCount not found in layer metadata, using default: %d",
                     max_record_count,
