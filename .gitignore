@@ -219,3 +219,7 @@ test_wfs_simple.py
 validate_wfs.py
 config/test_wfs_source.yaml
 tests/integration/test_wfs_source.py
+test_cleanup.py
+.vs/VSWorkspaceState.json
+.vs/ETL-pipeline/v17/.wsuo
+.vs/ETL-pipeline/v17/DocumentLayout.json
