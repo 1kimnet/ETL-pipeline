@@ -64,51 +64,49 @@ class MappingManager:
         log.info("🗺️  Mapping manager initialized with %d mappings", len(self.mappings))
     
     def load_mappings(self, mappings_file: Path) -> None:
-        """Load mappings from YAML file."""
-        if not mappings_file.exists():
-            log.warning("⚠️ Mappings file not found: %s", mappings_file)
-            return
+        """🔄 Load mappings from YAML file.
         
+        Args:
+            mappings_file: Path to the mappings YAML file.
+            
+        Raises:
+            ConfigurationError: If the file cannot be loaded or parsed.
+        """
+        if not mappings_file.exists():
+            log.info("📋 No mappings file found at %s, using defaults only", mappings_file)
+            return
+            
         try:
             with mappings_file.open('r', encoding='utf-8') as f:
                 content = yaml.safe_load(f)
-            
+                
+            # Handle empty file or missing mappings section
             if not content:
-                log.info("📄 Empty mappings file: %s", mappings_file)
+                log.info("📋 Empty mappings file, using defaults only")
                 return
+                
+            # Load settings if present
+            if 'settings' in content and content['settings']:
+                self.settings = MappingSettings(**content['settings'])
+                log.info("⚙️  Loaded mapping settings: %s", self.settings)
             
-            # Load settings
-            if 'settings' in content:
-                settings_data = content['settings']
-                self.settings = MappingSettings(
-                    default_schema=settings_data.get('default_schema', 'GNG'),
-                    default_dataset_pattern=settings_data.get('default_dataset_pattern', 'Underlag_{authority}'),
-                    default_fc_pattern=settings_data.get('default_fc_pattern', '{authority}_{source_name}'),
-                    validate_datasets=settings_data.get('validate_datasets', True),
-                    create_missing_datasets=settings_data.get('create_missing_datasets', True),
-                    skip_unmappable_sources=settings_data.get('skip_unmappable_sources', False)
-                )
-            
-            # Load mappings
-            if 'mappings' in content:
-                for mapping_data in content['mappings']:
-                    try:
-                        mapping = OutputMapping(
-                            staging_fc=mapping_data['staging_fc'],
-                            sde_fc=mapping_data['sde_fc'],
-                            sde_dataset=mapping_data['sde_dataset'],
-                            description=mapping_data.get('description'),
-                            enabled=mapping_data.get('enabled', True),
-                            schema=mapping_data.get('schema', self.settings.default_schema)
-                        )
-                        
-                        self.mappings[mapping.staging_fc] = mapping
-                        
-                    except (KeyError, ValidationError) as e:
-                        log.error("❌ Invalid mapping in %s: %s", mappings_file, e)
-                        continue
-            
-            log.info("✅ Loaded %d mappings from %s", len(self.mappings), mappings_file.name)
+            # Load individual mappings if present
+            mappings_data = content.get('mappings', [])
+            if not mappings_data:
+                log.info("📋 No mappings defined, using defaults only")
+                return
+                
+            for mapping_data in mappings_data:
+                try:
+                    mapping = OutputMapping(**mapping_data)
+                    self.mappings[mapping.staging_fc] = mapping
+                    log.debug("📌 Loaded mapping: %s → %s.%s", 
+                             mapping.staging_fc, mapping.sde_dataset, mapping.sde_fc)
+                except TypeError as e:
+                    log.warning("⚠️  Skipping invalid mapping %s: %s", mapping_data, e)
+                    continue
+                
+            log.info("✅ Loaded %d mappings from %s", len(self.mappings), mappings_file)
             
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Invalid YAML in mappings file {mappings_file}: {e}") from e
@@ -270,7 +268,7 @@ class MappingManager:
         # Prepare data for serialization
         mappings_data = []
         for mapping in self.mappings.values():
-            mapping_dict = {
+            mapping_dict: Dict[str, Any] = {
                 'staging_fc': mapping.staging_fc,
                 'sde_fc': mapping.sde_fc,
                 'sde_dataset': mapping.sde_dataset

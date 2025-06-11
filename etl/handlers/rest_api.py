@@ -26,7 +26,11 @@ log = logging.getLogger(__name__)
 # Default BBOX from your document (SWEREF99 TM)
 DEFAULT_BBOX_COORDS = "586206,6551160,647910,6610992"
 DEFAULT_BBOX_SR = "3006"
+DEFAULT_MAX_RECORDS = 5000
 
+# Output format constants
+GEOJSON_FORMAT = "geojson"
+SWEREF99_TM_WKID = 3006
 
 class RestApiDownloadHandler:
     """Handles downloading data from ESRI REST API MapServer and FeatureServer Query endpoints."""
@@ -67,8 +71,8 @@ class RestApiDownloadHandler:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
         }
         
+        timeout = self.global_config.get("timeout", 30)
         try:
-            timeout = self.global_config.get("timeout", 30)
             response = requests.get(
                 service_url, 
                 params=params, 
@@ -574,6 +578,10 @@ class RestApiDownloadHandler:
     ) -> None:
         """Fetches data for a single layer."""
         layer_id = layer_info.get("id")
+        if not layer_id:
+            log.error("❌ Layer ID is missing from layer_info: %s", layer_info)
+            return
+            
         layer_name_original = layer_info.get("name", f"layer_{layer_id}")
         layer_name_sanitized = sanitize_for_filename(layer_name_original)
         

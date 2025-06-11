@@ -99,7 +99,7 @@ sources:
     staged_data_type: "geojson" # Change this to "geojson"
     raw:
       format: "geojson"       # Change this to "geojson"
-      # layer_ids: [0, 1, 2, 3, 4, 5] # Optional: Omit to fetch all layers, or specify if needed
+      layer_ids: [0]
 
   - authority: "LST"
     name: "Riksintressen - Vindbruk"

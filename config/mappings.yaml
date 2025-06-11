@@ -4,55 +4,11 @@
 
 mappings:
   # MSB (Myndigheten för samhällsskydd och beredskap)
-  - staging_fc: "MSB_Stamnat"
-    sde_fc: "Stamnat_sodermanland"
-    sde_dataset: "Underlag_MSB"
-    description: "MSB national infrastructure data for Södermanland"
-  
-  - staging_fc: "MSB_Riskomraden"
-    sde_fc: "Riskzoner_MSB"
-    sde_dataset: "Underlag_MSB"
-    description: "MSB risk areas"
-  
-  # Naturvårdsverket mappings
-  - staging_fc: "NVV_Naturreservat"
-    sde_fc: "Naturskydd_Reservat"
-    sde_dataset: "Underlag_Naturvard"
-    description: "Nature reserves from Naturvårdsverket"
-  
-  - staging_fc: "NVV_Nationalparker"
-    sde_fc: "Naturskydd_Nationalparker"
-    sde_dataset: "Underlag_Naturvard"
-    description: "National parks"
-  
-  # Försvarsmakten mappings
-  - staging_fc: "FM_Riksintressen"
-    sde_fc: "Forsvar_Riksintresse"
-    sde_dataset: "Underlag_Forsvar"
-    description: "Defense national interests"
-  
-  # SGU (Sveriges geologiska undersökning) mappings
-  - staging_fc: "SGU_Berggrund"
-    sde_fc: "Geologi_Berggrund_50k"
-    sde_dataset: "Underlag_Geologi"
-    description: "Bedrock geology 1:50,000"
-  
-  - staging_fc: "SGU_Jordarter"
-    sde_fc: "Geologi_Jordarter_25k"
-    sde_dataset: "Underlag_Geologi"
-    description: "Soil types 1:25,000"
-  
-  # Custom regional mappings
-  - staging_fc: "REGIONAL_Detaljplaner"
-    sde_fc: "Plandata_Detaljplan"
-    sde_dataset: "Underlag_Planering"
-    description: "Detailed plans from regional sources"
-  
-  - staging_fc: "KOMMUN_Oversiktsplan"
-    sde_fc: "Plandata_Oversikt"
-    sde_dataset: "Underlag_Planering"
-    description: "Municipal comprehensive plans"
-
+  - staging_fc: "LST_lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2_polygon"
+    sde_fc: "Riksintresse_rorligt_friluftsliv"
+    sde_dataset: "Underlag_LST"
+    description: "Riksintresse för rörligt friluftsliv enligt MB 4 kap 1§ 2 st"
+    
 # Global mapping settings
 settings:
   # Default schema prefix for all SDE datasets
