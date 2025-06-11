@@ -223,3 +223,4 @@ test_cleanup.py
 .vs/VSWorkspaceState.json
 .vs/ETL-pipeline/v17/.wsuo
 .vs/ETL-pipeline/v17/DocumentLayout.json
+scripts/checkDB.py
