@@ -114,18 +114,34 @@ class MappingManager:
             raise ConfigurationError(f"Failed to load mappings from {mappings_file}: {e}") from e
     
     def get_output_mapping(self, source: Source, staging_fc_name: str) -> OutputMapping:
-        """Get output mapping for a source, falling back to default logic if not mapped."""
-        # Check for explicit mapping first
+        """🔍 Get output mapping for a staging feature class.
+    
+        Args:
+            source: The data source.
+            staging_fc_name: Name of the staging feature class.
+        
+        Returns:
+            OutputMapping with target SDE details.
+        """
+        log.info("🔍 Looking for mapping: staging_fc='%s', available mappings: %s", 
+                 staging_fc_name, list(self.mappings.keys()))
+    
+        # First check for exact custom mapping
         if staging_fc_name in self.mappings:
             mapping = self.mappings[staging_fc_name]
-            if mapping.enabled:
-                log.debug("📍 Using explicit mapping for %s -> %s.%s", 
-                         staging_fc_name, mapping.sde_dataset, mapping.sde_fc)
+            log.info("📌 Found exact mapping: %s → %s.%s", 
+                    staging_fc_name, mapping.sde_dataset, mapping.sde_fc)
+            return mapping
+    
+        # Check for partial matches (in case of naming variations)
+        for mapping_key, mapping in self.mappings.items():
+            if staging_fc_name.lower() in mapping_key.lower() or mapping_key.lower() in staging_fc_name.lower():
+                log.info("📌 Found partial mapping: %s ≈ %s → %s.%s", 
+                        staging_fc_name, mapping_key, mapping.sde_dataset, mapping.sde_fc)
                 return mapping
-            else:
-                log.debug("⏭️ Mapping for %s is disabled, using default logic", staging_fc_name)
-        
-        # Fall back to default naming logic
+    
+        # No custom mapping found, create default
+        log.info("🔧 No mapping found for '%s', using default pattern", staging_fc_name)
         return self._create_default_mapping(source, staging_fc_name)
     
     def _create_default_mapping(self, source: Source, staging_fc_name: str) -> OutputMapping:

@@ -5,10 +5,10 @@
 mappings:
   # MSB (Myndigheten för samhällsskydd och beredskap)
   - staging_fc: "LST_lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2_polygon"
-    sde_fc: "Riksintresse_rorligt_friluftsliv"
+    sde_fc: "riksintresse_rorligt_friluftsliv"
     sde_dataset: "Underlag_LST"
     description: "Riksintresse för rörligt friluftsliv enligt MB 4 kap 1§ 2 st"
-    
+
 # Global mapping settings
 settings:
   # Default schema prefix for all SDE datasets
