@@ -559,7 +559,7 @@ class RestApiDownloadHandler:
 
         if layer_meta and layer_meta.get("spatialReference"):
             sr_info = layer_meta.get("spatialReference")
-            if sr_info and sr_info.get("wkid") == 3006:
+            if sr_info and sr_info.get("wkid") == SWEREF99_TM_WKID:
                 collection["crs"] = {
                     "type": "name",
                     "properties": {"name": "urn:ogc:def:crs:EPSG::3006"},
