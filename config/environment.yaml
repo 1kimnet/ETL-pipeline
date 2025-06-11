@@ -1,4 +1,93 @@
-# Environment settings
+# Environment-specific configuration overrides
+# This file defines settings that vary between development, staging, and production
+
+# Development environment settings
+environments:
+  development:
+    debug: true
+    logging:
+      level: "DEBUG"
+      console_level: "DEBUG"
+    retry:
+      max_attempts: 2  # Faster feedback during development
+      timeout: 15
+    processing:
+      parallel_workers: 1  # Easier debugging with single worker
+      memory_limit_mb: 512
+    validation:
+      strict_mode: false
+    security:
+      enable_ssl_verification: false  # Allow self-signed certs in dev
+    paths:
+      download: "dev_downloads"
+      staging: "dev_staging" 
+      output: "dev_output"
+      logs: "dev_logs"
+
+  # Staging environment settings
+  staging:
+    debug: false
+    logging:
+      level: "INFO"
+      console_level: "INFO"
+    retry:
+      max_attempts: 3
+      timeout: 30
+    processing:
+      parallel_workers: 2
+      memory_limit_mb: 1024
+    validation:
+      strict_mode: true
+    security:
+      enable_ssl_verification: true
+    paths:
+      download: "/opt/etl/staging/downloads"
+      staging: "/opt/etl/staging/staging"
+      output: "/opt/etl/staging/output"
+      logs: "/var/log/etl/staging"
+
+  # Production environment settings
+  production:
+    debug: false
+    logging:
+      level: "INFO"
+      console_level: "WARNING"
+      max_file_size_mb: 50
+      backup_count: 10
+    retry:
+      max_attempts: 5
+      base_delay: 2.0
+      backoff_factor: 2.5
+      max_delay: 600
+      timeout: 60
+      circuit_breaker_threshold: 3
+      circuit_breaker_timeout: 120
+    processing:
+      parallel_workers: 4
+      memory_limit_mb: 2048
+      chunk_size: 5000
+    validation:
+      strict_mode: true
+      max_validation_errors: 50
+    security:
+      enable_ssl_verification: true
+      max_file_size_mb: 2048
+      trusted_hosts:
+        - "geodata.naturvardsverket.se"
+        - "www.forsvarsmakten.se"
+        - "resource.sgu.se"
+    paths:
+      download: "/opt/etl/prod/downloads"
+      staging: "/opt/etl/prod/staging"
+      output: "/opt/etl/prod/output"
+      temp: "/tmp/etl"
+      logs: "/var/log/etl"
+    database:
+      pool_size: 10
+      max_overflow: 20
+      pool_timeout: 60
+
+# Legacy compatibility - map old structure to new
 directories:
   download_dir: "data/downloads"  # Raw downloads location
   staging_dir: "data/staging"     # Staging area for processing
@@ -8,3 +97,16 @@ directories:
 staging_gdb:
   name: "staging.gdb"
   create_if_missing: true
+
+# Environment variable mappings
+env_vars:
+  ETL_ENVIRONMENT: "environment"
+  ETL_LOG_LEVEL: "logging.level"
+  ETL_DEBUG: "debug"
+  ETL_DOWNLOAD_PATH: "paths.download"
+  ETL_STAGING_PATH: "paths.staging"
+  ETL_OUTPUT_PATH: "paths.output"
+  ETL_DB_CONNECTION: "database.connection_string"
+  ETL_MAX_WORKERS: "processing.parallel_workers"
+  ETL_MEMORY_LIMIT: "processing.memory_limit_mb"
+  ETL_SSL_VERIFY: "security.enable_ssl_verification"

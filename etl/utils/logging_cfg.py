@@ -13,7 +13,7 @@ LOG_DIR: Final = Path("logs")         # <— adjust if you want a different fold
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def configure_logging(level_on_console: str = "VERBOSE") -> None:
+def configure_logging(level_on_console: str = "INFO") -> None:
     """Initialise two log files + console summary output."""
     today = datetime.now().strftime("%Y%m%d")
 
@@ -28,6 +28,10 @@ def configure_logging(level_on_console: str = "VERBOSE") -> None:
                 "format": "%(asctime)s  %(levelname)-7s  %(message)s",
                 "datefmt": "%H:%M:%S",
             },
+            "console_clean": {
+                "format": "%(asctime)s  %(levelname)-7s  %(message)s",
+                "datefmt": "%H:%M:%S",
+            },
             "debug": {
                 "format": (
                     "%(asctime)s  %(levelname)-7s  "
@@ -39,7 +43,7 @@ def configure_logging(level_on_console: str = "VERBOSE") -> None:
             "console": {
                 "class": "logging.StreamHandler",
                 "level": level_on_console,
-                "formatter": "summary",
+                "formatter": "console_clean",
             },
             "summary_file": {
                 "class": "logging.FileHandler",
@@ -55,17 +59,31 @@ def configure_logging(level_on_console: str = "VERBOSE") -> None:
                 "encoding": "utf-8",
                 "formatter": "debug",
             },
-        },
-        "loggers": {
+        },        "loggers": {
             "summary": {
                 "level": "INFO",
                 "handlers": ["console", "summary_file"],
                 "propagate": False,
             },
+            "etl.handlers": {
+                "level": "DEBUG",
+                "handlers": ["summary_file", "debug_file"],
+                "propagate": False,
+            },
+            "etl.utils.io": {
+                "level": "DEBUG", 
+                "handlers": ["summary_file", "debug_file"],
+                "propagate": False,
+            },
+            "etl": {
+                "level": "INFO",
+                "handlers": ["console", "summary_file", "debug_file"],
+                "propagate": False,
+            },
         },
         "root": {
             "level": "DEBUG",
-            "handlers": ["debug_file"],
+            "handlers": ["console", "debug_file"],
         },
     }
     logging.config.dictConfig(cfg)
