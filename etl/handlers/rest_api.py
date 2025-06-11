@@ -546,7 +546,7 @@ class RestApiDownloadHandler:
         output_format: str,
     ) -> Optional[Dict[str, Any]]:
         """Attach CRS metadata when appropriate."""
-        if output_format != "geojson":
+        if output_format != GEOJSON_FORMAT:
             return layer_meta
 
         if not layer_meta:
