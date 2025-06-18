@@ -224,3 +224,8 @@ test_cleanup.py
 .vs/ETL-pipeline/v17/.wsuo
 .vs/ETL-pipeline/v17/DocumentLayout.json
 scripts/checkDB.py
+PARAMETER_INVESTIGATION_REPORT.md
+PARAMETER_REFERENCE_CHART.md
+config/sources_BACKUP_$(Get-Date -Format 'yyyyMMdd_HHmmss').yaml
+SOURCES_CLEANUP_REPORT.md
+SOURCES_CLEANUP_ANALYSIS.md

@@ -43,8 +43,8 @@ class SDELoader:
         """Validate SDE connection is accessible."""
         try:
             # Test connection by listing datasets
-            arcpy.env.workspace = self.sde_connection
-            arcpy.ListDatasets()
+            with arcpy.EnvManager(workspace=self.sde_connection):
+                arcpy.ListDatasets()
             return True
         except Exception as e:
             log.error("❌ SDE connection validation failed: %s", e)
@@ -173,7 +173,7 @@ class SDELoader:
         )
         
         # Get record count for verification
-        record_count = int(arcpy.management.GetCount(target_fc)[0])
+        record_count = int(str(arcpy.management.GetCount(target_fc)[0]))
         log.info("✅ Loaded %d records to %s", record_count, mapping.sde_fc)
         
         return target_fc
@@ -191,7 +191,7 @@ class SDELoader:
         arcpy.management.CopyFeatures(source_fc, target_fc)
         
         # Get record count for verification
-        record_count = int(arcpy.management.GetCount(target_fc)[0])
+        record_count = int(str(arcpy.management.GetCount(target_fc)[0]))
         log.info("✅ Replaced with %d records: %s", record_count, mapping.sde_fc)
         
         return target_fc
@@ -203,11 +203,11 @@ class SDELoader:
         # Get initial record count
         initial_count = 0
         if arcpy.Exists(target_fc):
-            initial_count = int(arcpy.management.GetCount(target_fc)[0])
+            initial_count = int(str(arcpy.management.GetCount(target_fc)[0]))
         else:
             # Create target if it doesn't exist
             arcpy.management.CopyFeatures(source_fc, target_fc)
-            final_count = int(arcpy.management.GetCount(target_fc)[0])
+            final_count = int(str(arcpy.management.GetCount(target_fc)[0]))
             log.info("✅ Created and loaded %d records to %s", final_count, mapping.sde_fc)
             return target_fc
         
@@ -215,7 +215,7 @@ class SDELoader:
         arcpy.management.Append(source_fc, target_fc, "NO_TEST")
         
         # Get final record count
-        final_count = int(arcpy.management.GetCount(target_fc)[0])
+        final_count = int(str(arcpy.management.GetCount(target_fc)[0]))
         added_count = final_count - initial_count
         
         log.info("✅ Appended %d records to %s (total: %d)", 

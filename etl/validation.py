@@ -9,7 +9,7 @@ import json
 import logging
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dataclass_field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
@@ -26,7 +26,7 @@ class ValidationRule:
     name: str
     rule_type: str  # required, pattern, range, geometry, custom
     field: Optional[str] = None
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: Dict[str, Any] = dataclass_field(default_factory=dict)
     severity: str = "error"  # error, warning, info
     message: Optional[str] = None
 
@@ -40,7 +40,7 @@ class ValidationResult:
     message: str
     record_id: Optional[Union[str, int]] = None
     value: Optional[Any] = None
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: Dict[str, Any] = dataclass_field(default_factory=dict)
 
 
 @dataclass
@@ -53,7 +53,7 @@ class ValidationSummary:
     info_count: int
     rules_applied: int
     validation_time_seconds: float
-    results: List[ValidationResult] = field(default_factory=list)
+    results: List[ValidationResult] = dataclass_field(default_factory=list)
     
     @property
     def validity_rate(self) -> float:
@@ -312,7 +312,7 @@ class GeometryValidator(Validator):
                 message="Geometry missing coordinates",
                 record_id=record_id
             ))
-        elif coordinates is not None:
+        elif coordinates is not None and geom_type is not None:
             coord_results = self._validate_coordinates(coordinates, geom_type, record_id)
             results.extend(coord_results)
         
