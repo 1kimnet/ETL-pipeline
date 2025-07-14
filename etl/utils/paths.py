@@ -10,10 +10,12 @@ class paths:  # pylint: disable=too-few-public-methods
     DOWNLOADS: Final[Path] = DATA / "downloads"
     STAGING: Final[Path] = DATA / "staging"
     GDB: Final[Path] = DATA / "staging.gdb"
+    TEMP: Final[Path] = ROOT / "temp"
 
 
 def ensure_dirs() -> None:
-    for d in (paths.DOWNLOADS, paths.STAGING):
+    """Create all core directories if they don't exist."""
+    for d in (paths.DOWNLOADS, paths.STAGING, paths.TEMP):
         d.mkdir(parents=True, exist_ok=True)
 
 

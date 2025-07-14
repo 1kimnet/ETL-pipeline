@@ -1,6 +1,5 @@
 """Re-export loaders for easy import."""
 
 from .filegdb import ArcPyFileGDBLoader  # noqa: F401
-from .sde_loader import SDELoader  # noqa: F401
 
-__all__ = ["ArcPyFileGDBLoader", "SDELoader"]
+__all__ = ["ArcPyFileGDBLoader"]

@@ -32,10 +32,27 @@ def sanitize_for_arcgis_name(name: str) -> str:
 
 def generate_fc_name(authority: str, source: str) -> str:
     """
-    Combine authority + source → FGDB-safe name, ≤31 chars.
+    🏷️ Generate a feature class name with authority prefix.
+    
+    Examples:
+        generate_fc_name("RAA", "byggnader_sverige_point") → "raa_byggnader_sverige_point"
+        generate_fc_name("RAA", "raa_byggnader_sverige_point") → "raa_byggnader_sverige_point"
+        generate_fc_name("LSTD", "lstd_gi_betesmark_data") → "lstd_gi_betesmark_data"
     """
-    base = f"{authority}_{sanitize_for_arcgis_name(source)}"
-    return base[:_ARCGIS_MAX_LEN].rstrip("_")
+    authority_lower = authority.lower()
+    
+    # Clean the source string and sanitize it first
+    source_clean = sanitize_for_arcgis_name(source)
+    
+    # Check if it already starts with the authority prefix
+    expected_prefix = f"{authority_lower}_"
+    if source_clean.lower().startswith(expected_prefix):
+        # Already has the prefix, just return it
+        return source_clean[:_ARCGIS_MAX_LEN].rstrip("_")
+    
+    # Add the authority prefix
+    result = f"{authority_lower}_{source_clean}"
+    return result[:_ARCGIS_MAX_LEN].rstrip("_")
 
 
 def sanitize_sde_name(name: str) -> str:

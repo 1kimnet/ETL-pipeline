@@ -322,7 +322,32 @@ class MappingManager:
             
         except Exception as e:
             raise ConfigurationError(f"Failed to save mappings to {output_file}: {e}") from e
-
+    
+    def get_explicit_mapping(self, staging_fc_name: str) -> Optional[OutputMapping]:
+        """🔍 Get explicit mapping for a staging feature class (no fallback).
+    
+        Args:
+            staging_fc_name: Name of the staging feature class.
+        
+        Returns:
+            OutputMapping if found, None if no explicit mapping exists.
+        """
+        # First check for exact custom mapping
+        if staging_fc_name in self.mappings:
+            mapping = self.mappings[staging_fc_name]
+            log.info("📌 Found exact mapping: %s → %s.%s", 
+                    staging_fc_name, mapping.sde_dataset, mapping.sde_fc)
+            return mapping
+    
+        # Check for partial matches (in case of naming variations)
+        for mapping_key, mapping in self.mappings.items():
+            if staging_fc_name.lower() in mapping_key.lower() or mapping_key.lower() in staging_fc_name.lower():
+                log.info("📌 Found partial mapping: %s ≈ %s → %s.%s", 
+                        staging_fc_name, mapping_key, mapping.sde_dataset, mapping.sde_fc)
+                return mapping
+    
+        # No explicit mapping found
+        return None
 
 # Global mapping manager instance
 _mapping_manager: Optional[MappingManager] = None

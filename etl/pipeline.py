@@ -105,6 +105,11 @@ class Pipeline:
         # ---------- 1. DOWNLOAD & STAGING ---------------------------------
         sources = list(Source.load_all(self.sources_yaml_path))
         self.logger.info("📋 Found sources to process", source_count=len(sources))
+        
+        # Create SDE loader for proper source-to-dataset mapping
+        from .models import SdeLoader, AppConfig
+        app_config = AppConfig(sde_dataset_pattern=self.global_cfg.get("sde_dataset_pattern", "Underlag_{authority}"))
+        self.sde_loader = SdeLoader(app_config, sources)
 
         for src in sources:
             if not src.enabled:
@@ -687,33 +692,63 @@ class Pipeline:
             )
 
     def _get_sde_names(self, fc_name: str) -> Tuple[str, str]:
-        """📝 Derive target SDE dataset and feature class names."""
+        """
+        📝 Derive target SDE dataset and feature class names, stripping
+        the authority prefix when storing in 'Underlag_{AUTHORITY}'.
+        """        # 1) Mapping manager lookup takes precedence
         if self.mapping_manager:
-            authority = fc_name.split("_", 1)[0]
-            source_stub = Source(name=fc_name, authority=authority)
-            mapping = self.mapping_manager.get_output_mapping(source_stub, fc_name)
-            dataset = (
-                f"{mapping.schema}.{mapping.sde_dataset}"
-                if mapping.schema
-                else mapping.sde_dataset
-            )
-            return dataset, mapping.sde_fc
+            # Try to find an explicit mapping first
+            mapping = self.mapping_manager.get_explicit_mapping(fc_name)
+            if mapping:
+                dataset = f"{mapping.schema}.{mapping.sde_dataset}" if mapping.schema else mapping.sde_dataset
+                return dataset, mapping.sde_fc
 
+        # 2) Next, try SdeLoader if available
+        if hasattr(self, "sde_loader"):
+            lg_sum = logging.getLogger("summary")
+            lg_sum.info("🔍 Using SdeLoader for FC: %s", fc_name)
+            result = self.sde_loader._map_to_sde(fc_name)
+            if result:
+                dataset_name, final_fc_name = result
+                sde_schema = self.global_cfg.get("sde_schema")
+                if sde_schema:
+                    full_dataset = f"{sde_schema}.{dataset_name}"
+                else:
+                    full_dataset = dataset_name
+
+                # Remove authority prefix (e.g., "sjv_") from the feature class name
+                authority_part = dataset_name.replace("Underlag_", "")
+                authority_lower = authority_part.lower()
+                fc_lower = final_fc_name.lower()
+                while fc_lower.startswith(authority_lower + "_"):
+                    fc_lower = fc_lower[len(authority_lower) + 1 :]
+
+                lg_sum.info("🔍 SdeLoader found mapping: %s → %s", fc_name, full_dataset)
+                return full_dataset, fc_lower
+
+            lg_sum.warning("🔍 SdeLoader could not map FC: %s", fc_name)
+
+        # 3) Fallback logic
         parts = fc_name.split("_", 1)
         if len(parts) < 2:
-            dataset_suffix = "MISC"
-            fc_name_clean = fc_name.lower()
+            # No underscore → treat as MISC
+            authority = "MISC"
+            fc_remainder = fc_name.lower()
         else:
-            dataset_suffix, fc_name_clean = parts
-            fc_name_clean = fc_name_clean.lower()
+            authority = parts[0].upper()
+            fc_remainder = parts[1]
 
-        fc_name_clean = sanitize_sde_name(fc_name_clean)
+            # Strip repeated authority prefixes, e.g., "SJV_SJV_..."
+            while fc_remainder.lower().startswith(authority.lower() + "_"):
+                fc_remainder = fc_remainder[len(authority) + 1 :]
 
+        fc_name_clean = sanitize_sde_name(fc_remainder.lower())
         schema = self.global_cfg.get("sde_schema", "GNG")
 
-        if dataset_suffix == "LSTD":
+        # Map 'LSTD' to 'Underlag_LstD', otherwise build 'Underlag_<AUTH>'
+        if authority == "LSTD":
             dataset = f"{schema}.Underlag_LstD"
         else:
-            dataset = f"{schema}.Underlag_{dataset_suffix}"
+            dataset = f"{schema}.Underlag_{authority}"
 
         return dataset, fc_name_clean
