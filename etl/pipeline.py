@@ -24,6 +24,14 @@ from .monitoring import (
 )
 from .utils.performance import ParallelProcessor, monitor_performance
 from .utils.cleanup import cleanup_before_pipeline_run
+from .utils.recovery import (
+    get_global_recovery_manager,
+    graceful_degradation,
+    recoverable_operation,
+    GracefulDegradationConfig,
+    RecoveryStrategy
+)
+from .utils.rollback import get_global_rollback_manager, execute_pipeline_rollback
 
 
 class Pipeline:
@@ -76,7 +84,67 @@ class Pipeline:
         max_workers = self.global_cfg.get("parallel_workers", 2)
         self.parallel_processor = ParallelProcessor(max_workers=max_workers)
 
+        # Initialize recovery and rollback systems
+        self.recovery_manager = get_global_recovery_manager()
+        self.rollback_manager = get_global_rollback_manager()
+        self.degradation_config = GracefulDegradationConfig()
+        
+        # Configure recovery strategies based on config
+        self._setup_pipeline_recovery_strategies()
+
         ensure_dirs()
+
+    def _setup_pipeline_recovery_strategies(self) -> None:
+        """Setup pipeline-specific recovery strategies."""
+        # Configure degradation thresholds based on config
+        max_concurrent = self.global_cfg.get("concurrent_download_workers", 5)
+        timeout = self.global_cfg.get("timeout", 30)
+        
+        # Update degradation config
+        self.degradation_config.max_concurrent_downloads = max_concurrent
+        self.degradation_config.timeout_seconds = timeout
+        
+        # Register pipeline-specific recovery strategies
+        from .exceptions import NetworkError, SourceError, SystemError
+        
+        # Network recovery with config-aware degradation
+        def degrade_network_config():
+            level = self.recovery_manager.get_degradation_level()
+            degraded = self.degradation_config.get_degraded_config(level + 1)
+            self.logger.info(
+                "🔄 Degrading network settings: concurrent=%d, timeout=%d",
+                degraded["concurrent_downloads"],
+                degraded["timeout"]
+            )
+            # Update global config for subsequent operations
+            self.global_cfg["concurrent_download_workers"] = degraded["concurrent_downloads"]
+            self.global_cfg["timeout"] = degraded["timeout"]
+            return degraded
+        
+        self.recovery_manager.register_recovery_strategy(
+            NetworkError,
+            RecoveryStrategy.DEGRADE,
+            action_func=degrade_network_config,
+            description="Reduce concurrent downloads and increase timeout",
+            priority=4
+        )
+        
+        # Source recovery with cached data fallback
+        def use_cached_data():
+            # Look for previous successful downloads
+            cache_dir = paths.DOWNLOADS
+            if cache_dir.exists():
+                self.logger.info("🔄 Looking for cached data in %s", cache_dir)
+                return list(cache_dir.glob("*.json"))
+            return []
+        
+        self.recovery_manager.register_recovery_strategy(
+            SourceError,
+            RecoveryStrategy.FALLBACK,
+            action_func=use_cached_data,
+            description="Use previously downloaded data",
+            priority=3
+        )
 
     @monitor_performance("pipeline_run")
     def run(self) -> None:
@@ -111,6 +179,15 @@ class Pipeline:
         app_config = AppConfig(sde_dataset_pattern=self.global_cfg.get("sde_dataset_pattern", "Underlag_{authority}"))
         self.sde_loader = SdeLoader(app_config, sources)
 
+        # Log concurrent download configuration
+        if self.global_cfg.get("enable_concurrent_downloads", True):
+            self.logger.info("🚀 Concurrent downloads enabled: REST=%d, OGC=%d, Files=%d workers",
+                           self.global_cfg.get("concurrent_download_workers", 5),
+                           self.global_cfg.get("concurrent_collection_workers", 3),
+                           self.global_cfg.get("concurrent_file_workers", 4))
+        else:
+            self.logger.info("⚠️ Concurrent downloads disabled - using sequential processing")
+
         for src in sources:
             if not src.enabled:
                 self.logger.info("⏭ Skipped (disabled)", source_name=src.name)
@@ -127,38 +204,59 @@ class Pipeline:
                 self.summary.log_download("skip")
                 continue
 
-            try:
-                start_time = time.time()
-                self.logger.info("🚚 %s" % src.name)
+            # Wrap source processing in graceful degradation
+            with graceful_degradation(f"download_source_{src.name}", self.recovery_manager):
+                try:
+                    start_time = time.time()
+                    self.logger.info("🚚 %s" % src.name)
 
-                handler_cls(src, global_config=self.global_cfg).fetch()
+                    # Create handler with context manager for proper cleanup
+                    with handler_cls(src, global_config=self.global_cfg) as handler:
+                        handler.fetch()
 
-                download_duration = time.time() - start_time
-                self.metrics.record_timing(
-                    "download.duration_ms",
-                    download_duration * 1000,
-                    tags={"source": src.name, "type": src.type},
-                )
-                self.metrics.increment_counter(
-                    "download.success", tags={"source": src.name}
-                )
+                    download_duration = time.time() - start_time
+                    self.metrics.record_timing(
+                        "download.duration_ms",
+                        download_duration * 1000,
+                        tags={"source": src.name, "type": src.type, "concurrent": str(self.global_cfg.get("enable_concurrent_downloads", True))},
+                    )
+                    self.metrics.increment_counter(
+                        "download.success", tags={"source": src.name}
+                    )
 
-                self.summary.log_download("done")
-                self.monitor.record_source_processed(success=True)
+                    # Log performance improvement hint
+                    if download_duration > 60 and src.type in ["rest_api", "ogc_api"] and not self.global_cfg.get("enable_concurrent_downloads", True):
+                        self.logger.info("💡 Performance hint: Enable concurrent downloads for faster processing of %s sources", src.type)
 
-            except (FileNotFoundError, arcpy.ExecuteError) as exc:
-                self.summary.log_download("error")
-                self.summary.log_error(src.name, str(exc))
-                self.logger.error("❌ Download failed", source_name=src.name, error=exc)
+                    self.summary.log_download("done")
+                    self.monitor.record_source_processed(success=True)
 
-                self.metrics.increment_counter(
-                    "download.error", tags={"source": src.name}
-                )
-                self.monitor.record_source_processed(success=False, error=str(exc))
+                except Exception as exc:
+                    # Let recovery manager handle the error
+                    recovery_result = self.recovery_manager.recover_from_error(
+                        error=exc,
+                        operation_context=f"download_source_{src.name}"
+                    )
+                    
+                    if recovery_result.success:
+                        self.logger.info("✅ Recovered from download error for %s", src.name)
+                        self.summary.log_download("recovered")
+                        self.monitor.record_source_processed(success=True, error=f"Recovered: {exc}")
+                    else:
+                        self.summary.log_download("error")
+                        self.summary.log_error(src.name, str(exc))
+                        self.logger.error("❌ Download failed and recovery failed", source_name=src.name, error=exc)
 
-                if not self.global_cfg.get("continue_on_failure", True):
-                    self.monitor.end_run("failed")
-                    raise  # ---------- 2. STAGE → staging.gdb --------------------------------
+                        self.metrics.increment_counter(
+                            "download.error", tags={"source": src.name}
+                        )
+                        self.monitor.record_source_processed(success=False, error=str(exc))
+
+                        if not self.global_cfg.get("continue_on_failure", True):
+                            self.monitor.end_run("failed")
+                            # Execute pipeline rollback before raising
+                            execute_pipeline_rollback(f"Source download failed: {src.name}")
+                            raise  # ---------- 2. STAGE → staging.gdb --------------------------------
         self.logger.info("📦 Starting staging phase")
 
         # Reset staging GDB to avoid conflicts with existing feature classes
@@ -176,34 +274,48 @@ class Pipeline:
                 raise
 
         staging_success = True
-        try:
-            start_time = time.time()
-            loader = ArcPyFileGDBLoader(
-                summary=self.summary,
-                gdb_path=paths.GDB,
-                sources_yaml_path=self.sources_yaml_path,
-            )
-            loader.run()
+        
+        # Wrap staging in graceful degradation
+        with graceful_degradation("staging_phase", self.recovery_manager):
+            try:
+                start_time = time.time()
+                loader = ArcPyFileGDBLoader(
+                    summary=self.summary,
+                    gdb_path=paths.GDB,
+                    sources_yaml_path=self.sources_yaml_path,
+                )
+                loader.run()
 
-            staging_duration = time.time() - start_time
-            self.metrics.record_timing("staging.duration_ms", staging_duration * 1000)
-            self.metrics.increment_counter("staging.success")
+                staging_duration = time.time() - start_time
+                self.metrics.record_timing("staging.duration_ms", staging_duration * 1000)
+                self.metrics.increment_counter("staging.success")
 
-            self.logger.info(
-                "✅ Staging.gdb built successfully", duration_seconds=staging_duration
-            )
+                self.logger.info(
+                    "✅ Staging.gdb built successfully", duration_seconds=staging_duration
+                )
 
-        except (arcpy.ExecuteError, FileNotFoundError) as exc:
-            staging_success = False
-            self.summary.log_staging("error")
-            self.summary.log_error("GDB loader", str(exc))
+            except Exception as exc:
+                # Attempt recovery for staging failures
+                recovery_result = self.recovery_manager.recover_from_error(
+                    error=exc,
+                    operation_context="staging_phase"
+                )
+                
+                if recovery_result.success:
+                    self.logger.info("✅ Recovered from staging error")
+                    self.summary.log_staging("recovered")
+                else:
+                    staging_success = False
+                    self.summary.log_staging("error")
+                    self.summary.log_error("GDB loader", str(exc))
 
-            self.logger.error("❌ GDB load failed", error=exc)
-            self.metrics.increment_counter("staging.error")
+                    self.logger.error("❌ GDB load failed and recovery failed", error=exc)
+                    self.metrics.increment_counter("staging.error")
 
-            if not self.global_cfg.get("continue_on_failure", True):
-                self.monitor.end_run("failed")
-                raise
+                    if not self.global_cfg.get("continue_on_failure", True):
+                        self.monitor.end_run("failed")
+                        execute_pipeline_rollback(f"Staging failed: {exc}")
+                        raise
             else:
                 self.logger.warning("⚠️ Continuing despite staging failures")
 
@@ -222,15 +334,40 @@ class Pipeline:
         self.metrics.set_gauge("pipeline.status", 0)  # 0 = completed
         self.monitor.end_run("completed")
 
-        # Log final metrics
+        # Clean up HTTP sessions
+        try:
+            from .utils.http_session import close_all_http_sessions
+            close_all_http_sessions()
+            self.logger.debug("🧹 HTTP sessions closed")
+        except Exception as e:
+            self.logger.warning("Failed to close HTTP sessions: %s", e)
+
+        # Log final metrics and recovery statistics
         pipeline_stats = self.monitor.get_current_run()
+        recovery_stats = self.recovery_manager.get_recovery_stats()
+        
         if pipeline_stats:
             self.logger.info(
                 "🏁 Pipeline completed successfully",
                 duration_seconds=pipeline_stats.duration,
                 sources_processed=pipeline_stats.sources_processed,
                 success_rate=pipeline_stats.success_rate,
+                degradation_level=self.recovery_manager.get_degradation_level()
             )
+        
+        # Log recovery statistics
+        if recovery_stats:
+            self.logger.info("📊 Recovery Statistics:")
+            for operation, stats in recovery_stats.items():
+                self.logger.info(
+                    "   %s: %d attempts, %.1f%% success rate",
+                    operation,
+                    stats["attempts"],
+                    stats["success_rate"]
+                )
+        
+        # Reset degradation level for next run
+        self.recovery_manager.reset_degradation_level()
 
         self.summary.dump()
 

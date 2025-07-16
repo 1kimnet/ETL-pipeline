@@ -1,0 +1,203 @@
+# Error Recovery and Graceful Degradation Configuration
+# Advanced error handling and resilience settings for production environments
+
+# Global error handling behavior
+continue_on_failure: true               # Continue pipeline when individual sources fail
+max_pipeline_failures: 5               # Maximum source failures before aborting pipeline
+enable_error_recovery: true            # Enable automatic error recovery
+enable_graceful_degradation: true      # Enable service degradation on failures
+
+# Recovery strategies configuration
+recovery:
+  # Maximum degradation level (0=normal, 3=maximum degradation)
+  max_degradation_level: 3
+  
+  # Reset degradation level after successful operations
+  auto_reset_degradation: true
+  
+  # Recovery attempt timeouts
+  recovery_timeout_seconds: 60
+  
+  # Enable specific recovery strategies
+  strategies:
+    skip_failed_sources: true          # Skip sources that consistently fail
+    use_cached_data: true              # Use previously downloaded data as fallback
+    reduce_concurrency: true           # Reduce concurrent operations on failures
+    increase_timeouts: true            # Increase timeouts when experiencing delays
+    partial_data_processing: true      # Continue with partial data when possible
+
+# Graceful degradation settings
+degradation:
+  # Level 0 (Normal Operation)
+  level_0:
+    concurrent_download_workers: 5
+    concurrent_collection_workers: 3
+    concurrent_file_workers: 4
+    timeout: 30
+    max_file_size_mb: 100
+    retry_attempts: 3
+  
+  # Level 1 (Slight Degradation)
+  level_1:
+    concurrent_download_workers: 3
+    concurrent_collection_workers: 2
+    concurrent_file_workers: 2
+    timeout: 60
+    max_file_size_mb: 50
+    retry_attempts: 5
+  
+  # Level 2 (Moderate Degradation)
+  level_2:
+    concurrent_download_workers: 1
+    concurrent_collection_workers: 1
+    concurrent_file_workers: 1
+    timeout: 120
+    max_file_size_mb: 25
+    retry_attempts: 3
+  
+  # Level 3 (Maximum Degradation)
+  level_3:
+    concurrent_download_workers: 1
+    concurrent_collection_workers: 1
+    concurrent_file_workers: 1
+    timeout: 300
+    max_file_size_mb: 10
+    retry_attempts: 2
+
+# Rollback configuration
+rollback:
+  # Enable automatic rollback on critical failures
+  enable_auto_rollback: true
+  
+  # Rollback priorities (higher executed first)
+  priorities:
+    temp_workspace_cleanup: 4
+    feature_class_deletion: 3
+    directory_cleanup: 2
+    file_deletion: 1
+  
+  # Rollback on specific error types
+  rollback_triggers:
+    - "PipelineError"
+    - "SystemError" 
+    - "ProcessingError"
+
+# Circuit breaker configuration
+circuit_breakers:
+  # HTTP service circuit breakers
+  http_services:
+    failure_threshold: 5               # Failures before opening circuit
+    recovery_timeout: 60               # Seconds before attempting reset
+    half_open_max_calls: 3            # Test calls in half-open state
+  
+  # Database operation circuit breakers
+  database_operations:
+    failure_threshold: 3
+    recovery_timeout: 120
+    half_open_max_calls: 2
+  
+  # File operation circuit breakers
+  file_operations:
+    failure_threshold: 3
+    recovery_timeout: 30
+    half_open_max_calls: 2
+
+# Retry configuration by operation type
+retry_patterns:
+  # Network operations (downloads, API calls)
+  network_operations:
+    max_attempts: 5
+    base_delay: 2.0
+    max_delay: 120.0
+    exponential_base: 2.0
+    jitter: true
+    backoff_strategy: "exponential"
+  
+  # File operations (read, write, copy)
+  file_operations:
+    max_attempts: 3
+    base_delay: 1.0
+    max_delay: 60.0
+    exponential_base: 1.5
+    jitter: true
+    backoff_strategy: "exponential"
+  
+  # Database operations (ArcPy, SDE)
+  database_operations:
+    max_attempts: 3
+    base_delay: 5.0
+    max_delay: 300.0
+    exponential_base: 2.5
+    jitter: false
+    backoff_strategy: "exponential"
+  
+  # Concurrent operations
+  concurrent_operations:
+    max_attempts: 2
+    base_delay: 1.0
+    max_delay: 30.0
+    exponential_base: 2.0
+    jitter: true
+    backoff_strategy: "exponential"
+
+# Monitoring and alerting for recovery events
+monitoring:
+  # Log recovery statistics
+  log_recovery_stats: true
+  
+  # Recovery event thresholds for alerting
+  alert_thresholds:
+    recovery_failure_rate: 50          # Alert if recovery failure rate > 50%
+    degradation_level: 2               # Alert if degradation level reaches 2
+    consecutive_failures: 3            # Alert after 3 consecutive source failures
+  
+  # Recovery metrics to track
+  track_metrics:
+    - "recovery_attempts"
+    - "recovery_success_rate"
+    - "degradation_level_changes"
+    - "rollback_executions"
+    - "circuit_breaker_state_changes"
+
+# Fallback data sources (for recovery)
+fallback_data:
+  # Use cached downloads from previous successful runs
+  use_download_cache: true
+  cache_retention_days: 7
+  
+  # Fallback to static datasets when sources are unavailable
+  static_datasets:
+    enabled: true
+    directory: "data/fallback"
+    
+  # Use partial data when full dataset is unavailable
+  allow_partial_data: true
+  minimum_data_threshold: 0.1          # Minimum 10% of expected data
+
+# Advanced error handling patterns
+error_handling:
+  # Classify and handle unknown exceptions
+  auto_classify_exceptions: true
+  
+  # Enhanced error context for debugging
+  detailed_error_context: true
+  
+  # Error correlation and pattern detection
+  detect_error_patterns: true
+  pattern_threshold: 3                 # Same error 3+ times triggers pattern response
+  
+  # Automatic error reporting
+  auto_report_errors: true
+  error_report_destination: "logs/error_reports"
+
+# Performance impact of recovery systems
+performance:
+  # Disable recovery for performance-critical operations
+  disable_for_performance_critical: false
+  
+  # Recovery overhead monitoring
+  monitor_recovery_overhead: true
+  
+  # Automatic tuning of recovery parameters
+  auto_tune_parameters: true
+  tuning_interval_hours: 24

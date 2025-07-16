@@ -11,14 +11,17 @@ import re
 from ..models import Source
 from ..utils import paths, ensure_dirs
 from ..utils.naming import sanitize_for_filename
-from ..utils.retry import retry_with_backoff, RetryConfig, CircuitBreaker
+from ..utils.retry import smart_retry, enhanced_retry_with_stats, NETWORK_RETRY_CONFIG, retry_with_backoff, RetryConfig
+from ..utils.circuit_breaker import http_circuit_breaker, CircuitBreaker
+from ..utils.rollback import rollback_on_failure, FileOperationTransaction
+from ..utils.http_session import HTTPSessionHandler
+from ..utils.concurrent import get_layer_downloader, ConcurrentResult
 from ..exceptions import (
-    HTTPError,
     NetworkError,
-    SourceUnavailableError,
-    RateLimitError,
-    DataFormatError,
-    format_error_context
+    SourceError,
+    DataError,
+    SystemError,
+    ErrorContext
 )
 
 log = logging.getLogger(__name__)
@@ -32,13 +35,23 @@ DEFAULT_MAX_RECORDS = 5000
 GEOJSON_FORMAT = "geojson"
 SWEREF99_TM_WKID = 3006
 
-class RestApiDownloadHandler:
+class RestApiDownloadHandler(HTTPSessionHandler):
     """Handles downloading data from ESRI REST API MapServer and FeatureServer Query endpoints."""
 
     def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
         ensure_dirs()
+        
+        # Initialize HTTP session with connection pooling
+        timeout = self.global_config.get("timeout", 30)
+        super().__init__(
+            base_url=src.url,
+            pool_connections=5,
+            pool_maxsize=10,
+            max_retries=3,
+            timeout=timeout
+        )
         
         # Initialize retry configuration
         retry_config = self.global_config.get("retry", {})
@@ -63,43 +76,53 @@ class RestApiDownloadHandler:
         """Fetches base metadata for the service (MapServer/FeatureServer) with retries."""
         return self._fetch_service_metadata_impl(service_url)
     
-    @CircuitBreaker(failure_threshold=5, recovery_timeout=60.0)
+    @smart_retry("fetch_service_metadata")
+    @http_circuit_breaker("rest_api_metadata", failure_threshold=3)
     def _fetch_service_metadata_impl(self, service_url: str) -> Dict[str, Any]:
         """Implementation of service metadata fetching with circuit breaker."""
         params = {"f": "json"}
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
-        }
         
-        timeout = self.global_config.get("timeout", 30)
         try:
-            response = requests.get(
+            response = self.session.get(
                 service_url, 
                 params=params, 
-                headers=headers, 
-                timeout=timeout
+                timeout=self.session.timeout
             )
             
             # Handle different HTTP status codes appropriately
             if response.status_code == 429:
                 retry_after = response.headers.get('Retry-After')
-                raise RateLimitError(
+                raise NetworkError(
                     f"Rate limit exceeded for {service_url}",
-                    source_name=self.src.name,
-                    retry_after=int(retry_after) if retry_after else None
+                    status_code=429,
+                    url=service_url,
+                    context=ErrorContext(
+                        source_name=self.src.name,
+                        url=service_url,
+                        operation="fetch_metadata"
+                    )
                 )
             elif 500 <= response.status_code < 600:
-                raise SourceUnavailableError(
+                raise SourceError(
                     f"Service temporarily unavailable: {response.status_code}",
-                    source_name=self.src.name,
-                    context={"status_code": response.status_code, "url": service_url}
+                    available=False,
+                    context=ErrorContext(
+                        source_name=self.src.name,
+                        url=service_url,
+                        operation="fetch_metadata",
+                        metadata={"status_code": response.status_code}
+                    )
                 )
             elif 400 <= response.status_code < 500:
-                raise HTTPError(
+                raise NetworkError(
                     f"Client error: {response.status_code} {response.reason}",
-                    source_name=self.src.name,
                     status_code=response.status_code,
-                    context={"url": service_url}
+                    url=service_url,
+                    context=ErrorContext(
+                        source_name=self.src.name,
+                        url=service_url,
+                        operation="fetch_metadata"
+                    )
                 )
             
             response.raise_for_status()
@@ -107,36 +130,55 @@ class RestApiDownloadHandler:
             try:
                 return response.json()
             except json.JSONDecodeError as e:
-                raise DataFormatError(
+                raise DataError(
                     f"Invalid JSON response from {service_url}: {e}",
-                    source_name=self.src.name,
-                    format_type="json"
-                )
+                    data_type="json",
+                    context=ErrorContext(
+                        source_name=self.src.name,
+                        url=service_url,
+                        operation="parse_json"
+                    )
+                ) from e
                 
         except requests.exceptions.Timeout as e:
             raise NetworkError(
                 f"Timeout fetching metadata from {service_url}",
-                source_name=self.src.name,
-                context={"timeout": timeout}
+                timeout=self.session.timeout,
+                url=service_url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=service_url,
+                    operation="fetch_metadata"
+                )
             ) from e
         except requests.exceptions.ConnectionError as e:
             raise NetworkError(
                 f"Connection error fetching metadata from {service_url}",
-                source_name=self.src.name,
-                context={"error": str(e)}
+                url=service_url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=service_url,
+                    operation="fetch_metadata",
+                    metadata={"error": str(e)}
+                )
             ) from e
         except requests.exceptions.RequestException as e:
             raise NetworkError(
                 f"Request failed for {service_url}: {e}",
-                source_name=self.src.name,
-                context={"error": str(e)}
+                url=service_url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=service_url,
+                    operation="fetch_metadata",
+                    metadata={"error": str(e)}
+                )
             ) from e
 
     def _get_layer_metadata(self, layer_url: str) -> Optional[Dict[str, Any]]:
         """Fetches metadata for a specific layer."""
         try:
             params = {"f": "json"}
-            response = requests.get(layer_url, params=params, timeout=30)
+            response = self.session.get(layer_url, params=params, timeout=self.session.timeout)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -165,6 +207,7 @@ class RestApiDownloadHandler:
 
         return params
 
+    @smart_retry("request_page")
     def _request_page(
         self,
         query_url: str,
@@ -173,47 +216,32 @@ class RestApiDownloadHandler:
         page_num: int,
     ) -> Optional[Dict[str, Any]]:
         """Execute a paginated request and return the JSON payload."""
-        response_obj: Optional[requests.Response] = None
         try:
-            response_obj = requests.get(query_url, params=params, timeout=120)
+            response_obj = self.session.get(query_url, params=params, timeout=120)
             response_obj.raise_for_status()
             return response_obj.json()
         except requests.exceptions.RequestException as e:
-            log.error(
-                "❌ PAGINATION_LOOP_REQUEST_ERROR: Failed to download data for layer %s, page %d: %s",
-                layer_name_sanitized,
-                page_num,
-                e,
-            )
-            log.error(
-                "❌ PAGINATION_LOOP_REQUEST_ERROR: Breaking from pagination loop for this layer."
-            )
-        except json.JSONDecodeError as e:
-            log.error(
-                "❌ PAGINATION_LOOP_JSON_ERROR: Failed to decode JSON for layer %s, page %d: %s",
-                layer_name_sanitized,
-                page_num,
-                e,
-            )
-            if response_obj:
-                log.debug(
-                    "Raw response text for JSON error: %s", response_obj.text[:500]
+            raise NetworkError(
+                f"Failed to download data for layer {layer_name_sanitized}, page {page_num}: {e}",
+                url=query_url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=query_url,
+                    operation="request_page",
+                    metadata={"layer": layer_name_sanitized, "page": page_num}
                 )
-            log.error(
-                "❌ PAGINATION_LOOP_JSON_ERROR: Breaking from pagination loop for this layer."
-            )
-        except Exception as e_unexpected:
-            log.error(
-                "❌ PAGINATION_LOOP_UNEXPECTED_ERROR: Unexpected error for layer %s, page %d: %s",
-                layer_name_sanitized,
-                page_num,
-                e_unexpected,
-                exc_info=True,
-            )
-            log.error(
-                "❌ PAGINATION_LOOP_UNEXPECTED_ERROR: Breaking from pagination loop for this layer."
-            )
-        return None
+            ) from e
+        except json.JSONDecodeError as e:
+            raise DataError(
+                f"Failed to decode JSON for layer {layer_name_sanitized}, page {page_num}: {e}",
+                data_type="json",
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=query_url,
+                    operation="parse_json",
+                    metadata={"layer": layer_name_sanitized, "page": page_num}
+                )
+            ) from e
 
     def _append_features(
         self,
@@ -293,7 +321,7 @@ class RestApiDownloadHandler:
             )
 
     def fetch(self) -> None:
-        """Main fetch method for REST API sources."""
+        """Main fetch method for REST API sources with rollback support."""
         if not self.src.enabled:
             log.info(
                 "⏭️ Source '%s' (REST API) is disabled, skipping fetch.", self.src.name
@@ -306,118 +334,183 @@ class RestApiDownloadHandler:
             self.src.url,
         )
 
-        service_meta = self._get_service_metadata(self.src.url)
-        if not service_meta:
-            log.error(
-                "❌ Could not retrieve service metadata for %s. Skipping source.",
-                self.src.name,
-            )
-            return
+        # Use rollback context manager for entire fetch operation
+        with rollback_on_failure(f"rest_api_fetch_{self.src.name}") as rollback_mgr:
+            service_meta = self._get_service_metadata(self.src.url)
+            if not service_meta:
+                log.error(
+                    "❌ Could not retrieve service metadata for %s. Skipping source.",
+                    self.src.name,
+                )
+                return
 
-        layers_to_iterate_final: List[Dict[str, Any]] = []
-        configured_layer_ids_from_yaml = self.src.raw.get("layer_ids")
+            layers_to_iterate_final: List[Dict[str, Any]] = []
+            configured_layer_ids_from_yaml = self.src.raw.get("layer_ids")
 
-        # Create a lookup for all layer details from the service metadata
-        metadata_layers_details = {
-            str(lyr.get("id")): lyr
-            for lyr in service_meta.get("layers", [])
-            if "id" in lyr
-        }
+            # Create a lookup for all layer details from the service metadata
+            metadata_layers_details = {
+                str(lyr.get("id")): lyr
+                for lyr in service_meta.get("layers", [])
+                if "id" in lyr
+            }
 
-        if configured_layer_ids_from_yaml:
-            log.info(
-                "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
-                configured_layer_ids_from_yaml,
-                self.src.name,
-            )
-            if not isinstance(configured_layer_ids_from_yaml, list):
-                configured_layer_ids_from_yaml = [configured_layer_ids_from_yaml]
+            if configured_layer_ids_from_yaml:
+                log.info(
+                    "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
+                    configured_layer_ids_from_yaml,
+                    self.src.name,
+                )
+                if not isinstance(configured_layer_ids_from_yaml, list):
+                    configured_layer_ids_from_yaml = [configured_layer_ids_from_yaml]
 
-            for lid_val in configured_layer_ids_from_yaml:
-                lid_str = str(lid_val)
-                layer_detail = metadata_layers_details.get(lid_str)
+                for lid_val in configured_layer_ids_from_yaml:
+                    lid_str = str(lid_val)
+                    layer_detail = metadata_layers_details.get(lid_str)
 
-                if layer_detail:
-                    layer_name = layer_detail.get("name", f"layer_{lid_str}")
-                    layers_to_iterate_final.append(
-                        {"id": lid_str, "name": layer_name, "metadata": layer_detail}
-                    )
-                else:
-                    log.warning(
-                        "Layer ID '%s' specified in config for source '%s' "
-                        "was not found in the service's layer metadata list. "
-                        "Will attempt to query it using this ID and a placeholder name.",
-                        lid_str,
-                        self.src.name,
-                    )
+                    if layer_detail:
+                        layer_name = layer_detail.get("name", f"layer_{lid_str}")
+                        layers_to_iterate_final.append(
+                            {"id": lid_str, "name": layer_name, "metadata": layer_detail}
+                        )
+                    else:
+                        log.warning(
+                            "Layer ID '%s' specified in config for source '%s' "
+                            "was not found in the service's layer metadata list. "
+                            "Will attempt to query it using this ID and a placeholder name.",
+                            lid_str,
+                            self.src.name,
+                        )
+                        layers_to_iterate_final.append(
+                            {
+                                "id": lid_str,
+                                "name": f"layer_{lid_str}_cfg_only",
+                                "metadata": None,
+                            }
+                        )
+
+            elif "layers" in service_meta:
+                log.info(
+                    "No explicit layer_ids in config for source '%s'. Discovering all layers from service metadata.",
+                    self.src.name,
+                )
+                for layer_id_str, layer_detail_from_meta in metadata_layers_details.items():
                     layers_to_iterate_final.append(
                         {
-                            "id": lid_str,
-                            "name": f"layer_{lid_str}_cfg_only",
-                            "metadata": None,
+                            "id": layer_id_str,
+                            "name": layer_detail_from_meta.get(
+                                "name", f"layer_{layer_id_str}"
+                            ),
+                            "metadata": layer_detail_from_meta,
                         }
                     )
 
-        elif "layers" in service_meta:
-            log.info(
-                "No explicit layer_ids in config for source '%s'. Discovering all layers from service metadata.",
-                self.src.name,
-            )
-            for layer_id_str, layer_detail_from_meta in metadata_layers_details.items():
+            # Fallback for single-layer FeatureServer
+            elif (
+                not layers_to_iterate_final
+                and "/featureserver" in self.src.url.lower()
+                and service_meta.get("type") == "Feature Layer"
+            ):
+                log.info(
+                    "Source '%s' appears to be a single-layer FeatureServer and no layers were previously identified. "
+                    "Adding layer from service root or URL.",
+                    self.src.name,
+                )
+                layer_id_from_url_match = re.search(r"/(\d+)/?$", self.src.url)
+                fs_layer_id = (
+                    layer_id_from_url_match.group(1)
+                    if layer_id_from_url_match
+                    else service_meta.get("id", "0")
+                )
+                fs_layer_id_str = str(fs_layer_id)
+                fs_layer_name = service_meta.get("name", f"feature_layer_{fs_layer_id_str}")
                 layers_to_iterate_final.append(
-                    {
-                        "id": layer_id_str,
-                        "name": layer_detail_from_meta.get(
-                            "name", f"layer_{layer_id_str}"
-                        ),
-                        "metadata": layer_detail_from_meta,
-                    }
+                    {"id": fs_layer_id_str, "name": fs_layer_name, "metadata": service_meta}
                 )
 
-        # Fallback for single-layer FeatureServer
-        elif (
-            not layers_to_iterate_final
-            and "/featureserver" in self.src.url.lower()
-            and service_meta.get("type") == "Feature Layer"
-        ):
+            if not layers_to_iterate_final:
+                log.warning(
+                    "⚠️ No layers identified or specified to query for source '%s'. "
+                    "Check service metadata and `layer_ids` config.",
+                    self.src.name,
+                )
+                return
+
+            log_layer_ids_to_query = [layer["id"] for layer in layers_to_iterate_final]
             log.info(
-                "Source '%s' appears to be a single-layer FeatureServer and no layers were previously identified. "
-                "Adding layer from service root or URL.",
+                "Source '%s': Will attempt to query %d layer(s): %s",
                 self.src.name,
-            )
-            layer_id_from_url_match = re.search(r"/(\d+)/?$", self.src.url)
-            fs_layer_id = (
-                layer_id_from_url_match.group(1)
-                if layer_id_from_url_match
-                else service_meta.get("id", "0")
-            )
-            fs_layer_id_str = str(fs_layer_id)
-            fs_layer_name = service_meta.get("name", f"feature_layer_{fs_layer_id_str}")
-            layers_to_iterate_final.append(
-                {"id": fs_layer_id_str, "name": fs_layer_name, "metadata": service_meta}
+                len(layers_to_iterate_final),
+                log_layer_ids_to_query,
             )
 
-        if not layers_to_iterate_final:
-            log.warning(
-                "⚠️ No layers identified or specified to query for source '%s'. "
-                "Check service metadata and `layer_ids` config.",
-                self.src.name,
-            )
+            # Use concurrent downloads for multiple layers
+            if len(layers_to_iterate_final) > 1:
+                self._fetch_layers_concurrent(layers_to_iterate_final, rollback_mgr)
+            else:
+                # Single layer - use original sequential approach
+                for layer_info_to_query in layers_to_iterate_final:
+                    self._fetch_layer_data(
+                        layer_info=layer_info_to_query,
+                        layer_metadata_from_service=layer_info_to_query.get("metadata"),
+                        rollback_mgr=rollback_mgr,
+                    )
+
+    def _fetch_layers_concurrent(self, layers_to_iterate: List[Dict[str, Any]], rollback_mgr: FileOperationTransaction = None) -> None:
+        """Fetch multiple layers concurrently for improved performance."""
+        log.info("🚀 Starting concurrent download of %d layers", len(layers_to_iterate))
+        
+        # Get concurrent downloader
+        downloader = get_layer_downloader()
+        
+        # Enable parallel processing based on configuration
+        use_concurrent = self.global_config.get("enable_concurrent_downloads", True)
+        max_workers = self.global_config.get("concurrent_download_workers", 5)
+        
+        if not use_concurrent:
+            log.info("⚠️ Concurrent downloads disabled, falling back to sequential")
+            for layer_info in layers_to_iterate:
+                self._fetch_layer_data(
+                    layer_info=layer_info,
+                    layer_metadata_from_service=layer_info.get("metadata"),
+                    rollback_mgr=rollback_mgr,
+                )
             return
-
-        log_layer_ids_to_query = [layer["id"] for layer in layers_to_iterate_final]
-        log.info(
-            "Source '%s': Will attempt to query %d layer(s): %s",
-            self.src.name,
-            len(layers_to_iterate_final),
-            log_layer_ids_to_query,
+        
+        # Update worker count if specified
+        if max_workers != downloader.manager.max_workers:
+            downloader.manager.max_workers = max_workers
+        
+        # Add rollback actions for potential output files from concurrent downloads
+        if rollback_mgr:
+            for layer_info in layers_to_iterate:
+                layer_name_original = layer_info.get("name", f"layer_{layer_info.get('id')}")
+                layer_name_sanitized = sanitize_for_filename(layer_name_original)
+                source_name_sanitized = sanitize_for_filename(self.src.name)
+                staging_dir = paths.STAGING / self.src.authority / source_name_sanitized
+                output_format = self.src.raw.get("format", "geojson")
+                output_filename = f"{layer_name_sanitized}.{output_format}"
+                output_path = staging_dir / output_filename
+                rollback_mgr.add_file_deletion(output_path)
+        
+        # Execute concurrent downloads
+        results = downloader.download_layers_concurrent(
+            handler=self,
+            layers_info=layers_to_iterate,
+            fail_fast=self.global_config.get("fail_fast_downloads", False)
         )
-
-        for layer_info_to_query in layers_to_iterate_final:
-            self._fetch_layer_data(
-                layer_info=layer_info_to_query,
-                layer_metadata_from_service=layer_info_to_query.get("metadata"),
-            )
+        
+        # Process results and log statistics
+        successful_downloads = sum(1 for r in results if r.success)
+        failed_downloads = len(results) - successful_downloads
+        
+        log.info("🏁 Concurrent downloads completed: %d successful, %d failed", 
+                successful_downloads, failed_downloads)
+        
+        # Log any failures
+        for result in results:
+            if not result.success:
+                layer_name = result.metadata.get("task_name", "unknown")
+                log.error("❌ Layer download failed: %s - %s", layer_name, result.error)
 
     def _determine_max_record_count(
         self,
@@ -575,6 +668,7 @@ class RestApiDownloadHandler:
         self,
         layer_info: Dict[str, Any],
         layer_metadata_from_service: Optional[Dict[str, Any]] = None,
+        rollback_mgr: FileOperationTransaction = None,
     ) -> None:
         """Fetches data for a single layer."""
         layer_id = layer_info.get("id")
@@ -608,9 +702,14 @@ class RestApiDownloadHandler:
 
         output_filename = f"{layer_name_sanitized}.{params['f']}"
         output_path = staging_dir / output_filename
+        
+        # Add rollback action for the output file
+        if rollback_mgr:
+            rollback_mgr.add_file_deletion(output_path)
 
         all_features, features_written_total = self._pagination_loop(
-            query_url=query_url,            params=params,
+            query_url=query_url,
+            params=params,
             layer_name_sanitized=layer_name_sanitized,
             max_record_count=max_record_count,
         )

@@ -5,20 +5,21 @@ import logging
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Iterable, Optional, Dict, Any
+from typing import Iterable, Optional, Dict, Any, List
 from urllib.parse import unquote
 
 from ..models import Source
 from ..utils import download, ensure_dirs, extract_zip, paths
 from ..utils.naming import sanitize_for_filename
 from ..utils.http import fetch_true_filename_parts
-from ..utils.retry import retry_with_backoff, RetryConfig
+from ..utils.retry import smart_retry, enhanced_retry_with_stats, FILE_OPERATION_RETRY_CONFIG
+from ..utils.concurrent import get_file_downloader, ConcurrentResult
+from ..utils.recovery import recoverable_operation, get_global_recovery_manager
 from ..exceptions import (
-    FileNotFoundError as ETLFileNotFoundError,
     NetworkError,
-    StorageError,
-    DataFormatError,
-    format_error_context
+    SystemError,
+    DataError,
+    ErrorContext
 )
 
 log = logging.getLogger(__name__)
@@ -85,24 +86,76 @@ class FileDownloadHandler:
             self.src.url,
         )
 
-        for included_filename_stem in self._iter_included_file_stems():
-            file_ext_from_format = ".zip"  # Default for collections
-            if self.src.download_format:
-                fmt = self.src.download_format.lower().lstrip(".")
-                if fmt:
-                    file_ext_from_format = f".{fmt}"
+        file_stems = list(self._iter_included_file_stems())
+        
+        # Use concurrent downloads for multiple files
+        if len(file_stems) > 1:
+            self._download_files_concurrent(file_stems)
+        else:
+            # Single file - use original sequential approach
+            for included_filename_stem in file_stems:
+                self._download_single_file_stem(included_filename_stem)
 
-            actual_filename_for_download_part = included_filename_stem + file_ext_from_format
-            base_url = self.src.url.rstrip("/") + "/"
-            download_url_for_part = base_url + actual_filename_for_download_part
+    def _download_files_concurrent(self, file_stems: List[str]) -> None:
+        """Download multiple files concurrently for improved performance."""
+        log.info("🚀 Starting concurrent download of %d files", len(file_stems))
+        
+        # Get concurrent downloader
+        downloader = get_file_downloader()
+        
+        # Enable parallel processing based on configuration
+        use_concurrent = self.global_config.get("enable_concurrent_downloads", True)
+        max_workers = self.global_config.get("concurrent_file_workers", 4)
+        
+        if not use_concurrent:
+            log.info("⚠️ Concurrent downloads disabled, falling back to sequential")
+            for file_stem in file_stems:
+                self._download_single_file_stem(file_stem)
+            return
+        
+        # Update worker count if specified
+        if max_workers != downloader.manager.max_workers:
+            downloader.manager.max_workers = max_workers
+        
+        # Execute concurrent downloads
+        results = downloader.download_files_concurrent(
+            handler=self,
+            file_stems=file_stems,
+            fail_fast=self.global_config.get("fail_fast_downloads", False)
+        )
+        
+        # Process results and log statistics
+        successful_downloads = sum(1 for r in results if r.success)
+        failed_downloads = len(results) - successful_downloads
+        
+        log.info("🏁 Concurrent file downloads completed: %d successful, %d failed", 
+                successful_downloads, failed_downloads)
+        
+        # Log any failures
+        for result in results:
+            if not result.success:
+                file_name = result.metadata.get("task_name", "unknown")
+                log.error("❌ File download failed: %s - %s", file_name, result.error)
 
-            sanitized_included_stem = sanitize_for_filename(included_filename_stem)
-            self._download_and_stage_one(
-                download_url=download_url_for_part,
-                explicit_local_filename_stem=sanitized_included_stem,
-                explicit_local_file_ext=file_ext_from_format,
-                staging_subdir_name_override=sanitized_included_stem,
-            )
+    def _download_single_file_stem(self, included_filename_stem: str) -> None:
+        """Download a single file stem (extracted from original loop)."""
+        file_ext_from_format = ".zip"  # Default for collections
+        if self.src.download_format:
+            fmt = self.src.download_format.lower().lstrip(".")
+            if fmt:
+                file_ext_from_format = f".{fmt}"
+
+        actual_filename_for_download_part = included_filename_stem + file_ext_from_format
+        base_url = self.src.url.rstrip("/") + "/"
+        download_url_for_part = base_url + actual_filename_for_download_part
+
+        sanitized_included_stem = sanitize_for_filename(included_filename_stem)
+        self._download_and_stage_one(
+            download_url=download_url_for_part,
+            explicit_local_filename_stem=sanitized_included_stem,
+            explicit_local_file_ext=file_ext_from_format,
+            staging_subdir_name_override=sanitized_included_stem,
+        )
 
     def _download_single_resource(self) -> None:
         """Handle downloading a single resource from src.url."""
@@ -165,6 +218,7 @@ class FileDownloadHandler:
         for stem in self.src.include:
             yield stem
 
+    @smart_retry("file_download_and_stage")
     def _download_and_stage_one(
         self,
         download_url: str,
