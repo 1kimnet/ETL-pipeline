@@ -20,9 +20,7 @@ from etl.utils.naming import generate_fc_name, sanitize_for_arcgis_name
 log: Final = logging.getLogger(__name__)
 
 
-def _copy_to_temp_shapefile(
-    source_path: Path, authority: str
-) -> tuple[Path, Path]:
+def _copy_to_temp_shapefile(source_path: Path, authority: str) -> tuple[Path, Path]:
     """Copy shapefile to a temporary, sanitized location if its name is invalid."""
     base_name = sanitize_for_arcgis_name(source_path.stem)
     generated_name = f"{authority.lower()}_{base_name}"
@@ -48,12 +46,55 @@ class ShapefileLoader:
         self.src = src
 
     def load(self, used_names: set[str]) -> None:
-        """Load shapefiles from the source's downloaded items."""
-        if not self.src.items:
-            log.warning("No items to process for source '%s'", self.src.name)
+        """Load shapefiles from the source's staging directory."""
+        from etl.utils.naming import sanitize_for_filename
+
+        # Calculate the staging directory path for this source
+        source_staging_dir = (
+            paths.STAGING / self.src.authority / sanitize_for_filename(self.src.name)
+        )
+
+        if not source_staging_dir.exists():
+            log.warning(
+                "No staging directory found for source '%s' at %s",
+                self.src.name,
+                source_staging_dir,
+            )
             return
 
-        for item_path in self.src.items:
+        # Find all files and directories to process in the staging directory
+        items_to_process = []
+
+        # Look for zip files first
+        zip_files = list(source_staging_dir.glob("*.zip"))
+        items_to_process.extend(zip_files)
+
+        # Look for subdirectories (from extracted archives or multi-part downloads)
+        subdirs = [p for p in source_staging_dir.iterdir() if p.is_dir()]
+        items_to_process.extend(subdirs)
+
+        # If no items found, look for shapefiles directly in the staging directory
+        if not items_to_process:
+            shapefiles = list(source_staging_dir.glob("*.shp"))
+            if shapefiles:
+                # Treat the staging directory itself as the item to process
+                items_to_process.append(source_staging_dir)
+
+        if not items_to_process:
+            log.warning(
+                "No items to process for source '%s' in %s",
+                self.src.name,
+                source_staging_dir,
+            )
+            return
+
+        log.info(
+            "Found %d item(s) to process for source '%s'",
+            len(items_to_process),
+            self.src.name,
+        )
+
+        for item_path in items_to_process:
             self._process_item(item_path, used_names)
 
     def _find_shapefiles(self, directory: Path) -> List[Path]:
@@ -66,13 +107,17 @@ class ShapefileLoader:
         temp_unzip_dir: Optional[Path] = None
 
         if zipfile.is_zipfile(item_path):
-            temp_unzip_dir = paths.TEMP / f"unzip_{item_path.stem}_{uuid.uuid4().hex[:8]}"
+            temp_unzip_dir = (
+                paths.TEMP / f"unzip_{item_path.stem}_{uuid.uuid4().hex[:8]}"
+            )
             log.info("📦 Unzipping '%s' to '%s'", item_path.name, temp_unzip_dir)
             with zipfile.ZipFile(item_path, "r") as zip_ref:
                 zip_ref.extractall(temp_unzip_dir)
             item_dir = temp_unzip_dir
         elif not item_path.is_dir():
-            log.error("❌ Item '%s' is not a directory or a zip file, skipping.", item_path)
+            log.error(
+                "❌ Item '%s' is not a directory or a zip file, skipping.", item_path
+            )
             return
 
         shapefiles = self._find_shapefiles(item_dir)
@@ -80,7 +125,9 @@ class ShapefileLoader:
             log.warning("⚠️ No shapefiles found in '%s'.", item_dir.name)
             return
 
-        log.info("📐 Found %d shapefile(s) in item dir '%s'.", len(shapefiles), item_dir.name)
+        log.info(
+            "📐 Found %d shapefile(s) in item dir '%s'.", len(shapefiles), item_dir.name
+        )
         for shp_file in shapefiles:
             self.process_shapefile(shp_file, used_names)
 
@@ -117,7 +164,7 @@ class ShapefileLoader:
             with arcpy.EnvManager(overwriteOutput=True):
                 arcpy.management.CopyFeatures(
                     in_features=str(working_path),
- out_feature_class=str(paths.GDB / target_fc_name),
+                    out_feature_class=str(paths.GDB / target_fc_name),
                 )
             log.info(
                 "✅ SUCCESS: Copied shapefile '%s' to '%s'",
@@ -128,11 +175,11 @@ class ShapefileLoader:
             log.error(
                 "❌ ArcPy error processing SHP %s: %s", working_path.name, arc_error
             )
-        except Exception as generic_error:
+        except (OSError, IOError, ValueError, RuntimeError) as processing_error:
             log.error(
-                "❌ Unexpected error processing SHP %s: %s",
+                "❌ Error processing SHP %s: %s",
                 working_path.name,
-                generic_error,
+                processing_error,
                 exc_info=True,
             )
         finally:
