@@ -1,0 +1,6 @@
+{
+  "selectedLLM": "ANTHROPIC",
+  "baseUrl": "https://api.anthropic.com/v1",
+  "model": "claude-sonnet-4-20250514",
+  "contextWindow": 128000
+}

@@ -206,3 +206,26 @@ quick_verify.py
 raa_issue_summary.md
 test_raa_fix.py
 scripts/truncate_authority_tables.py
+debug_gpkg.py
+test_gpkg_fix.py
+GPKG_FIX_SUMMARY.md
+ETL_FIXES_SUMMARY.md
+OVERWRITE_FIXES_SUMMARY.md
+validate_fixes.py
+PROJECTION_SDE_FIXES.md
+test_sde_naming.py
+NAMING_SANITIZATION_SUMMARY.md
+test_wfs_simple.py
+validate_wfs.py
+config/test_wfs_source.yaml
+tests/integration/test_wfs_source.py
+test_cleanup.py
+.vs/VSWorkspaceState.json
+.vs/ETL-pipeline/v17/.wsuo
+.vs/ETL-pipeline/v17/DocumentLayout.json
+scripts/checkDB.py
+PARAMETER_INVESTIGATION_REPORT.md
+PARAMETER_REFERENCE_CHART.md
+config/sources_BACKUP_$(Get-Date -Format 'yyyyMMdd_HHmmss').yaml
+SOURCES_CLEANUP_REPORT.md
+SOURCES_CLEANUP_ANALYSIS.md
