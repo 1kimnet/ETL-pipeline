@@ -26,33 +26,18 @@ TARGET_SRID = 3010  # SWEREF99 12 00
 
 # Datasets to create based on your authorities
 DATASETS_TO_CREATE = [
-<<<<<<< HEAD
-    "FM",  # Försvarsmakten
-    "NVV",  # Naturvårdsverket
-    "LST",  # Länsstyrelsen
-    "LSTD",  # Länsstyrelsen Södermanland
-    "MSB",  # Myndigheten för samhällsskydd och beredskap
-    "RAA",  # Riksantikvarieämbetet
-    "SGI",  # Statens geotekniska institut
-    "SGU",  # Sveriges geologiska undersökning
-    "SJV",  # Jordbruksverket
-    "SKS",  # Skogsstyrelsen
-    "SVK",  # Svenska kraftnät
-    "TRV",  # Trafikverket
-=======
-    "Underlag_FM",    # Försvarsmakten
-    "Underlag_NVV",   # Naturvårdsverket  
-    "Underlag_LST",   # Länsstyrelsen
+    "Underlag_FM",  # Försvarsmakten
+    "Underlag_NVV",  # Naturvårdsverket
+    "Underlag_LST",  # Länsstyrelsen
     "Underlag_LSTD",  # Länsstyrelsen Södermanland
-    "Underlag_MSB",   # Myndigheten för samhällsskydd och beredskap
-    "Underlag_RAA",   # Riksantikvarieämbetet
-    "Underlag_SGI",   # Statens geotekniska institut
-    "Underlag_SGU",   # Sveriges geologiska undersökning
-    "Underlag_SJV",   # Jordbruksverket
-    "Underlag_SKS",   # Skogsstyrelsen
-    "Underlag_SVK",   # Svenska kraftnät
-    "Underlag_TRV",   # Trafikverket
->>>>>>> 5ca286e66623d38d4cf065ef31931cf44aff8bda
+    "Underlag_MSB",  # Myndigheten för samhällsskydd och beredskap
+    "Underlag_RAA",  # Riksantikvarieämbetet
+    "Underlag_SGI",  # Statens geotekniska institut
+    "Underlag_SGU",  # Sveriges geologiska undersökning
+    "Underlag_SJV",  # Jordbruksverket
+    "Underlag_SKS",  # Skogsstyrelsen
+    "Underlag_SVK",  # Svenska kraftnät
+    "Underlag_TRV",  # Trafikverket
 ]
 
 
