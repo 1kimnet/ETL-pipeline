@@ -7,18 +7,30 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 import re
-import time
 
 from ..models import Source
 from ..utils import paths, ensure_dirs
 from ..utils.naming import sanitize_for_filename
+from ..utils.retry import retry_with_backoff, RetryConfig, CircuitBreaker
+from ..exceptions import (
+    HTTPError,
+    NetworkError,
+    SourceUnavailableError,
+    RateLimitError,
+    DataFormatError,
+    format_error_context
+)
 
 log = logging.getLogger(__name__)
 
 # Default BBOX from your document (SWEREF99 TM)
 DEFAULT_BBOX_COORDS = "586206,6551160,647910,6610992"
 DEFAULT_BBOX_SR = "3006"
+DEFAULT_MAX_RECORDS = 5000
 
+# Output format constants
+GEOJSON_FORMAT = "geojson"
+SWEREF99_TM_WKID = 3006
 
 class RestApiDownloadHandler:
     """Handles downloading data from ESRI REST API MapServer and FeatureServer Query endpoints."""
@@ -27,103 +39,98 @@ class RestApiDownloadHandler:
         self.src = src
         self.global_config = global_config or {}
         ensure_dirs()
+        
+        # Initialize retry configuration
+        retry_config = self.global_config.get("retry", {})
+        self.retry_config = RetryConfig(
+            max_attempts=retry_config.get("max_attempts", 3),
+            base_delay=retry_config.get("base_delay", 1.0),
+            backoff_factor=retry_config.get("backoff_factor", 2.0),
+            max_delay=retry_config.get("max_delay", 300.0)
+        )
+        
+        # Initialize circuit breaker for this service
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=retry_config.get("circuit_breaker_threshold", 5),
+            recovery_timeout=retry_config.get("circuit_breaker_timeout", 60.0),
+            expected_exception=Exception
+        )
+        
         log.info("🚀 Initializing RestApiDownloadHandler for source: %s", self.src.name)
 
+    @retry_with_backoff()
     def _get_service_metadata(self, service_url: str) -> Optional[Dict[str, Any]]:
         """Fetches base metadata for the service (MapServer/FeatureServer) with retries."""
+        return self._fetch_service_metadata_impl(service_url)
+    
+    @CircuitBreaker(failure_threshold=5, recovery_timeout=60.0)
+    def _fetch_service_metadata_impl(self, service_url: str) -> Dict[str, Any]:
+        """Implementation of service metadata fetching with circuit breaker."""
         params = {"f": "json"}
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
         }
-
+        
+        timeout = self.global_config.get("timeout", 30)
         try:
-            total_attempts = int(self.global_config.get("max_retries", 1))
-            if total_attempts < 1:
-                total_attempts = 1
-        except ValueError:
-            total_attempts = 1
-            log.warning(
-                "Invalid value for 'max_retries' in global_config. Defaulting to 1 attempt for metadata fetch."
+            response = requests.get(
+                service_url, 
+                params=params, 
+                headers=headers, 
+                timeout=timeout
             )
-
-        for attempt in range(total_attempts):
+            
+            # Handle different HTTP status codes appropriately
+            if response.status_code == 429:
+                retry_after = response.headers.get('Retry-After')
+                raise RateLimitError(
+                    f"Rate limit exceeded for {service_url}",
+                    source_name=self.src.name,
+                    retry_after=int(retry_after) if retry_after else None
+                )
+            elif 500 <= response.status_code < 600:
+                raise SourceUnavailableError(
+                    f"Service temporarily unavailable: {response.status_code}",
+                    source_name=self.src.name,
+                    context={"status_code": response.status_code, "url": service_url}
+                )
+            elif 400 <= response.status_code < 500:
+                raise HTTPError(
+                    f"Client error: {response.status_code} {response.reason}",
+                    source_name=self.src.name,
+                    status_code=response.status_code,
+                    context={"url": service_url}
+                )
+            
+            response.raise_for_status()
+            
             try:
-                log.debug(
-                    "Attempt %d/%d to fetch service metadata from %s",
-                    attempt + 1,
-                    total_attempts,
-                    service_url,
-                )
-                response = requests.get(
-                    service_url, params=params, headers=headers, timeout=30
-                )
-                response.raise_for_status()
                 return response.json()
-            except requests.exceptions.HTTPError as e:
-                log.error(
-                    "❌ HTTP error fetching service metadata from %s (Attempt %d/%d): %s",
-                    service_url,
-                    attempt + 1,
-                    total_attempts,
-                    e,
+            except json.JSONDecodeError as e:
+                raise DataFormatError(
+                    f"Invalid JSON response from {service_url}: {e}",
+                    source_name=self.src.name,
+                    format_type="json"
                 )
-                if 400 <= e.response.status_code < 500:
-                    log.warning(
-                        "Client error %d, not retrying metadata fetch for %s.",
-                        e.response.status_code,
-                        service_url,
-                    )
-                    return None
-                if attempt + 1 == total_attempts:
-                    log.error(
-                        "Final attempt failed for %s with HTTP error.", service_url
-                    )
-                    return None
-                sleep_time = 5 * (attempt + 1)
-                log.info(
-                    "Server error. Retrying metadata fetch for %s in %ds...",
-                    service_url,
-                    sleep_time,
-                )
-                time.sleep(sleep_time)
-            except requests.exceptions.RequestException as e:
-                log.error(
-                    "❌ Request exception fetching service metadata from %s (Attempt %d/%d): %s",
-                    service_url,
-                    attempt + 1,
-                    total_attempts,
-                    e,
-                )
-                if attempt + 1 == total_attempts:
-                    log.error(
-                        "Final attempt failed for %s with RequestException.",
-                        service_url,
-                    )
-                    return None
-                sleep_time = 5 * (attempt + 1)
-                log.info(
-                    "Request exception. Retrying metadata fetch for %s in %ds...",
-                    service_url,
-                    sleep_time,
-                )
-                time.sleep(sleep_time)
-            except Exception as e:
-                log.error(
-                    "❌ Unexpected error during metadata fetch for %s (Attempt %d/%d): %s",
-                    service_url,
-                    attempt + 1,
-                    total_attempts,
-                    e,
-                    exc_info=True,
-                )
-                return None
-
-        log.error(
-            "All %d attempts to fetch metadata from %s failed.",
-            total_attempts,
-            service_url,
-        )
-        return None
+                
+        except requests.exceptions.Timeout as e:
+            raise NetworkError(
+                f"Timeout fetching metadata from {service_url}",
+                source_name=self.src.name,
+                context={"timeout": timeout}
+            ) from e
+        except requests.exceptions.ConnectionError as e:
+            raise NetworkError(
+                f"Connection error fetching metadata from {service_url}",
+                source_name=self.src.name,
+                context={"error": str(e)}
+            ) from e
+        except requests.exceptions.RequestException as e:
+            raise NetworkError(
+                f"Request failed for {service_url}: {e}",
+                source_name=self.src.name,
+                context={"error": str(e)}
+            ) from e
 
     def _get_layer_metadata(self, layer_url: str) -> Optional[Dict[str, Any]]:
         """Fetches metadata for a specific layer."""
@@ -154,7 +161,7 @@ class RestApiDownloadHandler:
             params["geometryType"] = "esriGeometryEnvelope"
             params["inSR"] = bbox_sr
             params["spatialRel"] = "esriSpatialRelIntersects"
-            log.info("Applying BBOX: %s (SRID: %s)", bbox_coords, bbox_sr)
+            log.debug("Applying BBOX: %s (SRID: %s)", bbox_coords, bbox_sr)
 
         return params
 
@@ -222,12 +229,12 @@ class RestApiDownloadHandler:
         features = data.get("features", [])
         if not features:
             if page_num == 1:
-                log.info(
+                log.debug(
                     "ℹ️ No features returned for layer %s with current parameters.",
                     layer_name_sanitized,
                 )
             else:
-                log.info(
+                log.debug(
                     "🏁 All features retrieved for layer %s (empty page).",
                     layer_name_sanitized,
                 )
@@ -239,7 +246,7 @@ class RestApiDownloadHandler:
         exceeded_transfer_limit = data.get("exceededTransferLimit", False)
 
         if exceeded_transfer_limit:
-            log.info(
+            log.debug(
                 "⚠️ Exceeded transfer limit for layer %s, fetching next page.",
                 layer_name_sanitized,
             )
@@ -248,7 +255,7 @@ class RestApiDownloadHandler:
         if (
             features_len < effective_page_limit and effective_page_limit > 0
         ) or max_record_count == 0:
-            log.info(
+            log.debug(
                 "🏁 All features likely retrieved for layer %s (less than page limit or server maxRecordCount is 0).",
                 layer_name_sanitized,
             )
@@ -268,7 +275,8 @@ class RestApiDownloadHandler:
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(final_output_data, f, ensure_ascii=False, indent=2)
-            log.info(
+            log.info("✅ %s: %d features", layer_name_sanitized, features_written_total)
+            log.debug(
                 "💾 Successfully saved %d features for layer %s to %s",
                 features_written_total,
                 layer_name_sanitized,
@@ -411,81 +419,55 @@ class RestApiDownloadHandler:
                 layer_metadata_from_service=layer_info_to_query.get("metadata"),
             )
 
-    def _fetch_layer_data(
+    def _determine_max_record_count(
         self,
-        layer_info: Dict[str, Any],
-        layer_metadata_from_service: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        """Fetches data for a single layer."""
-        layer_id = layer_info.get("id")
-        layer_name_original = layer_info.get("name", f"layer_{layer_id}")
-        layer_name_sanitized = sanitize_for_filename(layer_name_original)
-
-        query_url = f"{self.src.url.rstrip('/')}/{layer_id}/query"
-        log.info(
-            "Querying Layer ID: %s (Sanitized Name: %s, Original: %s) from %s",
-            layer_id,
-            layer_name_sanitized,
-            layer_name_original,
-            query_url,
-        )
-
-        # Determine maxRecordCount
+        layer_id: str,
+        layer_meta: Optional[Dict[str, Any]],
+    ) -> tuple[int, Optional[Dict[str, Any]]]:
+        """Resolve maxRecordCount using config or service metadata."""
         max_record_count_from_config = self.src.raw.get("max_record_count")
-        layer_meta_to_use = layer_metadata_from_service
-
         if max_record_count_from_config is not None:
             try:
                 max_record_count = int(max_record_count_from_config)
-                log.info(
-                    "Using max_record_count from source.raw config: %d",
-                    max_record_count,
-                )
+                log.debug("Using max_record_count from config: %d", max_record_count)
+                return max_record_count, layer_meta
             except ValueError:
                 log.warning(
-                    "Invalid 'max_record_count' in source.raw: '%s'. Falling back to metadata or default.",
+                    "Invalid 'max_record_count' in source.raw: '%s'. Falling back to metadata.",
                     max_record_count_from_config,
                 )
-                max_record_count = None
-        else:
-            max_record_count = None
 
-        if max_record_count is None:
-            if not layer_meta_to_use:
-                layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
+        if not layer_meta:
+            layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
+            log.debug(
+                "Fetching specific layer metadata for layer ID %s to determine maxRecordCount.",
+                layer_id,
+            )
+            layer_meta = self._get_layer_metadata(layer_metadata_url)
+
+        if layer_meta:
+            if layer_meta.get("maxRecordCount") is not None:
+                max_record_count = layer_meta["maxRecordCount"]
+                log.debug("Service metadata maxRecordCount: %d", max_record_count)
+            elif layer_meta.get("standardMaxRecordCount") is not None:
+                max_record_count = layer_meta["standardMaxRecordCount"]
                 log.debug(
-                    "Fetching specific layer metadata for layer ID %s to determine maxRecordCount.",
-                    layer_id,
-                )
-                layer_meta_to_use = self._get_layer_metadata(layer_metadata_url)
-
-            if layer_meta_to_use:
-                if layer_meta_to_use.get("maxRecordCount") is not None:
-                    max_record_count = layer_meta_to_use["maxRecordCount"]
-                    log.info(
-                        "Service layer metadata indicates maxRecordCount: %d",
-                        max_record_count,
-                    )
-                elif layer_meta_to_use.get("standardMaxRecordCount") is not None:
-                    max_record_count = layer_meta_to_use["standardMaxRecordCount"]
-                    log.info(
-                        "Service layer metadata indicates standardMaxRecordCount: %d",
-                        max_record_count,
-                    )
-                else:
-                    max_record_count = 2000
-                    log.info(
-                        "maxRecordCount not found in specific layer metadata, using default: %d",
-                        max_record_count,
-                    )
-            else:
-                max_record_count = 2000
-                log.warning(
-                    "Could not fetch specific layer metadata for maxRecordCount, using default: %d",
+                    "Service metadata standardMaxRecordCount: %d",
                     max_record_count,
                 )
+            else:
+                max_record_count = DEFAULT_MAX_RECORDS
+                log.debug(
+                    "maxRecordCount not found in layer metadata, using default: %d",
+                    max_record_count,
+                )
+        else:
+            max_record_count = 2000
+            log.warning(
+                "Could not fetch specific layer metadata for maxRecordCount, using default: %d",
+                max_record_count,
+            )
 
-        # Ensure max_record_count is an integer after all determinations
         if not isinstance(max_record_count, int):
             log.warning(
                 "max_record_count ended up non-integer: '%s'. Defaulting to 2000.",
@@ -493,29 +475,24 @@ class RestApiDownloadHandler:
             )
             max_record_count = 2000
 
-        # Setup Query Parameters
-        params = self._prepare_query_params()
+        return max_record_count, layer_meta
 
-        # Staging Path
-        source_name_sanitized = sanitize_for_filename(self.src.name)
-        staging_dir = paths.STAGING / self.src.authority / source_name_sanitized
-        staging_dir.mkdir(parents=True, exist_ok=True)
-
-        output_filename = f"{layer_name_sanitized}.{params['f']}"
-        output_path = staging_dir / output_filename
-
-        # Pagination and Data Fetching
+    def _pagination_loop(
+        self,
+        query_url: str,
+        params: Dict[str, Any],
+        layer_name_sanitized: str,
+        max_record_count: int,
+    ) -> tuple[List[Dict[str, Any]], int]:
+        """Return all features for a layer via paginated requests."""
         current_offset = 0
         features_written_total = 0
-        all_features = []
+        all_features: List[Dict[str, Any]] = []
         page_num = 1
 
         while True:
-            effective_page_limit = max_record_count
-            if max_record_count == 0:
-                effective_page_limit = 2000
-
-            log.info(
+            effective_page_limit = 2000 if max_record_count == 0 else max_record_count
+            log.debug(
                 "Fetching page %d for layer %s (offset %d, limit %d)",
                 page_num,
                 layer_name_sanitized,
@@ -544,7 +521,7 @@ class RestApiDownloadHandler:
                     data["error"],
                 )
                 log.error(
-                    "❌ API_ERROR_REPORTED: Breaking from pagination loop for this layer."
+                    "❌ API_ERROR_REPORTED: Breaking from pagination loop for this layer.",
                 )
                 break
 
@@ -563,40 +540,102 @@ class RestApiDownloadHandler:
 
             page_num += 1
 
-        if all_features:
-            final_output_data = {
-                "type": "FeatureCollection",
-                "features": all_features,
-            }
+        return all_features, features_written_total
 
-            # Add CRS information if output is GeoJSON
-            if params["f"] == "geojson":
-                if not layer_meta_to_use:
-                    layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
-                    log.debug(
-                        "Fetching specific layer metadata for layer ID %s (for CRS info).",
-                        layer_id,
-                    )
-                    layer_meta_to_use = self._get_layer_metadata(layer_metadata_url)
+    def _add_crs_info(
+        self,
+        collection: Dict[str, Any],
+        layer_id: str,
+        layer_meta: Optional[Dict[str, Any]],
+        output_format: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Attach CRS metadata when appropriate."""
+        if output_format != GEOJSON_FORMAT:
+            return layer_meta
 
-                if layer_meta_to_use and layer_meta_to_use.get("spatialReference"):
-                    sr_info = layer_meta_to_use.get("spatialReference")
-                    if sr_info and sr_info.get("wkid") == 3006:  # SWEREF99 TM
-                        final_output_data["crs"] = {
-                            "type": "name",
-                            "properties": {"name": "urn:ogc:def:crs:EPSG::3006"},
-                        }
-
-            self._write_output_data(
-                output_path=output_path,
-                final_output_data=final_output_data,
-                layer_name_sanitized=layer_name_sanitized,
-                features_written_total=features_written_total,
-                output_format=params["f"],
+        if not layer_meta:
+            layer_metadata_url = f"{self.src.url.rstrip('/')}/{layer_id}"
+            log.debug(
+                "Fetching specific layer metadata for layer ID %s (for CRS info).",
+                layer_id,
             )
-        elif page_num == 1 and not all_features:
-            log.info(
-                "ℹ️ No features found or written for layer %s for source '%s'.",
-                layer_name_sanitized,
-                self.src.name,
-            )
+            layer_meta = self._get_layer_metadata(layer_metadata_url)
+
+        if layer_meta and layer_meta.get("spatialReference"):
+            sr_info = layer_meta.get("spatialReference")
+            if sr_info and sr_info.get("wkid") == SWEREF99_TM_WKID:
+                collection["crs"] = {
+                    "type": "name",
+                    "properties": {"name": "urn:ogc:def:crs:EPSG::3006"},
+                }
+
+        return layer_meta
+
+    def _fetch_layer_data(
+        self,
+        layer_info: Dict[str, Any],
+        layer_metadata_from_service: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Fetches data for a single layer."""
+        layer_id = layer_info.get("id")
+        if not layer_id:
+            log.error("❌ Layer ID is missing from layer_info: %s", layer_info)
+            return
+            
+        layer_name_original = layer_info.get("name", f"layer_{layer_id}")
+        layer_name_sanitized = sanitize_for_filename(layer_name_original)
+        
+        query_url = f"{self.src.url.rstrip('/')}/{layer_id}/query"
+        log.info("🚚 %s", layer_name_sanitized)
+        log.debug(
+            "Querying Layer ID: %s (Sanitized Name: %s, Original: %s) from %s",
+            layer_id,
+            layer_name_sanitized,
+            layer_name_original,
+            query_url,
+        )
+
+        max_record_count, layer_meta_to_use = self._determine_max_record_count(
+            layer_id=layer_id,
+            layer_meta=layer_metadata_from_service,
+        )
+
+        params = self._prepare_query_params()
+
+        source_name_sanitized = sanitize_for_filename(self.src.name)
+        staging_dir = paths.STAGING / self.src.authority / source_name_sanitized
+        staging_dir.mkdir(parents=True, exist_ok=True)
+
+        output_filename = f"{layer_name_sanitized}.{params['f']}"
+        output_path = staging_dir / output_filename
+
+        all_features, features_written_total = self._pagination_loop(
+            query_url=query_url,            params=params,
+            layer_name_sanitized=layer_name_sanitized,
+            max_record_count=max_record_count,
+        )
+        
+        if not all_features:
+            if features_written_total == 0:
+                log.info("ℹ️ %s: no features", layer_name_sanitized)
+            return
+
+        final_output_data = {
+            "type": "FeatureCollection",
+            "features": all_features,
+        }
+
+        self._add_crs_info(
+            collection=final_output_data,
+            layer_id=layer_id,
+            layer_meta=layer_meta_to_use,
+            output_format=params["f"],
+        )
+
+        self._write_output_data(
+            output_path=output_path,
+            final_output_data=final_output_data,
+            layer_name_sanitized=layer_name_sanitized,
+            features_written_total=features_written_total,
+            output_format=params["f"],
+        )

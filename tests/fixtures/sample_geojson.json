@@ -1,0 +1,35 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 1,
+        "name": "Test Feature 1",
+        "category": "A"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [18.0649, 59.3293]
+      }
+    },
+    {
+      "type": "Feature", 
+      "properties": {
+        "id": 2,
+        "name": "Test Feature 2",
+        "category": "B"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [17.9, 59.3],
+          [18.1, 59.3], 
+          [18.1, 59.4],
+          [17.9, 59.4],
+          [17.9, 59.3]
+        ]]
+      }
+    }
+  ]
+}

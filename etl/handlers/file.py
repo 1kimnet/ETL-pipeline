@@ -10,8 +10,16 @@ from urllib.parse import unquote
 
 from ..models import Source
 from ..utils import download, ensure_dirs, extract_zip, paths
-from ..utils.naming import sanitize_for_filename  # Updated import
+from ..utils.naming import sanitize_for_filename
 from ..utils.http import fetch_true_filename_parts
+from ..utils.retry import retry_with_backoff, RetryConfig
+from ..exceptions import (
+    FileNotFoundError as ETLFileNotFoundError,
+    NetworkError,
+    StorageError,
+    DataFormatError,
+    format_error_context
+)
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +34,16 @@ class FileDownloadHandler:
     def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
+        
+        # Initialize retry configuration
+        retry_config = self.global_config.get("retry", {})
+        self.retry_config = RetryConfig(
+            max_attempts=retry_config.get("max_attempts", 3),
+            base_delay=retry_config.get("base_delay", 1.0),
+            backoff_factor=retry_config.get("backoff_factor", 2.0),
+            max_delay=retry_config.get("max_delay", 300.0)
+        )
+        
         ensure_dirs()
 
     def fetch(self) -> None:
@@ -38,17 +56,25 @@ class FileDownloadHandler:
             log.info("⏭️ Source '%s' is disabled, skipping fetch.", self.src.name)
             return
 
-        is_single_direct_download_gpkg = (
-            (self.src.download_format and self.src.download_format.lower() == "gpkg") or
-            (self.src.staged_data_type and self.src.staged_data_type.lower() == "gpkg")
-        )
+        if not self.src.url:
+            raise ETLFileNotFoundError(
+                f"Source '{self.src.name}' has no URL configured",
+                source_name=self.src.name
+            )
 
-        if self.src.include and not is_single_direct_download_gpkg:
-            self._download_multiple_files()
-        elif self.src.url:
-            self._download_single_resource()
-        else:
-            log.warning("🤷 Source '%s' (type: '%s') has no URL. Cannot fetch.", self.src.name, self.src.type)
+        try:
+            is_single_direct_download_gpkg = (
+                (self.src.download_format and self.src.download_format.lower() == "gpkg") or
+                (self.src.staged_data_type and self.src.staged_data_type.lower() == "gpkg")
+            )
+
+            if self.src.include and not is_single_direct_download_gpkg:
+                self._download_multiple_files()
+            else:
+                self._download_single_resource()
+        except Exception as e:
+            log.error("❌ Failed to fetch source '%s': %s", self.src.name, format_error_context(e) if hasattr(e, 'context') else str(e))
+            raise
 
     def _download_multiple_files(self) -> None:
         """Handle multi-part downloads defined by src.include."""
@@ -158,7 +184,7 @@ class FileDownloadHandler:
         final_staging_destination_dir = paths.STAGING / self.src.authority / sanitized_staging_subdir_name
         final_staging_destination_dir.mkdir(parents=True, exist_ok=True)
 
-        log.info("Attempting to download: %s \n    -> to local file: %s \n    -> staging dir: %s",
+        log.debug("Attempting to download: %s \n    -> to local file: %s \n    -> staging dir: %s",
                  download_url, download_target_path.name, final_staging_destination_dir.relative_to(paths.ROOT))
 
         try:

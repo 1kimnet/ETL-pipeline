@@ -1,0 +1,30 @@
+# Output mappings for staging GDB to production SDE
+# This file defines custom mappings between staging feature classes and SDE output
+# All mappings are optional - unmapped sources use default naming logic
+
+mappings:
+  # MSB (Myndigheten för samhällsskydd och beredskap)
+  - staging_fc: "LST_lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2_polygon"
+    sde_fc: "riksintresse_rorligt_friluftsliv"
+    sde_dataset: "Underlag_LST"
+    description: "Riksintresse för rörligt friluftsliv enligt MB 4 kap 1§ 2 st"
+
+# Global mapping settings
+settings:
+  # Default schema prefix for all SDE datasets
+  default_schema: "GNG"
+  
+  # Fallback dataset pattern for unmapped sources
+  default_dataset_pattern: "Underlag_{authority}"
+  
+  # Fallback feature class pattern for unmapped sources
+  default_fc_pattern: "{authority}_{source_name}"
+  
+  # Whether to validate that mapped datasets exist before loading
+  validate_datasets: true
+  
+  # Whether to create missing datasets automatically
+  create_missing_datasets: true
+  
+  # Whether to skip sources that have no valid mapping or default naming
+  skip_unmappable_sources: false
