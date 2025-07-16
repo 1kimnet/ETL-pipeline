@@ -16,6 +16,8 @@ from etl.models import Source
 from etl.utils import paths
 from etl.utils.gdb_utils import ensure_unique_name
 from etl.utils.naming import generate_fc_name, sanitize_for_arcgis_name
+from etl.utils.arcpy_context import arcpy_environment, safe_arcpy_operation
+from etl.utils.cleanup import track_temp_path, untrack_temp_path
 
 log: Final = logging.getLogger(__name__)
 
@@ -27,6 +29,9 @@ def _copy_to_temp_shapefile(source_path: Path, authority: str) -> tuple[Path, Pa
 
     temp_dir = paths.TEMP / f"shp_{uuid.uuid4().hex[:8]}"
     temp_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Track temporary directory for cleanup
+    track_temp_path(temp_dir)
 
     try:
         out_shp = temp_dir / f"{generated_name}.shp"
@@ -35,6 +40,7 @@ def _copy_to_temp_shapefile(source_path: Path, authority: str) -> tuple[Path, Pa
         log.info("✅ Copied shapefile to temporary location: %s", out_shp)
         return out_shp, temp_dir
     except Exception:
+        untrack_temp_path(temp_dir)
         shutil.rmtree(temp_dir, ignore_errors=True)
         raise
 
@@ -110,6 +116,8 @@ class ShapefileLoader:
             temp_unzip_dir = (
                 paths.TEMP / f"unzip_{item_path.stem}_{uuid.uuid4().hex[:8]}"
             )
+            # Track temporary directory for cleanup
+            track_temp_path(temp_unzip_dir)
             log.info("📦 Unzipping '%s' to '%s'", item_path.name, temp_unzip_dir)
             with zipfile.ZipFile(item_path, "r") as zip_ref:
                 zip_ref.extractall(temp_unzip_dir)
@@ -134,6 +142,7 @@ class ShapefileLoader:
         if temp_unzip_dir:
             shutil.rmtree(temp_unzip_dir, ignore_errors=True)
 
+    @safe_arcpy_operation
     def process_shapefile(self, shp_file_path: Path, used_names: set[str]) -> None:
         """Process a single shapefile."""
         working_path = shp_file_path
@@ -161,7 +170,7 @@ class ShapefileLoader:
                 self.src.authority,
             )
 
-            with arcpy.EnvManager(overwriteOutput=True):
+            with arcpy_environment(overwriteOutput=True):
                 arcpy.management.CopyFeatures(
                     in_features=str(working_path),
                     out_feature_class=str(paths.GDB / target_fc_name),
@@ -184,4 +193,10 @@ class ShapefileLoader:
             )
         finally:
             if temp_copy_dir:
-                shutil.rmtree(temp_copy_dir, ignore_errors=True)
+                try:
+                    untrack_temp_path(temp_copy_dir)
+                    shutil.rmtree(temp_copy_dir, ignore_errors=True)
+                    log.debug("Cleaned up temporary directory: %s", temp_copy_dir)
+                except Exception as cleanup_error:
+                    log.warning("Failed to cleanup temporary directory %s: %s", 
+                               temp_copy_dir, cleanup_error)

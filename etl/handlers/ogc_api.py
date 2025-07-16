@@ -13,6 +13,16 @@ import requests
 from ..models import Source
 from ..utils import paths
 from ..utils.naming import sanitize_for_filename
+from ..utils.http_session import HTTPSessionHandler
+from ..utils.concurrent import get_collection_downloader, ConcurrentResult
+from ..utils.retry import smart_retry, enhanced_retry_with_stats, NETWORK_RETRY_CONFIG
+from ..exceptions import (
+    NetworkError,
+    SourceError,
+    DataError,
+    SystemError,
+    ErrorContext
+)
 
 log: Final = logging.getLogger(__name__)
 
@@ -24,20 +34,29 @@ DEFAULT_OGC_BBOX_CRS_URI: Final = CRS84_URI
 DEFAULT_TIMEOUT: Final = 10  # seconds
 
 
-class OgcApiDownloadHandler:
+class OgcApiDownloadHandler(HTTPSessionHandler):
     """🔄 Downloads data from OGC API Features endpoints with BBOX filtering."""
 
     def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
         self.bbox_params: Dict[str, str] = {}
-        self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "User-Agent": "ETL-Pipeline/1.0",
-                "Accept": "application/geo+json, application/json;q=0.9",
-            }
+        
+        # Initialize HTTP session with connection pooling
+        super().__init__(
+            base_url=src.url,
+            pool_connections=3,
+            pool_maxsize=5,
+            max_retries=2,
+            timeout=DEFAULT_TIMEOUT
         )
+        
+        # Update session headers
+        self.session.headers.update({
+            "User-Agent": "ETL-Pipeline/1.0",
+            "Accept": "application/geo+json, application/json;q=0.9",
+        })
+        
         self._setup_bbox_params()
 
     def _setup_bbox_params(self) -> None:
@@ -166,30 +185,35 @@ class OgcApiDownloadHandler:
                 )
                 return False
 
-            processed_at_least_one_collection_successfully = False
-            for collection_data in collections:
-                collection_id = collection_data.get("id")
-                if not collection_id:
-                    log.warning(
-                        "    Skipping a collection with no ID for source '%s'. Title: '%s'",
-                        self.src.name,
-                        collection_data.get("title", "N/A"),
-                    )
-                    continue
+            # Use concurrent downloads for multiple collections
+            if len(collections) > 1:
+                processed_at_least_one_collection_successfully = self._fetch_collections_concurrent(collections)
+            else:
+                # Single collection - use original sequential approach
+                processed_at_least_one_collection_successfully = False
+                for collection_data in collections:
+                    collection_id = collection_data.get("id")
+                    if not collection_id:
+                        log.warning(
+                            "    Skipping a collection with no ID for source '%s'. Title: '%s'",
+                            self.src.name,
+                            collection_data.get("title", "N/A"),
+                        )
+                        continue
 
-                log.info(
-                    "📦 Processing collection: %s (Source: %s)",
-                    collection_id,
-                    self.src.name,
-                )
-                if self._fetch_collection(collection_data):
-                    processed_at_least_one_collection_successfully = True
-                else:
-                    log.warning(
-                        "    ⚠️ Collection '%s' for source '%s' may not have been processed successfully or had no data.",
+                    log.info(
+                        "📦 Processing collection: %s (Source: %s)",
                         collection_id,
                         self.src.name,
                     )
+                    if self._fetch_collection(collection_data):
+                        processed_at_least_one_collection_successfully = True
+                    else:
+                        log.warning(
+                            "    ⚠️ Collection '%s' for source '%s' may not have been processed successfully or had no data.",
+                            collection_id,
+                            self.src.name,
+                        )
 
             if not processed_at_least_one_collection_successfully and collections:
                 log.warning(
@@ -208,8 +232,51 @@ class OgcApiDownloadHandler:
                 exc_info=True,
             )
             return False
-        finally:
-            self.session.close()
+
+    def _fetch_collections_concurrent(self, collections: List[Dict[str, Any]]) -> bool:
+        """Fetch multiple collections concurrently for improved performance."""
+        log.info("🚀 Starting concurrent download of %d collections", len(collections))
+        
+        # Get concurrent downloader
+        downloader = get_collection_downloader()
+        
+        # Enable parallel processing based on configuration
+        use_concurrent = self.global_config.get("enable_concurrent_downloads", True)
+        max_workers = self.global_config.get("concurrent_collection_workers", 3)
+        
+        if not use_concurrent:
+            log.info("⚠️ Concurrent downloads disabled, falling back to sequential")
+            processed_successfully = False
+            for collection_data in collections:
+                if self._fetch_collection(collection_data):
+                    processed_successfully = True
+            return processed_successfully
+        
+        # Update worker count if specified
+        if max_workers != downloader.manager.max_workers:
+            downloader.manager.max_workers = max_workers
+        
+        # Execute concurrent downloads
+        results = downloader.download_collections_concurrent(
+            handler=self,
+            collections=collections,
+            fail_fast=self.global_config.get("fail_fast_downloads", False)
+        )
+        
+        # Process results and log statistics
+        successful_downloads = sum(1 for r in results if r.success)
+        failed_downloads = len(results) - successful_downloads
+        
+        log.info("🏁 Concurrent collection downloads completed: %d successful, %d failed", 
+                successful_downloads, failed_downloads)
+        
+        # Log any failures
+        for result in results:
+            if not result.success:
+                collection_name = result.metadata.get("task_name", "unknown")
+                log.error("❌ Collection download failed: %s - %s", collection_name, result.error)
+        
+        return successful_downloads > 0
 
     def _get_collections(self) -> List[Dict[str, Any]]:
         """🔍 Get list of collections to download, respecting source config if present."""
@@ -629,6 +696,7 @@ class OgcApiDownloadHandler:
         )
         return None
 
+    @smart_retry("fetch_ogc_page")
     def _fetch_page(
         self, url: str
     ) -> Tuple[Optional[List[Dict[str, Any]]], Optional[str]]:
@@ -664,34 +732,48 @@ class OgcApiDownloadHandler:
 
             return features_on_page, next_page_url
 
-        except requests.exceptions.Timeout:
-            log.error("        ❌ Timeout error fetching OGC API page: %s", url)
-            return None, None
+        except requests.exceptions.Timeout as e:
+            raise NetworkError(
+                f"Timeout error fetching OGC API page: {url}",
+                timeout=DEFAULT_TIMEOUT,
+                url=url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=url,
+                    operation="fetch_ogc_page"
+                )
+            ) from e
         except requests.exceptions.HTTPError as e:
-            log.error(
-                "        ❌ HTTP error %s fetching OGC API page: %s",
-                e.response.status_code,
-                url,
-            )
-            return None, None
+            raise NetworkError(
+                f"HTTP error {e.response.status_code} fetching OGC API page: {url}",
+                status_code=e.response.status_code,
+                url=url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=url,
+                    operation="fetch_ogc_page"
+                )
+            ) from e
         except requests.exceptions.RequestException as e:
-            log.error("        ❌ Network error fetching OGC API page %s: %s", url, e)
-            return None, None
+            raise NetworkError(
+                f"Network error fetching OGC API page {url}: {e}",
+                url=url,
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=url,
+                    operation="fetch_ogc_page"
+                )
+            ) from e
         except json.JSONDecodeError as e:
-            log.error(
-                "        ❌ Invalid JSON response from OGC API page %s: %s", url, e
-            )
-            if response and hasattr(response, "text"):
-                log.debug("        Raw response snippet: %s", response.text[:500])
-            return None, None
-        except Exception as e_unexpected:
-            log.error(
-                "        ❌ Unexpected error fetching OGC API page %s: %s",
-                url,
-                e_unexpected,
-                exc_info=True,
-            )
-            return None, None
+            raise DataError(
+                f"Invalid JSON response from OGC API page {url}: {e}",
+                data_type="json",
+                context=ErrorContext(
+                    source_name=self.src.name,
+                    url=url,
+                    operation="parse_json"
+                )
+            ) from e
 
     def _find_next_link(self, links: List[Dict[str, Any]]) -> Optional[str]:
         """🔍 Find the next page link from response links."""
@@ -700,13 +782,3 @@ class OgcApiDownloadHandler:
                 return link_info["href"]
         return None
 
-    def __enter__(self) -> OgcApiDownloadHandler:
-        return self
-
-    def __exit__(
-        self,
-        exc_type: Optional[type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[Any],
-    ) -> None:
-        self.session.close()

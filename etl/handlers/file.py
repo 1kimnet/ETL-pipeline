@@ -5,20 +5,22 @@ import logging
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Iterable, Optional, Dict, Any
+from typing import Iterable, Optional, Dict, Any, List
 from urllib.parse import unquote
 
 from ..models import Source
 from ..utils import download, ensure_dirs, extract_zip, paths
 from ..utils.naming import sanitize_for_filename
 from ..utils.http import fetch_true_filename_parts
-from ..utils.retry import retry_with_backoff, RetryConfig
+from ..utils.retry import smart_retry, enhanced_retry_with_stats, FILE_OPERATION_RETRY_CONFIG, RetryConfig
+from ..utils.concurrent import get_file_downloader, ConcurrentResult
+from ..utils.recovery import recoverable_operation, get_global_recovery_manager
 from ..exceptions import (
-    FileNotFoundError as ETLFileNotFoundError,
     NetworkError,
-    StorageError,
-    DataFormatError,
-    format_error_context
+    SystemError,
+    DataError,
+    ErrorContext,
+    ETLFileNotFoundError
 )
 
 log = logging.getLogger(__name__)
@@ -88,7 +90,7 @@ class FileDownloadHandler:
         file_stems = list(self._iter_included_file_stems())
         
         # Use concurrent downloads for multiple files if enabled
-        if len(file_stems) > 1 and self.global_config.get("enable_concurrent_downloads", False):
+        if len(file_stems) > 1 and self.global_config.get("enable_concurrent_downloads", True):
             self._download_files_concurrent(file_stems)
         else:
             # Single file or concurrent downloads disabled - use original sequential approach
@@ -100,7 +102,6 @@ class FileDownloadHandler:
         log.info("🚀 Starting concurrent download of %d files", len(file_stems))
         
         # Get concurrent downloader
-        from ..utils.concurrent import get_file_downloader
         downloader = get_file_downloader()
         
         # Get configuration - use max_workers parameter instead of mutating singleton
@@ -209,6 +210,7 @@ class FileDownloadHandler:
         for stem in self.src.include:
             yield stem
 
+    @smart_retry("file_download_and_stage")
     def _download_and_stage_one(
         self,
         download_url: str,

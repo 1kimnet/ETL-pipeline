@@ -13,12 +13,19 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from ..exceptions import (
     ETLError,
-    CircuitBreakerError,
     NetworkError,
-    SourceUnavailableError,
-    RateLimitError,
+    DataError,
+    SystemError,
+    ConfigurationError,
+    SourceError,
+    ProcessingError,
+    PipelineError,
+    ConcurrentError,
     is_recoverable_error,
-    get_retry_delay
+    get_retry_delay,
+    classify_exception,
+    ErrorContext,
+    ErrorSeverity
 )
 
 log = logging.getLogger(__name__)
@@ -45,8 +52,10 @@ class RetryConfig:
         self.exponential = exponential
         self.recoverable_exceptions = recoverable_exceptions or [
             NetworkError,
-            SourceUnavailableError,
-            RateLimitError,
+            SourceError,
+            SystemError,
+            ProcessingError,
+            ConcurrentError,
             ConnectionError,
             TimeoutError
         ]
@@ -114,9 +123,10 @@ class CircuitBreaker:
                 self.state = "HALF_OPEN"
                 log.info("🔄 Circuit breaker half-open, attempting reset")
             else:
-                raise CircuitBreakerError(
+                raise PipelineError(
                     f"Circuit breaker is OPEN for {func.__name__}",
-                    service_name=func.__name__
+                    dependency=func.__name__,
+                    context=ErrorContext(operation="circuit_breaker")
                 )
         
         try:
@@ -302,3 +312,177 @@ class RetryableOperation:
     def get_retry_delay(self, exception: Exception) -> float:
         """Get delay before next retry."""
         return self.config.get_delay(self.attempt, exception)
+
+
+class RetryStatistics:
+    """Global retry statistics tracking."""
+    
+    def __init__(self):
+        self.operation_stats: Dict[str, Dict[str, int]] = {}
+        self.total_retries = 0
+        self.total_successes = 0
+        self.total_failures = 0
+    
+    def record_attempt(self, operation: str, success: bool, attempt_number: int):
+        """Record a retry attempt."""
+        if operation not in self.operation_stats:
+            self.operation_stats[operation] = {
+                "attempts": 0,
+                "successes": 0,
+                "failures": 0,
+                "total_retry_attempts": 0
+            }
+        
+        stats = self.operation_stats[operation]
+        stats["attempts"] += 1
+        
+        if success:
+            stats["successes"] += 1
+            self.total_successes += 1
+        else:
+            stats["failures"] += 1
+            self.total_failures += 1
+        
+        if attempt_number > 1:
+            stats["total_retry_attempts"] += (attempt_number - 1)
+            self.total_retries += (attempt_number - 1)
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """Get summary of retry statistics."""
+        return {
+            "total_operations": sum(stats["attempts"] for stats in self.operation_stats.values()),
+            "total_retries": self.total_retries,
+            "total_successes": self.total_successes,
+            "total_failures": self.total_failures,
+            "success_rate": (self.total_successes / (self.total_successes + self.total_failures)) * 100 
+                           if (self.total_successes + self.total_failures) > 0 else 0,
+            "operations": self.operation_stats
+        }
+
+
+# Global retry statistics instance
+_retry_stats = RetryStatistics()
+
+
+def get_retry_statistics() -> RetryStatistics:
+    """Get global retry statistics."""
+    return _retry_stats
+
+
+# Enhanced retry patterns for specific operations
+NETWORK_RETRY_CONFIG = RetryConfig(
+    max_attempts=5,
+    base_delay=2.0,
+    max_delay=120.0,
+    backoff_factor=2.0,
+    recoverable_exceptions=[NetworkError, SourceError, ConnectionError, TimeoutError]
+)
+
+DATABASE_RETRY_CONFIG = RetryConfig(
+    max_attempts=3,
+    base_delay=5.0,
+    max_delay=300.0,
+    backoff_factor=2.5,
+    recoverable_exceptions=[SystemError, ProcessingError]
+)
+
+FILE_OPERATION_RETRY_CONFIG = RetryConfig(
+    max_attempts=3,
+    base_delay=1.0,
+    max_delay=60.0,
+    backoff_factor=1.5,
+    recoverable_exceptions=[SystemError, ProcessingError, OSError, IOError]
+)
+
+CONCURRENT_RETRY_CONFIG = RetryConfig(
+    max_attempts=2,
+    base_delay=1.0,
+    max_delay=30.0,
+    backoff_factor=2.0,
+    recoverable_exceptions=[ConcurrentError, SystemError]
+)
+
+
+def enhanced_retry_with_stats(
+    operation_name: str,
+    config: Optional[RetryConfig] = None
+) -> Callable:
+    """Enhanced retry decorator with statistics tracking."""
+    if config is None:
+        config = RetryConfig()
+    
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs) -> Any:
+            last_exception = None
+            
+            for attempt in range(1, config.max_attempts + 1):
+                try:
+                    log.debug("🔄 %s attempt %d/%d", operation_name, attempt, config.max_attempts)
+                    result = func(*args, **kwargs)
+                    
+                    # Record successful attempt
+                    _retry_stats.record_attempt(operation_name, True, attempt)
+                    
+                    if attempt > 1:
+                        log.info("✅ %s succeeded on attempt %d", operation_name, attempt)
+                    
+                    return result
+                
+                except Exception as e:
+                    last_exception = e
+                    
+                    # Classify unknown exceptions
+                    if not isinstance(e, ETLError):
+                        classified_error = classify_exception(e)
+                        log.debug("🔍 Classified %s as %s", type(e).__name__, type(classified_error).__name__)
+                        last_exception = classified_error
+                    
+                    if not config.should_retry(last_exception, attempt):
+                        log.debug("❌ %s failed with non-recoverable error: %s", operation_name, last_exception)
+                        _retry_stats.record_attempt(operation_name, False, attempt)
+                        raise last_exception
+                    
+                    if attempt == config.max_attempts:
+                        log.error("❌ %s failed after %d attempts: %s", operation_name, attempt, last_exception)
+                        _retry_stats.record_attempt(operation_name, False, attempt)
+                        raise last_exception
+                    
+                    delay = config.get_delay(attempt, last_exception)
+                    log.warning(
+                        "⚠️  %s failed (attempt %d/%d): %s. Retrying in %.1fs",
+                        operation_name, attempt, config.max_attempts, last_exception, delay
+                    )
+                    
+                    time.sleep(delay)
+            
+            # This should never be reached, but just in case
+            if last_exception:
+                _retry_stats.record_attempt(operation_name, False, config.max_attempts)
+                raise last_exception
+        
+        return wrapper
+    return decorator
+
+
+def smart_retry(operation_name: str = None):
+    """Smart retry decorator that automatically selects appropriate config based on operation name."""
+    def decorator(func: Callable) -> Callable:
+        nonlocal operation_name
+        if operation_name is None:
+            operation_name = func.__name__
+        
+        # Select appropriate config based on operation name patterns
+        if any(pattern in operation_name.lower() for pattern in ['http', 'request', 'download', 'fetch']):
+            config = NETWORK_RETRY_CONFIG
+        elif any(pattern in operation_name.lower() for pattern in ['database', 'sql', 'sde', 'arcpy']):
+            config = DATABASE_RETRY_CONFIG
+        elif any(pattern in operation_name.lower() for pattern in ['file', 'read', 'write', 'copy']):
+            config = FILE_OPERATION_RETRY_CONFIG
+        elif any(pattern in operation_name.lower() for pattern in ['concurrent', 'parallel', 'thread']):
+            config = CONCURRENT_RETRY_CONFIG
+        else:
+            config = RetryConfig()  # Default config
+        
+        return enhanced_retry_with_stats(operation_name, config)(func)
+    return decorator
