@@ -118,7 +118,7 @@ ipython_config.py
 .pdm.toml
 .pdm-python
 .pdm-build/
-
+data/*
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
 
@@ -220,3 +220,8 @@ OVERWRITE_FIXES_SUMMARY.md
 test_sde_naming.py
 validate_fixes.py
 data/connections/prod.sde
+config/sources_BACKUP_$(Get-Date -Format 'yyyyMMdd_HHmmss').yaml
+PARAMETER_INVESTIGATION_REPORT.md
+PARAMETER_REFERENCE_CHART.md
+SOURCES_CLEANUP_ANALYSIS.md
+SOURCES_CLEANUP_REPORT.md
