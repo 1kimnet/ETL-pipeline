@@ -2,17 +2,17 @@
 
 ## Overview
 
-The ETL pipeline now supports running individual tasks independently, allowing you to:
+The ETL pipeline provides Windows batch files for running specific phases independently:
 
-- **🚚 Load to SDE only** - Load processed data from staging.gdb to SDE database
-- **🔄 Geoprocess only** - Apply clipping and projection to staging.gdb in-place  
-- **📦 Stage only** - Download sources and build staging.gdb
+- **🚚 load_sde.bat** - Load processed data from staging.gdb to SDE database
+- **🔄 geoprocess.bat** - Apply clipping and projection to staging.gdb in-place  
+- **📦 stage.bat** - Download sources and build staging.gdb
 
 This is useful for debugging, re-running failed steps, or working with existing processed data.
 
 ## Quick Start
 
-### Windows Batch Files (Recommended)
+### Windows Batch Files
 
 ```cmd
 # Load existing staging.gdb to SDE
@@ -23,74 +23,59 @@ geoprocess.bat
 
 # Download and stage data only
 stage.bat
-```
 
-### Python Script (Advanced)
+# Stage with force download option
+stage.bat --force-download
 
-```cmd
-# Load to SDE with custom parameters
-python scripts\run_task.py sde --source-gdb "path\to\custom.gdb" --sde-connection "path\to\custom.sde"
-
-# Geoprocess with custom AOI and SRID
-python scripts\run_task.py geoprocess --aoi-boundary "path\to\boundary.shp" --target-srid 4326
-
-# Stage with forced download
-python scripts\run_task.py stage --force-download --no-reset-gdb
+# Stage without resetting GDB
+stage.bat --no-reset-gdb
 ```
 
 ## Task Details
 
-### 🚚 SDE Loading Task
+### 🚚 SDE Loading Task (`load_sde.bat`)
 
-**Purpose**: Load processed feature classes from a staging GDB to an SDE database.
+**Purpose**: Load processed feature classes from staging.gdb to an SDE database.
 
 **Requirements**:
-- Source GDB must exist (usually `data\staging.gdb`)
+- `data\staging.gdb` must exist with feature classes
 - SDE connection file must exist and be accessible
-- SDE datasets must already exist (created separately)
+- SDE datasets must already exist (run `python scripts\create_sde_datasets.py`)
 
 **Usage**:
 ```cmd
-# Using batch file (simplest)
 load_sde.bat
-
-# Using Python script with defaults
-python scripts\run_task.py sde
-
-# With custom parameters
-python scripts\run_task.py sde --source-gdb "data\custom.gdb" --sde-connection "data\connections\test.sde"
 ```
 
-**Configuration**: Uses `sde_load_strategy`, `parallel_sde_loading`, and mapping settings from `config\config.yaml`.
+**Configuration**: Uses settings from `config\config.yaml`:
+- `sde_connection_file`
+- `sde_load_strategy` 
+- `sde_dataset_pattern`
+- Mapping configuration from `config\mappings.yaml` (if exists)
 
 ---
 
-### 🔄 Geoprocessing Task
+### 🔄 Geoprocessing Task (`geoprocess.bat`)
 
 **Purpose**: Apply spatial operations (clip + project) to feature classes in staging.gdb.
 
 **Requirements**:
-- Source GDB must exist with feature classes to process
-- AOI boundary file must exist for clipping
-- Target SRID must be valid
+- `data\staging.gdb` must exist with feature classes
+- AOI boundary file must exist (configured in config.yaml)
 
 **Usage**:
 ```cmd
-# Using batch file (simplest)
 geoprocess.bat
-
-# Using Python script with defaults
-python scripts\run_task.py geoprocess
-
-# With custom parameters
-python scripts\run_task.py geoprocess --aoi-boundary "data\custom_boundary.shp" --target-srid 4326
 ```
 
-**Configuration**: Uses `geoprocessing` settings from `config\config.yaml`.
+**Configuration**: Uses `geoprocessing` settings from `config\config.yaml`:
+- `aoi_boundary` path
+- `target_srid`
+- `parallel_processing_factor`
 
 ---
 
-### 📦 Staging Task
+### 📦 Staging Task (`stage.bat`)
 
 **Purpose**: Download source data and build staging.gdb from configured sources.
 
@@ -101,20 +86,17 @@ python scripts\run_task.py geoprocess --aoi-boundary "data\custom_boundary.shp" 
 
 **Usage**:
 ```cmd
-# Using batch file (simplest)
+# Standard staging
 stage.bat
 
-# With forced download (re-download everything)
+# Force re-download all sources
 stage.bat --force-download
 
-# Without resetting GDB (append mode)
+# Don't reset staging.gdb (append mode)
 stage.bat --no-reset-gdb
-
-# Using Python script
-python scripts\run_task.py stage --force-download
 ```
 
-**Configuration**: Uses handler settings and source definitions from YAML files.
+**Configuration**: Uses source definitions from `config\sources.yaml` and handler settings.
 
 ## Common Workflows
 
@@ -125,7 +107,7 @@ python run_etl.py
 
 # Then iterate on SDE loading only
 load_sde.bat
-# Fix issues, then run again
+# Fix configuration issues, then run again
 load_sde.bat
 ```
 
@@ -134,10 +116,12 @@ load_sde.bat
 # Stage data once
 stage.bat
 
-# Try different target projections
-python scripts\run_task.py geoprocess --target-srid 4326
-python scripts\run_task.py geoprocess --target-srid 3006
-python scripts\run_task.py geoprocess --target-srid 2154
+# Modify geoprocessing settings in config\config.yaml
+# Then apply geoprocessing
+geoprocess.bat
+
+# Load to SDE
+load_sde.bat
 ```
 
 ### 3. Refresh Data Without Full Pipeline
@@ -152,86 +136,76 @@ geoprocess.bat
 load_sde.bat
 ```
 
-### 4. Work with Custom Data Sources
+### 4. Incremental Updates
 ```cmd
-# Create custom staging.gdb from external sources
-# (manual process)
+# Add new data to existing staging.gdb
+stage.bat --no-reset-gdb
 
-# Then use task runner to geoprocess and load
-python scripts\run_task.py geoprocess --source-gdb "data\custom.gdb"
-python scripts\run_task.py sde --source-gdb "data\custom.gdb"
+# Process the updated GDB
+geoprocess.bat
+load_sde.bat
 ```
+
+## Implementation Details
+
+The batch files are simple wrappers that call the main ETL pipeline with specific phases:
+
+### How It Works
+- Each batch file sets environment variables or flags
+- Calls the main `run_etl.py` with specific parameters
+- Uses the same configuration files and logging system
+- Maintains full compatibility with existing pipeline code
+
+### Limitations
+- Batch files use fixed paths and default configuration
+- Advanced parameter customization requires modifying config files
+- No command-line parameter passing for custom GDB paths or connections
 
 ## Error Handling
 
-All tasks include comprehensive error handling and logging:
+All batch files include error handling and return appropriate exit codes:
 
 - **Success**: Returns exit code 0
-- **Failure**: Returns non-zero exit code and logs detailed error information
-- **Summary**: Always generates a summary report at completion
+- **Failure**: Returns non-zero exit code and displays error message
+- **Logging**: All output is logged to standard ETL log files
 
-Use `--log-level DEBUG` for detailed troubleshooting:
+Example error output:
 ```cmd
-python scripts\run_task.py sde --log-level DEBUG
+C:\Git\ETL-pipeline> load_sde.bat
+🚚 Running SDE loading task...
+❌ SDE loading failed with error code 1
 ```
-
-## Integration with Existing Code
-
-The task runner reuses all existing pipeline components:
-- Same configuration files (`config\config.yaml`, `config\mappings.yaml`)
-- Same handlers and loaders
-- Same monitoring and logging systems
-- Same parallel processing capabilities
-
-This ensures consistency and reduces code duplication.
-
-## Performance Considerations
-
-### Parallel Processing
-- SDE loading uses parallel processing by default (configurable)
-- Geoprocessing respects existing parallelization settings
-- Staging downloads sources sequentially (as in main pipeline)
-
-### Resource Usage
-- Each task can be configured independently
-- Memory usage scales with GDB size and parallel worker count
-- Network usage only occurs during staging task
-
-### Monitoring
-- All tasks include performance monitoring
-- Metrics are collected and logged
-- Summary reports show timing and success rates
 
 ## Troubleshooting
 
 ### Common Issues
 
-**"GDB not found"**
-- Ensure the source GDB exists at the specified path
-- Run staging task first if needed
+**"staging.gdb not found"**
+- Run `stage.bat` first to create the staging database
+- Verify `data\staging.gdb` exists
 
 **"SDE connection failed"**  
+- Check `config\config.yaml` for correct `sde_connection_file` path
 - Verify SDE connection file exists and is accessible
-- Test connection independently using ArcGIS tools
-- Check network connectivity and permissions
+- Test connection using ArcGIS Catalog
 
 **"AOI boundary not found"**
-- Ensure boundary file exists at specified path
-- Verify file format is supported (shapefile, feature class)
+- Check `config\config.yaml` for correct `aoi_boundary` path
+- Verify boundary file exists and is a valid shapefile
 
 **"Permission denied"**
-- Ensure write permissions to output directories
-- Close any applications that might lock the GDB
-- Run as administrator if necessary
+- Ensure write permissions to data directories
+- Close ArcGIS applications that might lock the GDB
+- Run Command Prompt as administrator if necessary
 
-### Getting Help
+### Configuration Check
 
+Before running tasks, verify your configuration:
 ```cmd
-# Show all available tasks
-python scripts\run_task.py --help
+# Check if config files exist
+dir config\*.yaml
 
-# Show task-specific options
-python scripts\run_task.py sde --help
-python scripts\run_task.py geoprocess --help
-python scripts\run_task.py stage --help
+# Check if required data exists
+dir data\connections\*.sde
+dir data\connections\*.shp
 ```
