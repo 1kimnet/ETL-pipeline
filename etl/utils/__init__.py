@@ -2,6 +2,11 @@
 
 from .io import CHUNK, download, extract_zip  # noqa: F401
 from .paths import ensure_dirs, paths  # noqa: F401
+from .concurrent_download import (  # noqa: F401
+    ConcurrentDownloadManager,
+    ConcurrentResult,
+    get_concurrent_download_manager
+)
 
 __all__ = [
     "paths",
@@ -9,4 +14,7 @@ __all__ = [
     "CHUNK",
     "download",
     "extract_zip",
+    "ConcurrentDownloadManager",
+    "ConcurrentResult",
+    "get_concurrent_download_manager",
 ]

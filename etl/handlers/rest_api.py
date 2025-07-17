@@ -12,6 +12,7 @@ from ..models import Source
 from ..utils import paths, ensure_dirs
 from ..utils.naming import sanitize_for_filename
 from ..utils.retry import retry_with_backoff, RetryConfig, CircuitBreaker
+from ..utils.concurrent_download import ConcurrentResult, get_concurrent_download_manager
 from ..exceptions import (
     HTTPError,
     NetworkError,
@@ -413,11 +414,57 @@ class RestApiDownloadHandler:
             log_layer_ids_to_query,
         )
 
-        for layer_info_to_query in layers_to_iterate_final:
-            self._fetch_layer_data(
-                layer_info=layer_info_to_query,
-                layer_metadata_from_service=layer_info_to_query.get("metadata"),
-            )
+        # Check if concurrent downloading is enabled
+        use_concurrent = self.global_config.get("concurrent_downloads", {}).get("enabled", False)
+        max_workers = self.global_config.get("concurrent_downloads", {}).get("max_workers")
+        
+        if use_concurrent and len(layers_to_iterate_final) > 1:
+            self._fetch_layers_concurrent(layers_to_iterate_final, max_workers)
+        else:
+            # Sequential processing (existing behavior)
+            for layer_info_to_query in layers_to_iterate_final:
+                self._fetch_layer_data(
+                    layer_info=layer_info_to_query,
+                    layer_metadata_from_service=layer_info_to_query.get("metadata"),
+                )
+
+    def _fetch_layers_concurrent(
+        self, 
+        layers_to_fetch: List[Dict[str, Any]], 
+        max_workers: Optional[int] = None
+    ) -> None:
+        """
+        Fetch multiple layers concurrently using the concurrent download manager.
+        
+        Args:
+            layers_to_fetch: List of layer information dictionaries
+            max_workers: Number of worker threads to use
+        """
+        log.info("🚀 Starting concurrent layer fetch for %d layers", len(layers_to_fetch))
+        
+        # Get the concurrent download manager
+        download_manager = get_concurrent_download_manager()
+        
+        # Use the concurrent download functionality
+        results = download_manager.download_layers_concurrent(
+            handler=self,
+            layers_info=layers_to_fetch,
+            fail_fast=False,  # Continue even if some layers fail
+            max_workers=max_workers
+        )
+        
+        # Log results
+        successful = [r for r in results if r.success]
+        failed = [r for r in results if not r.success]
+        
+        log.info("📊 Concurrent layer fetch completed: %d successful, %d failed", 
+                len(successful), len(failed))
+        
+        if failed:
+            log.warning("❌ Failed layers:")
+            for result in failed:
+                layer_name = result.item.get('name', result.item.get('id', 'unknown'))
+                log.warning("  - %s: %s", layer_name, result.error)
 
     def _determine_max_record_count(
         self,
