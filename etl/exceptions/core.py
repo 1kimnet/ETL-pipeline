@@ -301,7 +301,7 @@ class SourceError(ETLError):
         super().__init__(
             message,
             severity=severity,
-            category=ErrorCategory.SYSTEM,
+            category=ErrorCategory.NETWORK, # Or a new ErrorCategory.SOURCE
             context=context,
             recoverable=recoverable,
             retry_after=retry_after,
