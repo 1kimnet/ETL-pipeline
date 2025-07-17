@@ -16,6 +16,11 @@ from .utils import ensure_dirs, paths
 from .utils.cleanup import cleanup_before_pipeline_run
 from .utils.performance import monitor_performance
 from .utils.run_summary import Summary
+from .monitoring import (
+    get_structured_logger,
+    get_metrics_collector,
+    get_pipeline_monitor,
+)
 
 
 class Pipeline:
@@ -55,6 +60,11 @@ class Pipeline:
             logging.getLogger("summary").info(
                 "ℹ️  No global config file supplied – using defaults"
             )
+
+        # Initialize monitoring and metrics
+        self.logger = get_structured_logger("pipeline")
+        self.metrics = get_metrics_collector()
+        self.monitor = get_pipeline_monitor()
 
         ensure_dirs()
 
