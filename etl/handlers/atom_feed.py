@@ -194,7 +194,7 @@ class AtomFeedDownloadHandler:
         except Exception as e:
             log.error("❌ Failed to download/stage resource from Atom link %s: %s", dl_url, e, exc_info=True)
 
-    def __enter__(self) -> 'AtomFeedHandler':
+    def __enter__(self) -> 'AtomFeedDownloadHandler':
         """Enter the context manager for use with 'with' statements."""
         return self
 
