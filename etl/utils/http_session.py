@@ -65,9 +65,6 @@ class HTTPSessionManager:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         
-        # Set default timeout
-        session.timeout = session_config['timeout']
-        
         # Set common headers
         session.headers.update({
             'User-Agent': 'ETL-Pipeline/1.0 (requests)',
