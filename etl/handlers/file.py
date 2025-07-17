@@ -267,3 +267,11 @@ class FileDownloadHandler:
                 "for source '%s'. File downloaded to %s.",
                 effective_staged_data_type, self.src.name, downloaded_file_path
             )
+
+    def __enter__(self) -> 'FileDownloadHandler':
+        """Enter the context manager for use with 'with' statements."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context manager. No cleanup needed for file downloads."""
+        pass

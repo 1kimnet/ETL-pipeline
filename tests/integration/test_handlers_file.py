@@ -190,3 +190,21 @@ class TestFileDownloadHandler:
         
         assert handler.global_config == {}
         # Should handle None config gracefully
+
+    @pytest.mark.integration 
+    @patch('etl.handlers.file.ensure_dirs')
+    def test_context_manager_support(self, mock_ensure_dirs, sample_file_source):
+        """Test that FileDownloadHandler supports context manager protocol."""
+        handler = FileDownloadHandler(sample_file_source)
+        
+        # Test context manager methods exist
+        assert hasattr(handler, '__enter__')
+        assert hasattr(handler, '__exit__')
+        
+        # Test context manager usage
+        with FileDownloadHandler(sample_file_source) as context_handler:
+            assert context_handler is not None
+            assert isinstance(context_handler, FileDownloadHandler)
+            assert hasattr(context_handler, 'fetch')
+        
+        # Should exit without errors
