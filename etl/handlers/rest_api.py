@@ -641,3 +641,11 @@ class RestApiDownloadHandler:
             features_written_total=features_written_total,
             output_format=params["f"],
         )
+
+    def __enter__(self) -> 'RestApiDownloadHandler':
+        """Enter the context manager for use with 'with' statements."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context manager. No cleanup needed for REST API downloads."""
+        pass
