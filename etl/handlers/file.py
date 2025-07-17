@@ -85,24 +85,68 @@ class FileDownloadHandler:
             self.src.url,
         )
 
-        for included_filename_stem in self._iter_included_file_stems():
-            file_ext_from_format = ".zip"  # Default for collections
-            if self.src.download_format:
-                fmt = self.src.download_format.lower().lstrip(".")
-                if fmt:
-                    file_ext_from_format = f".{fmt}"
+        file_stems = list(self._iter_included_file_stems())
+        
+        # Use concurrent downloads for multiple files if enabled
+        if len(file_stems) > 1 and self.global_config.get("enable_concurrent_downloads", False):
+            self._download_files_concurrent(file_stems)
+        else:
+            # Single file or concurrent downloads disabled - use original sequential approach
+            for included_filename_stem in file_stems:
+                self._download_single_file_stem(included_filename_stem)
 
-            actual_filename_for_download_part = included_filename_stem + file_ext_from_format
-            base_url = self.src.url.rstrip("/") + "/"
-            download_url_for_part = base_url + actual_filename_for_download_part
+    def _download_files_concurrent(self, file_stems: List[str]) -> None:
+        """Download multiple files concurrently for improved performance."""
+        log.info("🚀 Starting concurrent download of %d files", len(file_stems))
+        
+        # Get concurrent downloader
+        from ..utils.concurrent import get_file_downloader
+        downloader = get_file_downloader()
+        
+        # Get configuration - use max_workers parameter instead of mutating singleton
+        max_workers = self.global_config.get("concurrent_file_workers", 4)
+        fail_fast = self.global_config.get("fail_fast_downloads", False)
+        
+        # Execute concurrent downloads with max_workers parameter
+        results = downloader.download_files_concurrent(
+            handler=self,
+            file_stems=file_stems,
+            fail_fast=fail_fast,
+            max_workers=max_workers  # Pass as parameter instead of mutating singleton
+        )
+        
+        # Process results and log statistics
+        successful_downloads = sum(1 for r in results if r.success)
+        failed_downloads = len(results) - successful_downloads
+        
+        log.info("🏁 Concurrent file downloads completed: %d successful, %d failed", 
+                successful_downloads, failed_downloads)
+        
+        # Log any failures
+        for result in results:
+            if not result.success:
+                file_name = result.metadata.get("task_name", "unknown")
+                log.error("❌ File download failed: %s - %s", file_name, result.error)
 
-            sanitized_included_stem = sanitize_for_filename(included_filename_stem)
-            self._download_and_stage_one(
-                download_url=download_url_for_part,
-                explicit_local_filename_stem=sanitized_included_stem,
-                explicit_local_file_ext=file_ext_from_format,
-                staging_subdir_name_override=sanitized_included_stem,
-            )
+    def _download_single_file_stem(self, included_filename_stem: str) -> None:
+        """Download a single file stem (extracted from original loop)."""
+        file_ext_from_format = ".zip"  # Default for collections
+        if self.src.download_format:
+            fmt = self.src.download_format.lower().lstrip(".")
+            if fmt:
+                file_ext_from_format = f".{fmt}"
+
+        actual_filename_for_download_part = included_filename_stem + file_ext_from_format
+        base_url = self.src.url.rstrip("/") + "/"
+        download_url_for_part = base_url + actual_filename_for_download_part
+
+        sanitized_included_stem = sanitize_for_filename(included_filename_stem)
+        self._download_and_stage_one(
+            download_url=download_url_for_part,
+            explicit_local_filename_stem=sanitized_included_stem,
+            explicit_local_file_ext=file_ext_from_format,
+            staging_subdir_name_override=sanitized_included_stem,
+        )
 
     def _download_single_resource(self) -> None:
         """Handle downloading a single resource from src.url."""

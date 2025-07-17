@@ -10,8 +10,6 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, TypeVa
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .performance import PerformanceMetrics
-
 log = logging.getLogger(__name__)
 
 T = TypeVar('T')
