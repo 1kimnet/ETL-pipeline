@@ -1,0 +1,21 @@
+# Concurrent Download Configuration
+# Add these settings to your main config.yaml for optimal performance
+
+# Enable concurrent downloads (set to false to disable)
+enable_concurrent_downloads: true
+
+# Worker configuration for different download types
+concurrent_download_workers: 5        # REST API layers (default: 5)
+concurrent_collection_workers: 3      # OGC API collections (default: 3)  
+concurrent_file_workers: 4           # File downloads (default: 4)
+
+# Download behavior
+fail_fast_downloads: false           # Stop all downloads on first failure (default: false)
+
+# HTTP connection pooling (already implemented)
+timeout: 30                          # Request timeout in seconds
+pool_connections: 10                 # Connection pool size per domain
+pool_maxsize: 10                     # Max connections per pool
+
+# Performance monitoring
+log_concurrent_stats: true           # Log detailed performance statistics
