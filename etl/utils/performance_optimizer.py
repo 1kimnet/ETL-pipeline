@@ -248,8 +248,7 @@ class ConcurrencyOptimizer:
     def _get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        import os
-        root_path = os.path.abspath(os.sep)  # Gets 'C:\' on Windows, '/' on Unix
+        root_path = self.ROOT_PATH  # Use precomputed static root path
         disk = psutil.disk_usage(root_path)
         
         return SystemResources(
