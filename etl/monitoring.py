@@ -373,8 +373,7 @@ class HealthMonitor:
         try:
             import shutil
             import os
-            root_path = os.path.abspath(os.sep)  # Gets 'C:\' on Windows, '/' on Unix
-            total, used, free = shutil.disk_usage(root_path)
+            total, used, free = shutil.disk_usage(self.ROOT_PATH)
             free_percent = (free / total) * 100
             
             status = "healthy"
