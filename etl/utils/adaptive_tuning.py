@@ -570,9 +570,7 @@ class SystemMonitor:
     def get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        import os
-        root_path = os.path.abspath(os.sep)  # Gets 'C:\' on Windows, '/' on Unix
-        disk = psutil.disk_usage(root_path)
+        disk = psutil.disk_usage(self.root_path)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),
