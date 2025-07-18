@@ -1,3 +1,29 @@
 {
-    "python.defaultInterpreterPath": "C:\\Users\\kije\\AppData\\Local\\ESRI\\conda\\envs\\arcgispro-py3-dev"
+    "python.defaultInterpreterPath": "C:\\Users\\kije\\AppData\\Local\\ESRI\\conda\\envs\\arcgispro-py3-dev",
+    "github.copilot.chat.languageContext.fix.typescript.enabled": true,
+    "github.copilot.chat.languageContext.inline.typescript.enabled": true,
+    "github.copilot.chat.languageContext.typescript.enabled": true,
+    "githubPullRequests.queries": [
+        
+        {
+            "label": "Copilot on My Behalf",
+            "query": "repo:${owner}/${repository} is:open author:copilot involves:${user}"
+        },
+        {
+            "label": "Local Pull Request Branches",
+            "query": "default"
+        },
+        {
+            "label": "Waiting For My Review",
+            "query": "repo:${owner}/${repository} is:open review-requested:${user}"
+        },
+        {
+            "label": "Created By Me",
+            "query": "repo:${owner}/${repository} is:open author:${user}"
+        },
+        {
+            "label": "All Open",
+            "query": "default"
+        }
+    ]
 }
