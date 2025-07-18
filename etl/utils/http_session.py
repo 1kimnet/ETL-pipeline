@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 
 log = logging.getLogger(__name__)
 
