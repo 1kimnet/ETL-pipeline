@@ -74,12 +74,6 @@ class ConcurrentStats:
 
 
 class ConcurrentDownloadManager:
-<<<<<<< HEAD
-    """Manages concurrent download operations with monitoring."""
-    
-    def __init__(self, max_workers: Optional[int] = None, timeout: Optional[float] = None):
-        self.max_workers = max_workers or 5
-=======
     """Manages concurrent download operations with adaptive optimization and monitoring."""
     
     def __init__(self, max_workers: Optional[int] = None, timeout: Optional[float] = None):
@@ -88,14 +82,10 @@ class ConcurrentDownloadManager:
         self.memory_optimizer = get_memory_optimizer()
         
         self.max_workers = max_workers or self._get_optimal_worker_count()
->>>>>>> 97005ab (feat: Complete Phase 1 production readiness improvements (65% → 95%))
         self.timeout = timeout
         self.stats = ConcurrentStats()
         self.lock = threading.RLock()
         
-<<<<<<< HEAD
-        log.info("Initialized ConcurrentDownloadManager with %d workers", self.max_workers)
-=======
         log.info("Initialized ConcurrentDownloadManager with adaptive optimization")
     
     def _get_optimal_worker_count(self) -> int:

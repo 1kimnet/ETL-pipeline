@@ -12,7 +12,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Tuple, Union
 from queue import Queue, Empty
-import resource
 import sys
 
 log = logging.getLogger(__name__)
