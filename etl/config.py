@@ -308,12 +308,16 @@ class ConfigManager:
     
     def _find_config_file(self, filename: str) -> Path:
         """Find configuration file in standard locations."""
+        import platform
         search_paths = [
             Path.cwd() / "config" / filename,
             Path.cwd() / filename,
             Path.home() / ".etl" / filename,
-            Path("/etc/etl") / filename
         ]
+        
+        # Add Unix-specific path only on non-Windows systems
+        if platform.system() != "Windows":
+            search_paths.append(Path("/etc/etl") / filename)
         
         for path in search_paths:
             if path.exists():

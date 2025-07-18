@@ -12,8 +12,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Tuple, Union
 from queue import Queue, Empty
-import resource
 import sys
+try:
+    import resource
+except ImportError:
+    resource = None  # Windows doesn't have resource module
 
 log = logging.getLogger(__name__)
 
@@ -152,12 +155,9 @@ class MemoryOptimizer:
     
     def _clear_internal_caches(self) -> None:
         """Clear internal caches to free memory."""
-        try:
-            # Clear HTTP connection pools
-            import requests
-            requests.Session().close()
-        except ImportError:
-            pass
+        # Clear HTTP connection pools
+        import requests
+        requests.Session().close()
         
         # Clear any other internal caches
         if hasattr(sys, '_clear_type_cache'):
@@ -244,7 +244,9 @@ class ConcurrencyOptimizer:
     def _get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        import os
+        root_path = os.path.abspath(os.sep)  # Gets 'C:\' on Windows, '/' on Unix
+        disk = psutil.disk_usage(root_path)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),
