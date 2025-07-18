@@ -5,7 +5,7 @@ import logging
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Iterable, Optional, Dict, Any
+from typing import Iterable, Optional, Dict, Any, List
 from urllib.parse import unquote
 
 from ..models import Source

@@ -226,11 +226,6 @@ class Pipeline:
                 "aoi_boundary", "data/connections/municipality_boundary.shp"
             )
         )
-        aoi_boundary = Path(
-            geoprocessing_config.get(
-                "aoi_boundary", "data/connections/municipality_boundary.shp"
-            )
-        )
         if not aoi_boundary.exists():
             self.logger.error("❌ AOI boundary not found", aoi_path=str(aoi_boundary))
             if not self.global_cfg.get("continue_on_failure", True):
@@ -384,18 +379,8 @@ class Pipeline:
                 record_count = (
                     int(record_count_str) if record_count_str.isdigit() else 0
                 )
-                record_count = (
-                    int(record_count_str) if record_count_str.isdigit() else 0
-                )
             except (ValueError, AttributeError):
                 record_count = 0
-
-            lg_sum.info(
-                "🔍 Source FC info: type=%s, geom=%s, records=%d",
-                desc.dataType,
-                desc.shapeType,
-                record_count,
-            )
 
             lg_sum.info(
                 "🔍 Source FC info: type=%s, geom=%s, records=%d",
@@ -524,8 +509,8 @@ class Pipeline:
         parts = fc_name.split("_", 1)
         if len(parts) < 2:
             # No underscore → treat as MISC
-            authority = "MISC"
-            fc_remainder = fc_name.lower()
+            dataset_suffix = "MISC"
+            fc_name_clean = fc_name.lower()
         else:
             dataset_suffix, fc_name_clean = parts
             fc_name_clean = fc_name_clean.lower()

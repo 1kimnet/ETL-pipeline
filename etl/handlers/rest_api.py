@@ -612,7 +612,8 @@ class RestApiDownloadHandler:
         output_path = staging_dir / output_filename
 
         all_features, features_written_total = self._pagination_loop(
-            query_url=query_url,            params=params,
+            query_url=query_url,
+            params=params,
             layer_name_sanitized=layer_name_sanitized,
             max_record_count=max_record_count,
         )
