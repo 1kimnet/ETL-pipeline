@@ -20,7 +20,9 @@ from ..exceptions import (
     SystemError,
     DataError,
     ErrorContext,
-    ETLFileNotFoundError
+    SourceError,
+    format_error_context,
+    classify_exception
 )
 
 log = logging.getLogger(__name__)
@@ -59,7 +61,7 @@ class FileDownloadHandler:
             return
 
         if not self.src.url:
-            raise ETLFileNotFoundError(
+            raise SourceError(
                 f"Source '{self.src.name}' has no URL configured",
                 source_name=self.src.name
             )
@@ -75,7 +77,8 @@ class FileDownloadHandler:
             else:
                 self._download_single_resource()
         except Exception as e:
-            log.error("❌ Failed to fetch source '%s': %s", self.src.name, format_error_context(e) if hasattr(e, 'context') else str(e))
+            etl_error = classify_exception(e)
+            log.error("❌ Failed to fetch source '%s': %s", self.src.name, format_error_context(etl_error))
             raise
 
     def _download_multiple_files(self) -> None:

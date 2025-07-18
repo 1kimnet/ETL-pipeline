@@ -231,3 +231,6 @@ SOURCES_CLEANUP_REPORT.md
 SOURCES_CLEANUP_ANALYSIS.md
 
 .bevel/do_not_share
+.bevel/do_not_share/port
+.bevel/do_not_share/port
+.vscode/settings.json

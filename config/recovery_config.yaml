@@ -64,24 +64,6 @@ degradation:
     max_file_size_mb: 10
     retry_attempts: 2
 
-# Rollback configuration
-rollback:
-  # Enable automatic rollback on critical failures
-  enable_auto_rollback: true
-  
-  # Rollback priorities (higher executed first)
-  priorities:
-    temp_workspace_cleanup: 4
-    feature_class_deletion: 3
-    directory_cleanup: 2
-    file_deletion: 1
-  
-  # Rollback on specific error types
-  rollback_triggers:
-    - "PipelineError"
-    - "SystemError" 
-    - "ProcessingError"
-
 # Circuit breaker configuration
 circuit_breakers:
   # HTTP service circuit breakers
@@ -156,7 +138,6 @@ monitoring:
     - "recovery_attempts"
     - "recovery_success_rate"
     - "degradation_level_changes"
-    - "rollback_executions"
     - "circuit_breaker_state_changes"
 
 # Fallback data sources (for recovery)
