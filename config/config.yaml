@@ -92,7 +92,7 @@ monitoring:
 
 # Data validation configuration
 validation:
-  strict_mode: false
+  strict_modeQ: false
   schema_validation: true
   geometry_validation: true
   attribute_validation: true
