@@ -16,7 +16,11 @@ import sys
 try:
     import resource
 except ImportError:
-    resource = None  # Windows doesn't have resource module
+    raise ImportError(
+        "The 'resource' module is not available on this platform. "
+        "This module is typically unavailable on Windows. Please ensure "
+        "that your code does not rely on 'resource' or provide an alternative implementation."
+    )
 
 log = logging.getLogger(__name__)
 
