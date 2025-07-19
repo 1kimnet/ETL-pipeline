@@ -373,7 +373,7 @@ class HealthMonitor:
         try:
             import shutil
             import os
-            total, used, free = shutil.disk_usage(self.ROOT_PATH)
+            total, used, free = shutil.disk_usage(getattr(self, "ROOT_PATH", Path.cwd().anchor))
             free_percent = (free / total) * 100
             
             status = "healthy"
