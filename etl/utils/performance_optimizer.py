@@ -12,7 +12,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Tuple, Union
 from queue import Queue, Empty
-import resource
+try:
+    import resource
+except ImportError:
+    raise ImportError(
+        "The 'resource' module is not available on this platform. "
+        "This module is typically unavailable on Windows. Please ensure "
+        "that your code does not rely on 'resource' or provide an alternative implementation."
+    ) from None
 import sys
 
 log = logging.getLogger(__name__)
@@ -172,6 +179,10 @@ class ConcurrencyOptimizer:
         self.memory_gb = psutil.virtual_memory().total / (1024**3)
         self.optimal_workers_cache: Dict[str, int] = {}
         
+        # Platform-aware root path for disk usage monitoring
+        import os
+        self.ROOT_PATH = os.path.abspath(os.sep)
+        
     def calculate_optimal_workers(
         self,
         operation_type: str,
@@ -244,7 +255,7 @@ class ConcurrencyOptimizer:
     def _get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage(self.ROOT_PATH)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),

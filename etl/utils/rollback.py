@@ -500,11 +500,4 @@ def add_pipeline_rollback_action(
 
 def execute_pipeline_rollback(reason: str = "Pipeline failed") -> bool:
     """Execute global pipeline rollback."""
-<<<<<<< HEAD
     return _global_rollback_manager.execute_rollback(reason)
-=======
-    return _global_rollback_manager.execute_rollback(reason)
-
-
-import threading  # Fix missing import
->>>>>>> 97005ab (feat: Complete Phase 1 production readiness improvements (65% → 95%))

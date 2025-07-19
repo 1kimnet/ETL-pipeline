@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import platform
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, Type, get_type_hints
@@ -312,8 +313,11 @@ class ConfigManager:
             Path.cwd() / "config" / filename,
             Path.cwd() / filename,
             Path.home() / ".etl" / filename,
-            Path("/etc/etl") / filename
         ]
+        
+        # Add Unix-specific paths only on non-Windows systems
+        if platform.system() != "Windows":
+            search_paths.append(Path("/etc/etl") / filename)
         
         for path in search_paths:
             if path.exists():
