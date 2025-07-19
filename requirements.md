@@ -104,8 +104,9 @@ def test_bundled_dependencies():
     results = {}
     for package, description in dependencies.items():
         try:
-            __import__(package)
-            results[package] = "✅ Available"
+            module = __import__(package)
+            version = getattr(module, '__version__', 'N/A')
+            results[package] = f"✅ Available (v{version})"
         except ImportError:
             results[package] = "❌ Missing"
     
