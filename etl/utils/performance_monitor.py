@@ -125,6 +125,10 @@ class PerformanceMonitor:
         self.enable_alerts = enable_alerts
         self.report_interval_minutes = report_interval_minutes
         
+        # Platform-aware root path for disk usage monitoring
+        import os
+        self._ROOT_PATH = os.path.abspath(os.sep)
+        
         # Data storage
         self.performance_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self.system_history: deque = deque(maxlen=1000)
@@ -351,7 +355,7 @@ class PerformanceMonitor:
     def _get_system_resources(self) -> SystemResources:
         """Get current system resources."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage(self._ROOT_PATH)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),

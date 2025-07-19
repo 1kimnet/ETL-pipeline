@@ -536,6 +536,8 @@ class SystemMonitor:
     def __init__(self):
         self.monitoring_interval = 5.0  # seconds
         self.history_size = 100
+        import os
+        self.root_path = os.path.abspath(os.sep)  # Platform-aware root path
         self.resource_history: deque = deque(maxlen=self.history_size)
         self.monitoring_thread: Optional[threading.Thread] = None
         self.stop_monitoring = threading.Event()
@@ -570,7 +572,7 @@ class SystemMonitor:
     def get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage(self.root_path)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),
