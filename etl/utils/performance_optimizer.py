@@ -12,8 +12,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Tuple, Union
 from queue import Queue, Empty
-import resource
 import sys
+try:
+    import resource
+except ImportError:
+    raise ImportError(
+        "The 'resource' module is not available on this platform. "
+        "This module is typically unavailable on Windows. Please ensure "
+        "that your code does not rely on 'resource' or provide an alternative implementation."
+    )
 
 log = logging.getLogger(__name__)
 
@@ -152,12 +159,9 @@ class MemoryOptimizer:
     
     def _clear_internal_caches(self) -> None:
         """Clear internal caches to free memory."""
-        try:
-            # Clear HTTP connection pools
-            import requests
-            requests.Session().close()
-        except ImportError:
-            pass
+        # Clear HTTP connection pools
+        import requests
+        requests.Session().close()
         
         # Clear any other internal caches
         if hasattr(sys, '_clear_type_cache'):
@@ -168,6 +172,8 @@ class ConcurrencyOptimizer:
     """Optimizes concurrency based on system resources and workload characteristics."""
     
     def __init__(self):
+        import os
+        self.ROOT_PATH = os.path.abspath(os.sep)
         self.cpu_count = psutil.cpu_count()
         self.memory_gb = psutil.virtual_memory().total / (1024**3)
         self.optimal_workers_cache: Dict[str, int] = {}
@@ -244,7 +250,8 @@ class ConcurrencyOptimizer:
     def _get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        root_path = getattr(self, "ROOT_PATH", Path.cwd().anchor)  # Use precomputed static root path
+        disk = psutil.disk_usage(root_path)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),

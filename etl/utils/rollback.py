@@ -12,42 +12,7 @@ from typing import Any, Dict, List, Optional, Type, Union, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
-try:
-    import arcpy
-except ImportError:
-    # Mock arcpy for testing environments
-    class MockArcPy:
-        @staticmethod
-        def Exists(path):
-            return False
-        
-        class management:
-            @staticmethod
-            def Delete(path):
-                pass
-            
-            @staticmethod
-            def CreateFeatureclass(*args, **kwargs):
-                pass
-                
-            @staticmethod
-            def CreateFileGDB(*args, **kwargs):
-                pass
-        
-        @staticmethod
-        def ListFeatureClasses():
-            return []
-            
-        @staticmethod
-        def ListTables():
-            return []
-            
-        class env:
-            workspace = None
-    
-    arcpy = MockArcPy()
-else:
-    pass  # Use the real arcpy module
+import arcpy
 
 from ..exceptions import (
     ETLError,
