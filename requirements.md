@@ -192,7 +192,7 @@ For dependency-related issues:
 ### ArcGIS Pro Python Environment
 
 The pipeline is designed to work with the **default ArcGIS Pro Python environment**:
-- **Location**: Usually `C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\`
+- **Location**: Usually `C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3`
 - **Python Version**: 3.9+ (varies by ArcGIS Pro version)
 - **All required libraries**: Bundled and ready to use
 
