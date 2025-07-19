@@ -351,7 +351,7 @@ class PerformanceMonitor:
     def _get_system_resources(self) -> SystemResources:
         """Get current system resources."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage(self._ROOT_PATH)
+        disk = psutil.disk_usage(getattr(self, "_ROOT_PATH", Path.cwd().anchor))
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),
