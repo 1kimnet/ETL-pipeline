@@ -229,3 +229,5 @@ PARAMETER_REFERENCE_CHART.md
 config/sources_BACKUP_$(Get-Date -Format 'yyyyMMdd_HHmmss').yaml
 SOURCES_CLEANUP_REPORT.md
 SOURCES_CLEANUP_ANALYSIS.md
+
+.bevel/do_not_share
