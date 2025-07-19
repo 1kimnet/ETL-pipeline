@@ -65,12 +65,8 @@ class HTTPSessionManager:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         
-<<<<<<< HEAD
-=======
         # Set default timeout
         session.timeout = session_config['timeout']
-        
->>>>>>> 97005ab (feat: Complete Phase 1 production readiness improvements (65% → 95%))
         # Set common headers
         session.headers.update({
             'User-Agent': 'ETL-Pipeline/1.0 (requests)',
@@ -79,12 +75,6 @@ class HTTPSessionManager:
             'Connection': 'keep-alive'
         })
         
-<<<<<<< HEAD
-        # Store timeout in session for use in request method override
-        session._etl_timeout = session_config['timeout']
-        
-=======
->>>>>>> 97005ab (feat: Complete Phase 1 production readiness improvements (65% → 95%))
         return session
     
     def close_session(self, base_url: Optional[str] = None):
@@ -122,28 +112,8 @@ _session_manager = HTTPSessionManager()
 
 
 def get_http_session(base_url: Optional[str] = None, **config) -> requests.Session:
-<<<<<<< HEAD
-    """Get a managed HTTP session with timeout override."""
-    session = _session_manager.get_session(base_url, **config)
-    
-    # Override the request method to ensure timeout is always passed
-    if not hasattr(session, '_etl_request_override'):
-        original_request = session.request
-        
-        def request_with_timeout(method, url, **kwargs):
-            # Use session timeout if no timeout specified
-            if 'timeout' not in kwargs and hasattr(session, '_etl_timeout'):
-                kwargs['timeout'] = session._etl_timeout
-            return original_request(method, url, **kwargs)
-        
-        session.request = request_with_timeout
-        session._etl_request_override = True
-    
-    return session
-=======
     """Get a managed HTTP session."""
     return _session_manager.get_session(base_url, **config)
->>>>>>> 97005ab (feat: Complete Phase 1 production readiness improvements (65% → 95%))
 
 
 @contextmanager
