@@ -6,5 +6,6 @@
         "github.vscode-pull-request-github",
         "ms-python.python",
         "ms-python.vscode-pylance",
+        "anthropics/claude-code-action@beta"
     ]
 }
