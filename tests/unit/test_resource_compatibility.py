@@ -31,7 +31,6 @@ class TestResourceModuleCompatibility(unittest.TestCase):
     def test_system_resources_functionality(self):
         """Test that SystemResources class works correctly without resource module."""
         # Import the SystemResources class definition directly
-        import sys
         import os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
         
