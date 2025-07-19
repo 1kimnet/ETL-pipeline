@@ -13,7 +13,7 @@ class TestResourceModuleCompatibility(unittest.TestCase):
             'etl', 'utils', 'performance_optimizer.py'
         )
         
-        with open(perf_opt_path, 'r') as f:
+        with open(perf_opt_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Check that resource import has been removed
