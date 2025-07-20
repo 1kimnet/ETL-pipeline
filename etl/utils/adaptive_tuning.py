@@ -2,18 +2,18 @@
 from __future__ import annotations
 
 import logging
-import time
-import threading
-from typing import Any, Dict, List, Optional, Callable, Tuple
-from dataclasses import dataclass, field
-from collections import deque
-from enum import Enum
 import statistics
+import threading
+import time
+from collections import deque
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import psutil
 
-from .performance_optimizer import PerformanceMetrics, SystemResources
 from .intelligent_cache import get_global_cache
-from ..exceptions import SystemError, ProcessingError
+from .performance_optimizer import PerformanceMetrics, SystemResources
 
 log = logging.getLogger(__name__)
 
@@ -654,7 +654,7 @@ def auto_tune_decorator(operation_name: str):
                 tuner.record_performance(metrics)
                 return result
                 
-            except Exception as e:
+            except Exception:
                 # Still record performance for failed operations
                 end_time = time.time()
                 end_memory = psutil.Process().memory_info().rss / (1024 * 1024)
@@ -676,4 +676,4 @@ def auto_tune_decorator(operation_name: str):
                 raise
         
         return wrapper
-    return decorator
+    return decorator    return decorator
