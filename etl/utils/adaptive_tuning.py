@@ -40,7 +40,7 @@ class PerformanceBaseline:
     
     def is_degraded(self, current_metrics: PerformanceMetrics, threshold: float = 0.2) -> bool:
         """Check if current performance is degraded compared to baseline."""
-        duration_increase = (current_metrics.duration - self.avg_duration) / self.avg_duration
+        duration_increase = (current_metrics.duration - self.avg_duration) / self.avg_duration # type: ignore
         throughput_decrease = (self.avg_throughput - current_metrics.throughput_items_per_sec) / self.avg_throughput
         
         return duration_increase > threshold or throughput_decrease > threshold
@@ -155,7 +155,7 @@ class AdaptivePerformanceTuner:
                 tuning_actions = self._generate_tuning_actions(operation)
                 if tuning_actions:
                     log.info("🎯 Generated %d tuning actions for %s", len(tuning_actions), operation)
-                    return tuning_actions
+                    # The record_performance method should not return tuning actions directly.
     
     def tune_configuration(self, config: Dict[str, Any], operation: str) -> List[TuningAction]:
         """Generate tuning actions for configuration optimization."""

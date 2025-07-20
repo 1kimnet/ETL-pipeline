@@ -1,4 +1,5 @@
 """HTTP session management with connection pooling and proper cleanup."""
+
 from __future__ import annotations
 
 import logging
@@ -122,7 +123,7 @@ def get_http_session(base_url: Optional[str] = None, **config) -> requests.Sessi
     session = _session_manager.get_session(base_url, **config)
 
     # Override the request method to ensure timeout is always passed
-    if not hasattr(session, '_etl_request_override'):
+    if not hasattr(session, "_etl_request_override"):
         original_request = session.request
 
         def request_with_timeout(method, url, **kwargs):
@@ -183,7 +184,7 @@ class HTTPSessionHandler:
 
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close_session()
 
