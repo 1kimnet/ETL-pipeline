@@ -2,18 +2,18 @@
 from __future__ import annotations
 
 import logging
-import time
-import threading
-from typing import Any, Dict, List, Optional, Callable, Tuple
-from dataclasses import dataclass, field
-from collections import deque
-from enum import Enum
 import statistics
+import threading
+import time
+from collections import deque
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import psutil
 
-from .performance_optimizer import PerformanceMetrics, SystemResources
 from .intelligent_cache import get_global_cache
-from ..exceptions import SystemError, ProcessingError
+from .performance_optimizer import PerformanceMetrics, SystemResources
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class PerformanceBaseline:
     
     def is_degraded(self, current_metrics: PerformanceMetrics, threshold: float = 0.2) -> bool:
         """Check if current performance is degraded compared to baseline."""
-        duration_increase = (current_metrics.duration - self.avg_duration) / self.avg_duration
+        duration_increase = (current_metrics.duration - self.avg_duration) / self.avg_duration # type: ignore
         throughput_decrease = (self.avg_throughput - current_metrics.throughput_items_per_sec) / self.avg_throughput
         
         return duration_increase > threshold or throughput_decrease > threshold
@@ -155,7 +155,7 @@ class AdaptivePerformanceTuner:
                 tuning_actions = self._generate_tuning_actions(operation)
                 if tuning_actions:
                     log.info("🎯 Generated %d tuning actions for %s", len(tuning_actions), operation)
-                    return tuning_actions
+                    # The record_performance method should not return tuning actions directly.
     
     def tune_configuration(self, config: Dict[str, Any], operation: str) -> List[TuningAction]:
         """Generate tuning actions for configuration optimization."""
@@ -570,7 +570,7 @@ class SystemMonitor:
     def get_current_resources(self) -> SystemResources:
         """Get current system resource usage."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage(self.root_path)
         
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),
@@ -654,7 +654,7 @@ def auto_tune_decorator(operation_name: str):
                 tuner.record_performance(metrics)
                 return result
                 
-            except Exception as e:
+            except Exception:
                 # Still record performance for failed operations
                 end_time = time.time()
                 end_memory = psutil.Process().memory_info().rss / (1024 * 1024)
@@ -676,4 +676,4 @@ def auto_tune_decorator(operation_name: str):
                 raise
         
         return wrapper
-    return decorator
+    return decorator    return decorator
