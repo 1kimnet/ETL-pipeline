@@ -1,0 +1,239 @@
+name: Pre-commit Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pre-commit black isort flake8 mypy bandit safety
+        pip install -r requirements.txt || echo "No requirements.txt found"
+
+    - name: Cache pre-commit
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+    - name: Create pre-commit config if missing
+      run: |
+        if [ ! -f .pre-commit-config.yaml ]; then
+          cat > .pre-commit-config.yaml << EOF
+        repos:
+        - repo: https://github.com/pre-commit/pre-commit-hooks
+          rev: v4.4.0
+          hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+          - id: check-added-large-files
+          - id: check-merge-conflict
+          - id: debug-statements
+          - id: check-json
+          
+        - repo: https://github.com/psf/black
+          rev: 23.3.0
+          hooks:
+          - id: black
+            language_version: python3
+            
+        - repo: https://github.com/pycqa/isort
+          rev: 5.12.0
+          hooks:
+          - id: isort
+            args: ["--profile", "black"]
+            
+        - repo: https://github.com/pycqa/flake8
+          rev: 6.0.0
+          hooks:
+          - id: flake8
+            args: [--max-line-length=127, --extend-ignore=E203,W503]
+            
+        - repo: https://github.com/pycqa/bandit
+          rev: 1.7.5
+          hooks:
+          - id: bandit
+            args: ["-r", ".", "-x", "*/tests/*"]
+            
+        - repo: https://github.com/pre-commit/mirrors-mypy
+          rev: v1.3.0
+          hooks:
+          - id: mypy
+            args: [--ignore-missing-imports, --no-strict-optional]
+        EOF
+        fi
+
+    - name: Run pre-commit on all files
+      run: |
+        pre-commit install
+        pre-commit run --all-files || {
+          echo "❌ Pre-commit checks failed!"
+          echo "📝 The following issues were found and should be fixed:"
+          echo ""
+          pre-commit run --all-files --verbose
+          exit 1
+        }
+
+    - name: Generate pre-commit report
+      if: failure()
+      run: |
+        echo "## 🔍 Pre-commit Check Results" > precommit_report.md
+        echo "" >> precommit_report.md
+        echo "Some pre-commit checks failed. Here's what needs to be fixed:" >> precommit_report.md
+        echo "" >> precommit_report.md
+        echo "### Issues Found:" >> precommit_report.md
+        pre-commit run --all-files 2>&1 | head -100 >> precommit_report.md || true
+        echo "" >> precommit_report.md
+        echo "### How to fix:" >> precommit_report.md
+        echo "1. Install pre-commit: \`pip install pre-commit\`" >> precommit_report.md
+        echo "2. Install hooks: \`pre-commit install\`" >> precommit_report.md
+        echo "3. Run fixes: \`pre-commit run --all-files\`" >> precommit_report.md
+        echo "4. Commit the fixes and push again" >> precommit_report.md
+
+    - name: Comment on PR with pre-commit results
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const report = fs.readFileSync('precommit_report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+          } catch (error) {
+            console.log('Could not read pre-commit report:', error.message);
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔍 Pre-commit Check Results
+              
+              ❌ Pre-commit checks failed! Please run the following locally:
+              
+              1. Install pre-commit: \`pip install pre-commit\`
+              2. Install hooks: \`pre-commit install\`
+              3. Run fixes: \`pre-commit run --all-files\`
+              4. Commit the fixes and push again`
+            });
+          }
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety semgrep
+
+    - name: Run Bandit security scan
+      continue-on-error: true
+      run: |
+        echo "🔒 Running Bandit security scan..."
+        bandit -r . -f json -o bandit-report.json || echo "Bandit found security issues"
+        bandit -r . -ll || echo "Security scan completed"
+
+    - name: Run Safety dependency check
+      continue-on-error: true
+      run: |
+        echo "🔒 Checking for vulnerable dependencies..."
+        safety check --json --output safety-report.json || echo "Safety found vulnerable dependencies"
+        safety check || echo "Dependency security scan completed"
+
+    - name: Run Semgrep security scan
+      continue-on-error: true
+      run: |
+        echo "🔒 Running Semgrep security patterns..."
+        semgrep --config=auto --json --output=semgrep-report.json . || echo "Semgrep found security issues"
+
+    - name: Security summary
+      run: |
+        echo "## 🔒 Security Scan Summary" > security_summary.md
+        echo "" >> security_summary.md
+        
+        # Bandit results
+        if [ -f bandit-report.json ]; then
+          BANDIT_ISSUES=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
+          echo "- **Bandit (SAST):** $BANDIT_ISSUES issues found" >> security_summary.md
+        fi
+        
+        # Safety results
+        if [ -f safety-report.json ]; then
+          SAFETY_ISSUES=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+          echo "- **Safety (Dependencies):** $SAFETY_ISSUES vulnerabilities found" >> security_summary.md
+        fi
+        
+        # Semgrep results
+        if [ -f semgrep-report.json ]; then
+          SEMGREP_ISSUES=$(jq '.results | length' semgrep-report.json 2>/dev/null || echo "0")
+          echo "- **Semgrep (SAST):** $SEMGREP_ISSUES issues found" >> security_summary.md
+        fi
+        
+        echo "" >> security_summary.md
+        echo "📁 Detailed reports are available in the workflow artifacts." >> security_summary.md
+        
+        cat security_summary.md
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          semgrep-report.json
+          security_summary.md
+        retention-days: 30
+
+    - name: Comment security results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const summary = fs.readFileSync('security_summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          } catch (error) {
+            console.log('Could not read security summary:', error.message);
+          }
