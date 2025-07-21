@@ -342,45 +342,38 @@ class HealthMonitor:
     
     def _check_memory_usage(self) -> HealthCheck:
         """Check memory usage."""
-        try:
-            import psutil
-            memory = psutil.virtual_memory()
-            usage_percent = memory.percent
-            
-            status = "healthy"
-            message = f"Memory usage: {usage_percent:.1f}%"
-            
-            if usage_percent > 90:
-                status = "unhealthy"
-                message = f"High memory usage: {usage_percent:.1f}%"
-            elif usage_percent > 75:
-                status = "warning"
-                message = f"Elevated memory usage: {usage_percent:.1f}%"
-            
-            return HealthCheck(
-                name="memory_usage",
-                status=status,
-                message=message,
-                timestamp=time.time(),
-                details={
-                    "percent": usage_percent,
-                    "available_gb": memory.available / (1024**3),
-                    "total_gb": memory.total / (1024**3)
-                }
-            )
-        except ImportError:
-            return HealthCheck(
-                name="memory_usage",
-                status="warning",
-                message="psutil not available for memory monitoring",
-                timestamp=time.time()
-            )
+        import psutil
+        memory = psutil.virtual_memory()
+        usage_percent = memory.percent
+        
+        status = "healthy"
+        message = f"Memory usage: {usage_percent:.1f}%"
+        
+        if usage_percent > 90:
+            status = "unhealthy"
+            message = f"High memory usage: {usage_percent:.1f}%"
+        elif usage_percent > 75:
+            status = "warning"
+            message = f"Elevated memory usage: {usage_percent:.1f}%"
+        
+        return HealthCheck(
+            name="memory_usage",
+            status=status,
+            message=message,
+            timestamp=time.time(),
+            details={
+                "percent": usage_percent,
+                "available_gb": memory.available / (1024**3),
+                "total_gb": memory.total / (1024**3)
+            }
+        )
     
     def _check_disk_space(self) -> HealthCheck:
         """Check disk space."""
         try:
             import shutil
-            total, used, free = shutil.disk_usage("/")
+            import os
+            total, used, free = shutil.disk_usage(getattr(self, "ROOT_PATH", Path.cwd().anchor))
             free_percent = (free / total) * 100
             
             status = "healthy"

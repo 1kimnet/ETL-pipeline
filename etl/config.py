@@ -308,12 +308,54 @@ class ConfigManager:
     
     def _find_config_file(self, filename: str) -> Path:
         """Find configuration file in standard locations."""
+        """Configuration management and validation for ETL pipeline.
+
+        This module provides structured configuration management using dataclasses
+        instead of Pydantic (to maintain ArcGIS compatibility). Includes validation,
+        environment-specific configuration, and schema checking.
+        """
+        from __future__ import annotations
+
+        import logging
+        import os
+        import platform
+        from dataclasses import dataclass, field, fields
+        from pathlib import Path
+        from typing import Any, Dict, List, Optional, Union, Type, get_type_hints
+        import yaml
+
+        from .exceptions import ConfigurationError, ValidationError
+
+        log = logging.getLogger(__name__)
+
+        # ... rest of the code remains unchanged ...
+
+            def _find_config_file(self, filename: str) -> Path:
+                """Find configuration file in standard locations."""
+                search_paths = [
+                    Path.cwd() / "config" / filename,
+                    Path.cwd() / filename,
+                    Path.home() / ".etl" / filename,
+                ]
+                
+                # Add Unix-specific path only on non-Windows systems
+                if platform.system() != "Windows":
+                    search_paths.append(Path("/etc/etl") / filename)
+                
+                for path in search_paths:
+                    if path.exists():
+                        return path
+                
+                raise ConfigurationError(f"Configuration file '{filename}' not found in any of: {search_paths}")
         search_paths = [
             Path.cwd() / "config" / filename,
             Path.cwd() / filename,
             Path.home() / ".etl" / filename,
-            Path("/etc/etl") / filename
         ]
+        
+        # Add Unix-specific path only on non-Windows systems
+        if platform.system() != "Windows":
+            search_paths.append(Path("/etc/etl") / filename)
         
         for path in search_paths:
             if path.exists():
