@@ -1,5 +1,4 @@
-- name: Claude PR Assistant
-  uses: anthropics/claude-code-action@beta
+name: Claude PR Assistant
 
 on:
   issue_comment:
