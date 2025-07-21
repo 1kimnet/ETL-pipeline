@@ -1,0 +1,15 @@
+# ETL Pipeline Runtime Dependencies
+# All libraries below are BUNDLED with ArcGIS Pro 3.3 - NO INSTALLATION REQUIRED
+
+# Core runtime dependencies (all bundled with ArcGIS Pro 3.3)
+# numpy>=1.24.3        # Bundled - Statistical analysis
+# scipy>=1.9.3         # Bundled - Advanced statistics  
+# psutil>=5.9.0        # Bundled - System monitoring
+# requests>=2.31.0     # Bundled - HTTP client
+# PyYAML>=6.0.1        # Bundled - Configuration parsing
+
+# NOTE: All dependencies are commented out because they're already bundled!
+# This file exists only for documentation purposes.
+# 
+# To verify availability, run:
+# python -c "import numpy, scipy, psutil, requests, yaml; print('All runtime deps available!')"
