@@ -1,0 +1,199 @@
+name: Dependency Security & Compliance
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Monday
+  push:
+    branches: [ main ]
+    paths: [ 'requirements.txt', 'pyproject.toml', '*.lock' ]
+  pull_request:
+    paths: [ 'requirements.txt', 'pyproject.toml', '*.lock' ]
+
+jobs:
+  dependency-security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety pip-audit cyclonedx-bom
+
+    - name: Run Safety check
+      continue-on-error: true
+      run: |
+        echo "🔒 Checking for known security vulnerabilities..."
+        safety check --json --output safety-report.json || echo "Vulnerabilities found"
+        safety check --short-report || echo "Security scan completed"
+
+    - name: Run pip-audit
+      continue-on-error: true
+      run: |
+        echo "🔍 Running pip-audit for vulnerability scanning..."
+        pip-audit --format=json --output=pip-audit-report.json || echo "pip-audit found issues"
+        pip-audit || echo "Audit completed"
+
+    - name: Generate SBOM (Software Bill of Materials)
+      run: |
+        echo "📋 Generating Software Bill of Materials..."
+        pip install -r requirements.txt
+        cyclonedx-py --force -o sbom.json
+        echo "✅ SBOM generated: sbom.json"
+
+    - name: Check for outdated packages
+      run: |
+        echo "📦 Checking for outdated packages..."
+        pip list --outdated --format=json > outdated-packages.json
+        pip list --outdated || echo "All packages are up to date"
+
+    - name: License compliance check
+      run: |
+        echo "⚖️ Checking license compliance..."
+        pip install pip-licenses
+        pip-licenses --format=json --output-file=licenses.json
+        pip-licenses --format=markdown --output-file=licenses.md
+        
+        # Check for problematic licenses
+        if pip-licenses | grep -E "(GPL|AGPL|LGPL)" | grep -v "BSD\|MIT\|Apache"; then
+          echo "⚠️ Found copyleft licenses that may require legal review"
+        else
+          echo "✅ No problematic licenses detected"
+        fi
+
+    - name: Dependency vulnerability summary
+      run: |
+        echo "## 🔒 Dependency Security Report" > security-summary.md
+        echo "" >> security-summary.md
+        echo "**Scan Date:** $(date)" >> security-summary.md
+        echo "" >> security-summary.md
+        
+        # Safety results
+        if [ -f safety-report.json ]; then
+          SAFETY_VULNS=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+          echo "- **Safety:** $SAFETY_VULNS vulnerabilities found" >> security-summary.md
+        fi
+        
+        # pip-audit results  
+        if [ -f pip-audit-report.json ]; then
+          PIP_AUDIT_VULNS=$(jq '.vulnerabilities | length' pip-audit-report.json 2>/dev/null || echo "0")
+          echo "- **pip-audit:** $PIP_AUDIT_VULNS vulnerabilities found" >> security-summary.md
+        fi
+        
+        # Outdated packages
+        if [ -f outdated-packages.json ]; then
+          OUTDATED_COUNT=$(jq '. | length' outdated-packages.json 2>/dev/null || echo "0")
+          echo "- **Outdated packages:** $OUTDATED_COUNT packages need updates" >> security-summary.md
+        fi
+        
+        echo "" >> security-summary.md
+        echo "📁 **Reports available:** SBOM, license scan, vulnerability details" >> security-summary.md
+        
+        cat security-summary.md
+
+    - name: Create dependency update suggestions
+      if: github.event_name == 'schedule'
+      run: |
+        echo "## 🔄 Suggested Dependency Updates" > dependency-updates.md
+        echo "" >> dependency-updates.md
+        echo "The following packages can be safely updated:" >> dependency-updates.md
+        echo "" >> dependency-updates.md
+        
+        if [ -f outdated-packages.json ]; then
+          jq -r '.[] | "- **\(.name):** \(.version) → \(.latest_version)"' outdated-packages.json >> dependency-updates.md
+        fi
+        
+        echo "" >> dependency-updates.md
+        echo "**Automated update commands:**" >> dependency-updates.md
+        echo '```bash' >> dependency-updates.md
+        echo 'pip install --upgrade $(pip list --outdated --format=freeze | cut -d= -f1)' >> dependency-updates.md
+        echo '```' >> dependency-updates.md
+
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: dependency-security-reports
+        path: |
+          safety-report.json
+          pip-audit-report.json
+          sbom.json
+          licenses.json
+          licenses.md
+          outdated-packages.json
+          security-summary.md
+          dependency-updates.md
+        retention-days: 90
+
+    - name: Comment on PR with security results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          } catch (error) {
+            console.log('Could not read security summary:', error.message);
+          }
+
+    - name: Create issue for vulnerabilities
+      if: github.event_name == 'schedule'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            // Check if there are any vulnerabilities
+            let hasVulns = false;
+            let vulnCount = 0;
+            
+            try {
+              const safetyReport = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+              vulnCount += safetyReport.vulnerabilities?.length || 0;
+            } catch (e) {}
+            
+            try {
+              const pipAuditReport = JSON.parse(fs.readFileSync('pip-audit-report.json', 'utf8'));
+              vulnCount += pipAuditReport.vulnerabilities?.length || 0;
+            } catch (e) {}
+            
+            if (vulnCount > 0) {
+              const summary = fs.readFileSync('security-summary.md', 'utf8');
+              const updates = fs.readFileSync('dependency-updates.md', 'utf8');
+              
+              const issueBody = `${summary}
+
+${updates}
+
+**Action Required:** Please review and update dependencies to address security vulnerabilities.
+
+*This issue was automatically created by the dependency security workflow.*`;
+
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🔒 Security vulnerabilities found in dependencies (${vulnCount} issues)`,
+                body: issueBody,
+                labels: ['security', 'dependencies', 'automated']
+              });
+            }
+          } catch (error) {
+            console.log('Could not create security issue:', error.message);
+          }

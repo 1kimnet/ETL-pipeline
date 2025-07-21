@@ -1,0 +1,362 @@
+name: Release Automation
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+      prerelease:
+        description: 'Is this a pre-release?'
+        type: boolean
+        default: false
+
+jobs:
+  changelog-and-release:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install semantic-version gitpython
+
+    - name: Generate version number
+      id: version
+      run: |
+        python -c "
+        import os
+        import git
+        import semantic_version
+        from datetime import datetime
+        
+        repo = git.Repo('.')
+        
+        # Get the latest tag
+        try:
+            latest_tag = repo.git.describe('--tags', '--abbrev=0')
+            current_version = semantic_version.Version(latest_tag.lstrip('v'))
+        except:
+            current_version = semantic_version.Version('0.1.0')
+        
+        # Determine release type from commit messages or workflow input
+        release_type = os.environ.get('RELEASE_TYPE', 'patch')
+        
+        # Analyze commit messages since last tag for automatic versioning
+        try:
+            commits = list(repo.iter_commits(f'{latest_tag}..HEAD'))
+        except:
+            commits = list(repo.iter_commits('HEAD'))
+        
+        has_breaking = any('BREAKING CHANGE' in commit.message for commit in commits)
+        has_feat = any(commit.message.startswith('feat') for commit in commits)
+        
+        if has_breaking:
+            new_version = current_version.next_major()
+        elif has_feat:
+            new_version = current_version.next_minor()  
+        else:
+            new_version = current_version.next_patch()
+        
+        # Manual override from workflow dispatch
+        if os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch':
+            release_type = os.environ.get('INPUT_RELEASE_TYPE', 'patch')
+            if release_type == 'major':
+                new_version = current_version.next_major()
+            elif release_type == 'minor':
+                new_version = current_version.next_minor()
+            else:
+                new_version = current_version.next_patch()
+        
+        version_string = f'v{new_version}'
+        
+        print(f'Current version: {current_version}')
+        print(f'New version: {version_string}')
+        
+        # Set outputs
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write(f'version={version_string}\n')
+            f.write(f'version_number={new_version}\n')
+            f.write(f'previous_version=v{current_version}\n')
+        "
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        python -c "
+        import git
+        import os
+        from datetime import datetime
+        
+        repo = git.Repo('.')
+        previous_version = os.environ.get('PREVIOUS_VERSION', 'HEAD~10')
+        
+        try:
+            commits = list(repo.iter_commits(f'{previous_version}..HEAD'))
+        except:
+            commits = list(repo.iter_commits('HEAD', max_count=10))
+        
+        # Categorize commits
+        features = []
+        fixes = []
+        chores = []
+        breaking = []
+        
+        for commit in commits:
+            message = commit.message.strip()
+            if message.startswith('feat'):
+                features.append(f'- {message}')
+            elif message.startswith('fix'):
+                fixes.append(f'- {message}')
+            elif 'BREAKING CHANGE' in message:
+                breaking.append(f'- {message}')
+            else:
+                chores.append(f'- {message}')
+        
+        # Generate changelog
+        changelog = []
+        changelog.append(f'# Release {os.environ.get(\"NEW_VERSION\", \"\")}')
+        changelog.append('')
+        changelog.append(f'**Release Date:** {datetime.now().strftime(\"%Y-%m-%d\")}')
+        changelog.append('')
+        
+        if breaking:
+            changelog.append('## ⚠️ BREAKING CHANGES')
+            changelog.extend(breaking)
+            changelog.append('')
+        
+        if features:
+            changelog.append('## 🚀 New Features')
+            changelog.extend(features)
+            changelog.append('')
+        
+        if fixes:
+            changelog.append('## 🐛 Bug Fixes')
+            changelog.extend(fixes)
+            changelog.append('')
+        
+        if chores:
+            changelog.append('## 🔧 Maintenance')
+            changelog.extend(chores[:5])  # Limit chores to 5 items
+            changelog.append('')
+        
+        changelog_text = '\n'.join(changelog)
+        
+        # Save changelog
+        with open('RELEASE_CHANGELOG.md', 'w') as f:
+            f.write(changelog_text)
+        
+        print('Generated changelog:')
+        print(changelog_text)
+        
+        # Set output for GitHub release
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write(f'changelog<<EOF\n{changelog_text}\nEOF\n')
+        "
+        env:
+          PREVIOUS_VERSION: ${{ steps.version.outputs.previous_version }}
+          NEW_VERSION: ${{ steps.version.outputs.version }}
+
+    - name: Update version in files
+      run: |
+        # Update version in setup.py if it exists
+        if [ -f setup.py ]; then
+          sed -i "s/version=['\"][^'\"]*['\"]/version='${{ steps.version.outputs.version_number }}'/" setup.py
+        fi
+        
+        # Update version in pyproject.toml if it exists
+        if [ -f pyproject.toml ]; then
+          sed -i "s/version = ['\"][^'\"]*['\"]/version = '${{ steps.version.outputs.version_number }}'/" pyproject.toml
+        fi
+        
+        # Create or update __version__.py
+        mkdir -p etl
+        echo "__version__ = '${{ steps.version.outputs.version_number }}'" > etl/__version__.py
+
+    - name: Run pre-release tests
+      run: |
+        echo "🧪 Running pre-release validation..."
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt || echo "No requirements.txt"
+        
+        # Basic syntax check
+        python -m py_compile $(find . -name "*.py" -not -path "./.git/*") || {
+          echo "❌ Syntax errors found - aborting release"
+          exit 1
+        }
+        
+        # Run tests if they exist
+        if [ -d tests ]; then
+          pip install pytest
+          pytest tests/ || {
+            echo "❌ Tests failed - aborting release"
+            exit 1
+          }
+        fi
+        
+        echo "✅ Pre-release validation passed"
+
+    - name: Create release package
+      run: |
+        echo "📦 Creating release package..."
+        
+        # Create distribution directory
+        mkdir -p dist
+        
+        # Create source archive
+        git archive --format=tar.gz --prefix=etl-pipeline-${{ steps.version.outputs.version_number }}/ HEAD > dist/etl-pipeline-${{ steps.version.outputs.version_number }}.tar.gz
+        
+        # Create zip archive
+        git archive --format=zip --prefix=etl-pipeline-${{ steps.version.outputs.version_number }}/ HEAD > dist/etl-pipeline-${{ steps.version.outputs.version_number }}.zip
+        
+        # Generate checksums
+        cd dist
+        sha256sum *.tar.gz *.zip > checksums.txt
+        cd ..
+        
+        echo "✅ Release packages created"
+
+    - name: Commit version changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+
+    - name: Create Git tag
+      run: |
+        git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
+        git push origin ${{ steps.version.outputs.version }}
+        git push origin main
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        release_name: "ETL Pipeline ${{ steps.version.outputs.version }}"
+        body: ${{ steps.changelog.outputs.changelog }}
+        draft: false
+        prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/etl-pipeline-${{ steps.version.outputs.version_number }}.tar.gz
+        asset_name: etl-pipeline-${{ steps.version.outputs.version_number }}.tar.gz
+        asset_content_type: application/gzip
+
+    - name: Upload zip asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/etl-pipeline-${{ steps.version.outputs.version_number }}.zip
+        asset_name: etl-pipeline-${{ steps.version.outputs.version_number }}.zip
+        asset_content_type: application/zip
+
+    - name: Upload checksums
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/checksums.txt
+        asset_name: checksums.txt
+        asset_content_type: text/plain
+
+    - name: Post-release notifications
+      run: |
+        echo "🎉 Release ${{ steps.version.outputs.version }} completed successfully!"
+        echo "📝 Changelog: ${{ steps.changelog.outputs.changelog }}"
+        echo "📦 Assets uploaded with checksums"
+        echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: changelog-and-release
+    if: success()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      if: github.repository_owner == '1kimnet'  # Only for main repo
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Create Dockerfile
+      run: |
+        cat > Dockerfile << 'EOF'
+        FROM python:3.11-slim
+
+        WORKDIR /app
+
+        # Install system dependencies
+        RUN apt-get update && apt-get install -y \
+            git \
+            && rm -rf /var/lib/apt/lists/*
+
+        # Copy requirements and install Python dependencies
+        COPY requirements.txt .
+        RUN pip install --no-cache-dir -r requirements.txt
+
+        # Copy application code
+        COPY . .
+
+        # Create non-root user
+        RUN useradd -m -u 1000 etluser && chown -R etluser:etluser /app
+        USER etluser
+
+        # Health check
+        HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+          CMD python -c "import etl; print('ETL pipeline is healthy')" || exit 1
+
+        CMD ["python", "-m", "etl"]
+        EOF
+
+    - name: Build and push Docker image
+      if: github.repository_owner == '1kimnet'
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ github.repository_owner }}/etl-pipeline:latest
+          ${{ github.repository_owner }}/etl-pipeline:${{ needs.changelog-and-release.outputs.version }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
