@@ -1,20 +1,11 @@
-# Core ETL Pipeline Dependencies
-# Note: These are bundled with ArcGIS Pro 3.3 - see requirements.md for details
+# GitHub Actions Workflow Dependencies
+# WARNING: This file is for CI/CD workflows ONLY - NOT for ETL runtime!
+#
+# ETL Pipeline Runtime: Uses ONLY ArcGIS Pro 3.3 bundled libraries
+# See requirements-runtime.txt for actual runtime dependencies
+# See requirements.md for complete documentation
 
-# HTTP and networking
-requests>=2.31.0
-
-# Data processing  
-numpy>=1.24.3
-scipy>=1.9.3
-
-# System monitoring
-psutil>=5.9.0
-
-# Configuration and data formats
-PyYAML>=6.0.1
-
-# Development and testing dependencies
+# Development and CI/CD dependencies (GitHub Actions workflows)
 black>=23.0.0
 isort>=5.12.0
 flake8>=6.0.0
@@ -23,3 +14,16 @@ mypy>=1.3.0
 bandit>=1.7.5
 safety>=2.3.0
 pre-commit>=3.3.0
+pytest>=7.4.0
+pytest-benchmark>=4.0.0
+memory-profiler>=0.61.0
+
+# Dependency analysis tools
+pip-audit>=2.6.0
+cyclonedx-bom>=4.0.0
+pip-licenses>=4.3.0
+
+# IMPORTANT: Runtime dependencies are all bundled with ArcGIS Pro 3.3:
+# - numpy, scipy, psutil, requests, PyYAML
+# - concurrent.futures, threading, dataclasses (standard library)
+# NO pip install needed for runtime - everything is already available!
