@@ -540,6 +540,10 @@ class SystemMonitor:
         self.monitoring_thread: Optional[threading.Thread] = None
         self.stop_monitoring = threading.Event()
         
+        # Platform-aware disk monitoring
+        import os
+        self.root_path = os.path.abspath(os.sep)
+        
     def start_monitoring(self) -> None:
         """Start continuous system monitoring."""
         if self.monitoring_thread and self.monitoring_thread.is_alive():
@@ -676,4 +680,4 @@ def auto_tune_decorator(operation_name: str):
                 raise
         
         return wrapper
-    return decorator    return decorator
+    return decorator
