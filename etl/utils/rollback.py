@@ -1,6 +1,5 @@
 """Rollback mechanisms for ETL pipeline operations."""
 from __future__ import annotations
-
 import logging
 import shutil
 import threading
@@ -11,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-
+import threading
 import arcpy
 
 from ..exceptions import (
@@ -436,7 +435,6 @@ class ArcPyTransaction(TransactionalOperation):
         log.debug("🏗️ Created temp workspace: %s", workspace_path)
         return workspace_path
 
-
 # Global rollback manager for tracking pipeline-level rollbacks
 _global_rollback_manager = RollbackManager("global_pipeline")
 
@@ -444,7 +442,6 @@ _global_rollback_manager = RollbackManager("global_pipeline")
 def get_global_rollback_manager() -> RollbackManager:
     """Get the global rollback manager for pipeline-level operations."""
     return _global_rollback_manager
-
 
 def add_pipeline_rollback_action(
     action_type: RollbackType,
@@ -462,14 +459,6 @@ def add_pipeline_rollback_action(
         priority=priority
     )
 
-
 def execute_pipeline_rollback(reason: str = "Pipeline failed") -> bool:
     """Execute global pipeline rollback."""
-<<<<<<< HEAD
     return _global_rollback_manager.execute_rollback(reason)
-=======
-    return _global_rollback_manager.execute_rollback(reason)
-
-
-import threading  # Fix missing import
->>>>>>> 97005ab (feat: Complete Phase 1 production readiness improvements (65% → 95%))
