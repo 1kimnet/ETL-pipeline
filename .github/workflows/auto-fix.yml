@@ -131,17 +131,8 @@ jobs:
         
         echo "✅ Security check completed"
 
-    - name: Fix YAML formatting
-      run: |
-        echo "🔧 Checking YAML files..."
-        find . -name "*.yml" -o -name "*.yaml" | while read file; do
-          if python -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
-            echo "✅ $file is valid"
-          else
-            echo "❌ $file has syntax errors"
-          fi
-        done
-
+-        pip install black isort autopep8 pylint flake8 mypy
++        pip install black isort autopep8 pylint flake8 mypy pyyaml
     - name: Generate fix summary
       run: |
         echo "📊 Auto-Fix Summary:" > fix_summary.md
