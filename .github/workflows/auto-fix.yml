@@ -60,7 +60,20 @@ jobs:
     - name: Fix common Python issues
       run: |
         echo "🔧 Fixing common Python issues..."
-        
+
+        # Ensure dos2unix is installed
+        if ! command -v dos2unix >/dev/null 2>&1; then
+          echo "Installing dos2unix..."
+          if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y dos2unix
+          elif command -v yum >/dev/null 2>&1; then
+            sudo yum install -y dos2unix
+          else
+            echo "No supported package manager found to install dos2unix."
+            exit 1
+          fi
+        fi
+
         # Fix missing newlines at end of files
         find . -name "*.py" -type f -exec sh -c '
           if [ -n "$(tail -c1 "$1")" ]; then
@@ -68,13 +81,13 @@ jobs:
             echo "" >> "$1"
           fi
         ' _ {} \;
-        
+
         # Fix Windows line endings
-        find . -name "*.py" -type f -exec dos2unix {} \; 2>/dev/null || echo "dos2unix not available"
-        
+        find . -name "*.py" -type f -exec dos2unix {} \;
+
         # Remove trailing whitespace
         find . -name "*.py" -type f -exec sed -i 's/[[:space:]]*$//' {} \;
-        
+
         echo "✅ Common fixes applied"
 
     - name: Check for Python syntax errors
