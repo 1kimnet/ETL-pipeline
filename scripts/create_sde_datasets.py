@@ -65,8 +65,9 @@ def create_sde_datasets(
         log.info("✅ Spatial reference: %s", spatial_ref.name)
     except Exception as exc:
         log.error(
-            "❌ Failed to create spatial reference for EPSG:%d: %s", target_srid, exc
-        )
+            "❌ Failed to create spatial reference for EPSG:%d: %s",
+            target_srid,
+            exc)
         raise
 
     created_count = 0
@@ -96,11 +97,15 @@ def create_sde_datasets(
 
         except arcpy.ExecuteError:
             log.error(
-                "❌ Failed to create dataset %s: %s", dataset_name, arcpy.GetMessages(2)
-            )
+                "❌ Failed to create dataset %s: %s",
+                dataset_name,
+                arcpy.GetMessages(2))
             error_count += 1
         except Exception as exc:
-            log.error("❌ Unexpected error creating dataset %s: %s", dataset_name, exc)
+            log.error(
+                "❌ Unexpected error creating dataset %s: %s",
+                dataset_name,
+                exc)
             error_count += 1
 
     # Summary

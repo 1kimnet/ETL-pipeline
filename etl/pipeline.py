@@ -90,7 +90,7 @@ class Pipeline:
         self.recovery_manager = get_global_recovery_manager()
         self.rollback_manager = get_global_rollback_manager()
         self.degradation_config = GracefulDegradationConfig()
-        
+
         # Configure recovery strategies based on config
         self._setup_pipeline_recovery_strategies()
 
@@ -101,14 +101,14 @@ class Pipeline:
         # Configure degradation thresholds based on config
         max_concurrent = self.global_cfg.get("concurrent_download_workers", 5)
         timeout = self.global_cfg.get("timeout", 30)
-        
+
         # Update degradation config
         self.degradation_config.max_concurrent_downloads = max_concurrent
         self.degradation_config.timeout_seconds = timeout
-        
+
         # Register pipeline-specific recovery strategies
         from .exceptions import NetworkError, SourceError, SystemError
-        
+
         # Network recovery with config-aware degradation
         def degrade_network_config():
             level = self.recovery_manager.get_degradation_level()
@@ -122,7 +122,7 @@ class Pipeline:
             self.global_cfg["concurrent_download_workers"] = degraded["concurrent_downloads"]
             self.global_cfg["timeout"] = degraded["timeout"]
             return degraded
-        
+
         self.recovery_manager.register_recovery_strategy(
             NetworkError,
             RecoveryStrategy.DEGRADE,
@@ -130,7 +130,7 @@ class Pipeline:
             description="Reduce concurrent downloads and increase timeout",
             priority=4
         )
-        
+
         # Source recovery with cached data fallback
         def use_cached_data():
             # Look for previous successful downloads
@@ -139,7 +139,7 @@ class Pipeline:
                 self.logger.info("🔄 Looking for cached data in %s", cache_dir)
                 return list(cache_dir.glob("*.json"))
             return []
-        
+
         self.recovery_manager.register_recovery_strategy(
             SourceError,
             RecoveryStrategy.FALLBACK,
@@ -165,8 +165,10 @@ class Pipeline:
 
         # ---------- 0. PRE-PIPELINE CLEANUP -------------------------------
         # Clean downloads and staging folders for fresh data
-        cleanup_downloads = self.global_cfg.get("cleanup_downloads_before_run", True)
-        cleanup_staging = self.global_cfg.get("cleanup_staging_before_run", True)
+        cleanup_downloads = self.global_cfg.get(
+            "cleanup_downloads_before_run", True)
+        cleanup_staging = self.global_cfg.get(
+            "cleanup_staging_before_run", True)
 
         if cleanup_downloads or cleanup_staging:
             lg_sum.info("🧹 Starting pre-pipeline cleanup...")
@@ -174,21 +176,34 @@ class Pipeline:
 
         # ---------- 1. DOWNLOAD & STAGING ---------------------------------
         sources = list(Source.load_all(self.sources_yaml_path))
-        self.logger.info("📋 Found sources to process", source_count=len(sources))
+        self.logger.info(
+            "📋 Found sources to process",
+            source_count=len(sources))
 
         # Create SDE loader for proper source-to-dataset mapping
         from .models import SdeLoader, AppConfig
-        app_config = AppConfig(sde_dataset_pattern=self.global_cfg.get("sde_dataset_pattern", "Underlag_{authority}"))
+        app_config = AppConfig(
+            sde_dataset_pattern=self.global_cfg.get(
+                "sde_dataset_pattern",
+                "Underlag_{authority}"))
         self.sde_loader = SdeLoader(app_config, sources)
 
         # Log concurrent download configuration
         if self.global_cfg.get("enable_concurrent_downloads", True):
-            self.logger.info("🚀 Concurrent downloads enabled: REST=%d, OGC=%d, Files=%d workers",
-                           self.global_cfg.get("concurrent_download_workers", 5),
-                           self.global_cfg.get("concurrent_collection_workers", 3),
-                           self.global_cfg.get("concurrent_file_workers", 4))
+            self.logger.info(
+                "🚀 Concurrent downloads enabled: REST=%d, OGC=%d, Files=%d workers",
+                self.global_cfg.get(
+                    "concurrent_download_workers",
+                    5),
+                self.global_cfg.get(
+                    "concurrent_collection_workers",
+                    3),
+                self.global_cfg.get(
+                    "concurrent_file_workers",
+                    4))
         else:
-            self.logger.info("⚠️ Concurrent downloads disabled - using sequential processing")
+            self.logger.info(
+                "⚠️ Concurrent downloads disabled - using sequential processing")
 
         for src in sources:
             if not src.enabled:
@@ -220,15 +235,25 @@ class Pipeline:
                     self.metrics.record_timing(
                         "download.duration_ms",
                         download_duration * 1000,
-                        tags={"source": src.name, "type": src.type, "concurrent": str(self.global_cfg.get("enable_concurrent_downloads", True))},
+                        tags={
+                            "source": src.name,
+                            "type": src.type,
+                            "concurrent": str(
+                                self.global_cfg.get(
+                                    "enable_concurrent_downloads",
+                                    True))},
                     )
                     self.metrics.increment_counter(
                         "download.success", tags={"source": src.name}
                     )
 
                     # Log performance improvement hint
-                    if download_duration > 60 and src.type in ["rest_api", "ogc_api"] and not self.global_cfg.get("enable_concurrent_downloads", True):
-                        self.logger.info("💡 Performance hint: Enable concurrent downloads for faster processing of %s sources", src.type)
+                    if download_duration > 60 and src.type in [
+                            "rest_api", "ogc_api"] and not self.global_cfg.get(
+                            "enable_concurrent_downloads", True):
+                        self.logger.info(
+                            "💡 Performance hint: Enable concurrent downloads for faster processing of %s sources",
+                            src.type)
 
                     self.summary.log_download("done")
                     self.monitor.record_source_processed(success=True)
@@ -239,25 +264,33 @@ class Pipeline:
                         error=exc,
                         operation_context=f"download_source_{src.name}"
                     )
-                    
+
                     if recovery_result.success:
-                        self.logger.info("✅ Recovered from download error for %s", src.name)
+                        self.logger.info(
+                            "✅ Recovered from download error for %s", src.name)
                         self.summary.log_download("recovered")
-                        self.monitor.record_source_processed(success=True, error=f"Recovered: {exc}")
+                        self.monitor.record_source_processed(
+                            success=True, error=f"Recovered: {exc}")
                     else:
                         self.summary.log_download("error")
                         self.summary.log_error(src.name, str(exc))
-                        self.logger.error("❌ Download failed and recovery failed", source_name=src.name, error=exc)
+                        self.logger.error(
+                            "❌ Download failed and recovery failed",
+                            source_name=src.name,
+                            error=exc)
 
                         self.metrics.increment_counter(
                             "download.error", tags={"source": src.name}
                         )
-                        self.monitor.record_source_processed(success=False, error=str(exc))
+                        self.monitor.record_source_processed(
+                            success=False, error=str(exc))
 
-                        if not self.global_cfg.get("continue_on_failure", True):
+                        if not self.global_cfg.get(
+                                "continue_on_failure", True):
                             self.monitor.end_run("failed")
                             # Execute pipeline rollback before raising
-                            execute_pipeline_rollback(f"Source download failed: {src.name}")
+                            execute_pipeline_rollback(
+                                f"Source download failed: {src.name}")
                             raise  # ---------- 2. STAGE → staging.gdb --------------------------------
         self.logger.info("📦 Starting staging phase")
 
@@ -270,13 +303,15 @@ class Pipeline:
                 reset_gdb(paths.GDB)
             self.logger.info("✅ Staging GDB reset complete")
         except (ImportError, arcpy.ExecuteError, OSError) as reset_exc:
-            self.logger.warning("⚠️ Failed to reset staging GDB", error=reset_exc)
+            self.logger.warning(
+                "⚠️ Failed to reset staging GDB",
+                error=reset_exc)
             if not self.global_cfg.get("continue_on_failure", True):
                 self.monitor.end_run("failed")
                 raise
 
         staging_success = True
-        
+
         # Wrap staging in graceful degradation
         with graceful_degradation("staging_phase", self.recovery_manager):
             try:
@@ -289,12 +324,13 @@ class Pipeline:
                 loader.run()
 
                 staging_duration = time.time() - start_time
-                self.metrics.record_timing("staging.duration_ms", staging_duration * 1000)
+                self.metrics.record_timing(
+                    "staging.duration_ms", staging_duration * 1000)
                 self.metrics.increment_counter("staging.success")
 
                 self.logger.info(
-                    "✅ Staging.gdb built successfully", duration_seconds=staging_duration
-                )
+                    "✅ Staging.gdb built successfully",
+                    duration_seconds=staging_duration)
 
             except Exception as exc:
                 # Attempt recovery for staging failures
@@ -302,7 +338,7 @@ class Pipeline:
                     error=exc,
                     operation_context="staging_phase"
                 )
-                
+
                 if recovery_result.success:
                     self.logger.info("✅ Recovered from staging error")
                     self.summary.log_staging("recovered")
@@ -311,7 +347,8 @@ class Pipeline:
                     self.summary.log_staging("error")
                     self.summary.log_error("GDB loader", str(exc))
 
-                    self.logger.error("❌ GDB load failed and recovery failed", error=exc)
+                    self.logger.error(
+                        "❌ GDB load failed and recovery failed", error=exc)
                     self.metrics.increment_counter("staging.error")
 
                     if not self.global_cfg.get("continue_on_failure", True):
@@ -348,7 +385,7 @@ class Pipeline:
         # Log final metrics and recovery statistics
         pipeline_stats = self.monitor.get_current_run()
         recovery_stats = self.recovery_manager.get_recovery_stats()
-        
+
         if pipeline_stats:
             self.logger.info(
                 "🏁 Pipeline completed successfully",
@@ -357,7 +394,7 @@ class Pipeline:
                 success_rate=pipeline_stats.success_rate,
                 degradation_level=self.recovery_manager.get_degradation_level()
             )
-        
+
         # Log recovery statistics
         if recovery_stats:
             self.logger.info("📊 Recovery Statistics:")
@@ -368,7 +405,7 @@ class Pipeline:
                     stats["attempts"],
                     stats["success_rate"]
                 )
-        
+
         # Reset degradation level for next run
         self.recovery_manager.reset_degradation_level()
 
@@ -391,9 +428,12 @@ class Pipeline:
             )
         )
         if not aoi_boundary.exists():
-            self.logger.error("❌ AOI boundary not found", aoi_path=str(aoi_boundary))
+            self.logger.error(
+                "❌ AOI boundary not found",
+                aoi_path=str(aoi_boundary))
             if not self.global_cfg.get("continue_on_failure", True):
-                raise FileNotFoundError(f"AOI boundary not found: {aoi_boundary}")
+                raise FileNotFoundError(
+                    f"AOI boundary not found: {aoi_boundary}")
             return
 
         try:
@@ -406,11 +446,9 @@ class Pipeline:
 
             # Perform simplified in-place geoprocessing (clip + project only)
             geoprocess.geoprocess_staging_gdb(
-                staging_gdb=paths.GDB,
-                aoi_fc=aoi_boundary,
-                target_srid=geoprocessing_config.get("target_srid", 3006),
-                pp_factor=geoprocessing_config.get("parallel_processing_factor", "100"),
-            )
+                staging_gdb=paths.GDB, aoi_fc=aoi_boundary, target_srid=geoprocessing_config.get(
+                    "target_srid", 3006), pp_factor=geoprocessing_config.get(
+                    "parallel_processing_factor", "100"), )
 
             geoprocessing_duration = time.time() - start_time
             self.metrics.record_timing(
@@ -419,8 +457,8 @@ class Pipeline:
             self.metrics.increment_counter("geoprocessing.success")
 
             self.logger.info(
-                "✅ Geoprocessing complete", duration_seconds=geoprocessing_duration
-            )
+                "✅ Geoprocessing complete",
+                duration_seconds=geoprocessing_duration)
 
         except arcpy.ExecuteError as exc:
             self.logger.error("❌ Geoprocessing failed", error=exc)
@@ -433,7 +471,9 @@ class Pipeline:
         """🚚 Step 4: Load processed GDB to production SDE with parallel processing"""
 
         if not source_gdb.exists():
-            self.logger.error("❌ Source GDB not found", gdb_path=str(source_gdb))
+            self.logger.error(
+                "❌ Source GDB not found",
+                gdb_path=str(source_gdb))
             return
 
         # Get SDE connection from config and validate
@@ -454,7 +494,9 @@ class Pipeline:
 
         all_feature_classes = self._discover_feature_classes(source_gdb)
         if not all_feature_classes:
-            self.logger.warning("⚠️ No feature classes found", gdb_path=str(source_gdb))
+            self.logger.warning(
+                "⚠️ No feature classes found",
+                gdb_path=str(source_gdb))
             return
 
         self.logger.info(
@@ -477,7 +519,9 @@ class Pipeline:
 
     def _validate_sde_connection_file(self, path: Path) -> bool:
         if not path.exists():
-            self.logger.error("❌ SDE connection file not found", sde_path=str(path))
+            self.logger.error(
+                "❌ SDE connection file not found",
+                sde_path=str(path))
             return False
         return True
 
@@ -495,7 +539,9 @@ class Pipeline:
                     all_fcs.append((fc_full_path, fc))
             datasets = arcpy.ListDatasets(feature_type="Feature")
             if datasets:
-                self.logger.debug("📁 Found feature datasets", count=len(datasets))
+                self.logger.debug(
+                    "📁 Found feature datasets",
+                    count=len(datasets))
                 for ds in datasets:
                     ds_fcs = arcpy.ListFeatureClasses(feature_dataset=ds)
                     if ds_fcs:
@@ -511,7 +557,8 @@ class Pipeline:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
         lg_sum = logging.getLogger("summary")
 
-        # Apply naming logic: RAA_byggnader_sverige_point → GNG.RAA\byggnader_sverige_point
+        # Apply naming logic: RAA_byggnader_sverige_point →
+        # GNG.RAA\byggnader_sverige_point
         dataset, sde_fc_name = self._get_sde_names(fc_name)
         sde_dataset_path = f"{sde_connection}\\{dataset}"
         target_path = f"{sde_dataset_path}\\{sde_fc_name}"
@@ -523,11 +570,13 @@ class Pipeline:
             sde_fc_name,
         )
         lg_sum.info(
-            "🔍 Target paths: dataset='%s', fc='%s'", sde_dataset_path, target_path
-        )
+            "🔍 Target paths: dataset='%s', fc='%s'",
+            sde_dataset_path,
+            target_path)
 
         # Get load strategy from config (default: truncate_and_load)
-        load_strategy = self.global_cfg.get("sde_load_strategy", "truncate_and_load")
+        load_strategy = self.global_cfg.get(
+            "sde_load_strategy", "truncate_and_load")
 
         try:
             # Check if target dataset exists in SDE
@@ -594,16 +643,16 @@ class Pipeline:
                 arcpy.GetMessages(2),
             )
             lg_sum.error(
-                "❌ Check SDE permissions and ensure dataset '%s' exists", dataset
-            )
+                "❌ Check SDE permissions and ensure dataset '%s' exists",
+                dataset)
             lg_sum.error(
                 "❌ SDE operation failed for %s: %s",
                 source_fc_path,
                 arcpy.GetMessages(2),
             )
             lg_sum.error(
-                "❌ Check SDE permissions and ensure dataset '%s' exists", dataset
-            )
+                "❌ Check SDE permissions and ensure dataset '%s' exists",
+                dataset)
             raise
 
     def _load_single_feature_class(
@@ -620,13 +669,23 @@ class Pipeline:
 
         if arcpy.Exists(target_path):
             if load_strategy == "truncate_and_load":
-                lg_sum.info("🗑️ Truncating existing FC: %s\\%s", dataset, sde_fc_name)
+                lg_sum.info(
+                    "🗑️ Truncating existing FC: %s\\%s",
+                    dataset,
+                    sde_fc_name)
                 arcpy.management.TruncateTable(target_path)
-                lg_sum.info("📄 Loading fresh data to: %s\\%s", dataset, sde_fc_name)
+                lg_sum.info(
+                    "📄 Loading fresh data to: %s\\%s",
+                    dataset,
+                    sde_fc_name)
                 arcpy.management.Append(
-                    inputs=source_fc_path, target=target_path, schema_type="NO_TEST"
-                )
-                lg_sum.info("🚚→  %s\\%s (truncated + loaded)", dataset, sde_fc_name)
+                    inputs=source_fc_path,
+                    target=target_path,
+                    schema_type="NO_TEST")
+                lg_sum.info(
+                    "🚚→  %s\\%s (truncated + loaded)",
+                    dataset,
+                    sde_fc_name)
             elif load_strategy == "replace":
                 self.logger.info(
                     "🗑️ Deleting existing FC", dataset=dataset, fc=sde_fc_name
@@ -645,7 +704,8 @@ class Pipeline:
                 )
 
                 duration = time.time() - start_time
-                self.metrics.record_timing("sde.replace.duration_ms", duration * 1000)
+                self.metrics.record_timing(
+                    "sde.replace.duration_ms", duration * 1000)
                 self.logger.info(
                     "🚚→ Replaced",
                     dataset=dataset,
@@ -659,8 +719,9 @@ class Pipeline:
                     fc=sde_fc_name,
                 )
                 arcpy.management.Append(
-                    inputs=source_fc_path, target=target_path, schema_type="NO_TEST"
-                )
+                    inputs=source_fc_path,
+                    target=target_path,
+                    schema_type="NO_TEST")
                 lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
             else:
                 self.logger.error(
@@ -681,7 +742,8 @@ class Pipeline:
             )
 
             duration = time.time() - start_time
-            self.metrics.record_timing("sde.create.duration_ms", duration * 1000)
+            self.metrics.record_timing(
+                "sde.create.duration_ms", duration * 1000)
             self.logger.info(
                 "🚚→ Created",
                 dataset=dataset,

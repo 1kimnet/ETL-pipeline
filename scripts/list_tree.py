@@ -32,8 +32,8 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 # ── tree drawing constants ────────────────────────────────────────────────
 VERTICAL: Final[str] = "│   "
-BRANCH:   Final[str] = "├── "
-LAST:     Final[str] = "└── "
+BRANCH: Final[str] = "├── "
+LAST: Final[str] = "└── "
 
 # ── default exclusions ────────────────────────────────────────────────────
 EXCLUDED_NAMES: Final[set[str]] = {"__pycache__", ".git", "data"}
@@ -109,7 +109,8 @@ def build_tree(
 
 # ── CLI entry point ───────────────────────────────────────────────────────
 def main() -> None:
-    parser = argparse.ArgumentParser(description="List workspace directory tree.")
+    parser = argparse.ArgumentParser(
+        description="List workspace directory tree.")
     parser.add_argument(
         "path",
         nargs="?",

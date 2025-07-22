@@ -69,7 +69,7 @@ from .exceptions.compat import (
 # The new system provides 8 core exception types with enhanced functionality:
 #
 # 1. NetworkError - HTTP, connection, timeout, rate limit issues
-# 2. DataError - Data format, quality, validation, geospatial issues  
+# 2. DataError - Data format, quality, validation, geospatial issues
 # 3. SystemError - Storage, resources, permissions, disk space
 # 4. ConfigurationError - Configuration and setup problems
 # 5. SourceError - Source availability, authentication, access

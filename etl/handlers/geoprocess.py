@@ -29,14 +29,14 @@ def geoprocess_staging_gdb(
     # Validate inputs
     staging_gdb_path = Path(staging_gdb)
     aoi_fc_path = Path(aoi_fc)
-    
+
     if not staging_gdb_path.exists():
         raise FileNotFoundError(f"Staging GDB not found: {staging_gdb_path}")
     if not aoi_fc_path.exists():
         raise FileNotFoundError(f"AOI feature class not found: {aoi_fc_path}")
-    
+
     log.info("🔄 Starting in-place geoprocessing of %s", staging_gdb_path.name)
-    
+
     # Configure environment using EnvManager
     with arcpy.EnvManager(
         workspace=str(staging_gdb_path),
@@ -49,30 +49,32 @@ def geoprocess_staging_gdb(
         if not original_fcs:
             log.warning("⚠️ No feature classes found in %s", staging_gdb_path)
             return
-            
-        log.info("🔄 Processing %d feature classes: clip + project only", len(original_fcs))
-        
+
+        log.info(
+            "🔄 Processing %d feature classes: clip + project only",
+            len(original_fcs))
+
         # Clip and project all FCs
         clip_and_project_fcs(original_fcs, aoi_fc_path)
-            
+
         log.info("✅ Geoprocessing complete for %s", staging_gdb_path.name)
 
 
 def clip_and_project_fcs(feature_classes: List[str], aoi_fc: Path) -> None:
     """🔄 Clip and project all feature classes in-place."""
     log.info("✂️ Clipping and projecting feature classes")
-    
+
     processed_count = 0
     error_count = 0
-    
+
     for fc_name in feature_classes:
         try:
             # Create temporary clipped version
             temp_clipped = f"in_memory\\{fc_name}_temp"
-            
+
             # Clip (projection handled by environment)
             arcpy.analysis.PairwiseClip(fc_name, str(aoi_fc), temp_clipped)
-            
+
             # Replace original with clipped version
             arcpy.management.Delete(fc_name)
             arcpy.management.CopyFeatures(temp_clipped, fc_name)
@@ -82,12 +84,18 @@ def clip_and_project_fcs(feature_classes: List[str], aoi_fc: Path) -> None:
 
             log.info("   ✂️ clipped & projected ➜ %s", fc_name)
             processed_count += 1
-            
+
         except arcpy.ExecuteError:
-            log.error("   ❌ failed to process %s: %s", fc_name, arcpy.GetMessages(2))
+            log.error(
+                "   ❌ failed to process %s: %s",
+                fc_name,
+                arcpy.GetMessages(2))
             error_count += 1
-            
-    log.info("📊 Clip/project complete: %d processed, %d errors", processed_count, error_count)
+
+    log.info(
+        "📊 Clip/project complete: %d processed, %d errors",
+        processed_count,
+        error_count)
 
 
 def create_naming_rules_from_config(config: Dict) -> Dict[str, Dict[str, str]]:

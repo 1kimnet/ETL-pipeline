@@ -22,20 +22,22 @@ from etl.utils.cleanup import track_temp_path, untrack_temp_path
 log: Final = logging.getLogger(__name__)
 
 
-def _copy_to_temp_shapefile(source_path: Path, authority: str) -> tuple[Path, Path]:
+def _copy_to_temp_shapefile(
+        source_path: Path, authority: str) -> tuple[Path, Path]:
     """Copy shapefile to a temporary, sanitized location if its name is invalid."""
     base_name = sanitize_for_arcgis_name(source_path.stem)
     generated_name = f"{authority.lower()}_{base_name}"
 
     temp_dir = paths.TEMP / f"shp_{uuid.uuid4().hex[:8]}"
     temp_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Track temporary directory for cleanup
     track_temp_path(temp_dir)
 
     try:
         out_shp = temp_dir / f"{generated_name}.shp"
-        # Use arcpy.Copy_management as it robustly handles all shapefile sidecar files
+        # Use arcpy.Copy_management as it robustly handles all shapefile
+        # sidecar files
         arcpy.management.Copy(in_data=str(source_path), out_data=str(out_shp))
         log.info("✅ Copied shapefile to temporary location: %s", out_shp)
         return out_shp, temp_dir
@@ -57,8 +59,10 @@ class ShapefileLoader:
 
         # Calculate the staging directory path for this source
         source_staging_dir = (
-            paths.STAGING / self.src.authority / sanitize_for_filename(self.src.name)
-        )
+            paths.STAGING /
+            self.src.authority /
+            sanitize_for_filename(
+                self.src.name))
 
         if not source_staging_dir.exists():
             log.warning(
@@ -75,11 +79,13 @@ class ShapefileLoader:
         zip_files = list(source_staging_dir.glob("*.zip"))
         items_to_process.extend(zip_files)
 
-        # Look for subdirectories (from extracted archives or multi-part downloads)
+        # Look for subdirectories (from extracted archives or multi-part
+        # downloads)
         subdirs = [p for p in source_staging_dir.iterdir() if p.is_dir()]
         items_to_process.extend(subdirs)
 
-        # If no items found, look for shapefiles directly in the staging directory
+        # If no items found, look for shapefiles directly in the staging
+        # directory
         if not items_to_process:
             shapefiles = list(source_staging_dir.glob("*.shp"))
             if shapefiles:
@@ -118,14 +124,17 @@ class ShapefileLoader:
             )
             # Track temporary directory for cleanup
             track_temp_path(temp_unzip_dir)
-            log.info("📦 Unzipping '%s' to '%s'", item_path.name, temp_unzip_dir)
+            log.info(
+                "📦 Unzipping '%s' to '%s'",
+                item_path.name,
+                temp_unzip_dir)
             with zipfile.ZipFile(item_path, "r") as zip_ref:
                 zip_ref.extractall(temp_unzip_dir)
             item_dir = temp_unzip_dir
         elif not item_path.is_dir():
             log.error(
-                "❌ Item '%s' is not a directory or a zip file, skipping.", item_path
-            )
+                "❌ Item '%s' is not a directory or a zip file, skipping.",
+                item_path)
             return
 
         shapefiles = self._find_shapefiles(item_dir)
@@ -134,8 +143,9 @@ class ShapefileLoader:
             return
 
         log.info(
-            "📐 Found %d shapefile(s) in item dir '%s'.", len(shapefiles), item_dir.name
-        )
+            "📐 Found %d shapefile(s) in item dir '%s'.",
+            len(shapefiles),
+            item_dir.name)
         for shp_file in shapefiles:
             self.process_shapefile(shp_file, used_names)
 
@@ -143,7 +153,10 @@ class ShapefileLoader:
             shutil.rmtree(temp_unzip_dir, ignore_errors=True)
 
     @safe_arcpy_operation
-    def process_shapefile(self, shp_file_path: Path, used_names: set[str]) -> None:
+    def process_shapefile(
+            self,
+            shp_file_path: Path,
+            used_names: set[str]) -> None:
         """Process a single shapefile."""
         working_path = shp_file_path
         temp_copy_dir: Optional[Path] = None
@@ -158,7 +171,8 @@ class ShapefileLoader:
                     shp_file_path, self.src.authority
                 )
 
-            fc_name_base = generate_fc_name(self.src.authority, working_path.stem)
+            fc_name_base = generate_fc_name(
+                self.src.authority, working_path.stem)
             target_fc_name = ensure_unique_name(
                 base_name=fc_name_base, used_names=used_names, max_length=60
             )
@@ -182,8 +196,9 @@ class ShapefileLoader:
             )
         except arcpy.ExecuteError as arc_error:
             log.error(
-                "❌ ArcPy error processing SHP %s: %s", working_path.name, arc_error
-            )
+                "❌ ArcPy error processing SHP %s: %s",
+                working_path.name,
+                arc_error)
         except (OSError, IOError, ValueError, RuntimeError) as processing_error:
             log.error(
                 "❌ Error processing SHP %s: %s",
@@ -196,7 +211,9 @@ class ShapefileLoader:
                 try:
                     untrack_temp_path(temp_copy_dir)
                     shutil.rmtree(temp_copy_dir, ignore_errors=True)
-                    log.debug("Cleaned up temporary directory: %s", temp_copy_dir)
+                    log.debug(
+                        "Cleaned up temporary directory: %s",
+                        temp_copy_dir)
                 except Exception as cleanup_error:
-                    log.warning("Failed to cleanup temporary directory %s: %s", 
-                               temp_copy_dir, cleanup_error)
+                    log.warning("Failed to cleanup temporary directory %s: %s",
+                                temp_copy_dir, cleanup_error)

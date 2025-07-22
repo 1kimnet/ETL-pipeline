@@ -12,7 +12,7 @@ class ErrorSeverity(Enum):
     LOW = "low"           # Warnings, can continue
     MEDIUM = "medium"     # Errors, but recoverable
     HIGH = "high"        # Critical errors, stop current operation
-    CRITICAL = "critical" # Pipeline-breaking errors
+    CRITICAL = "critical"  # Pipeline-breaking errors
 
 
 class ErrorCategory(Enum):
@@ -33,7 +33,7 @@ class ErrorContext:
     timestamp: float = field(default_factory=time.time)
     retry_count: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for logging."""
         return {
@@ -49,7 +49,7 @@ class ErrorContext:
 
 class ETLError(Exception):
     """Base exception for all ETL pipeline errors with enhanced functionality."""
-    
+
     def __init__(
         self,
         message: str,
@@ -69,26 +69,26 @@ class ETLError(Exception):
         self.recoverable = recoverable
         self.retry_after = retry_after
         self.cause = cause
-        
+
         # Set the cause for proper exception chaining
         if cause:
             self.__cause__ = cause
-    
+
     def __str__(self) -> str:
         """Enhanced string representation."""
         parts = [self.message]
-        
+
         if self.context.source_name:
             parts.append(f"[source: {self.context.source_name}]")
-        
+
         if self.context.operation:
             parts.append(f"[operation: {self.context.operation}]")
-        
+
         if self.context.retry_count > 0:
             parts.append(f"[retry: {self.context.retry_count}]")
-        
+
         return " ".join(parts)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert error to dictionary for structured logging."""
         return {
@@ -103,10 +103,11 @@ class ETLError(Exception):
         }
 
 
-# 1. NETWORK ERRORS (replaces HTTPError, NetworkError, ConnectionError, TimeoutError, RateLimitError)
+# 1. NETWORK ERRORS (replaces HTTPError, NetworkError, ConnectionError,
+# TimeoutError, RateLimitError)
 class NetworkError(ETLError):
     """Network-related errors including HTTP, connection, and timeout issues."""
-    
+
     def __init__(
         self,
         message: str,
@@ -123,12 +124,12 @@ class NetworkError(ETLError):
             context.metadata['timeout'] = timeout
         if status_code:
             context.metadata['status_code'] = status_code
-        
+
         # Determine severity and recoverability based on status code
         severity = ErrorSeverity.MEDIUM
         recoverable = True
         retry_after = None
-        
+
         if status_code:
             if status_code == 429:  # Rate limit
                 retry_after = 60.0
@@ -139,7 +140,7 @@ class NetworkError(ETLError):
             elif 400 <= status_code < 500:  # Client errors (except 429)
                 recoverable = False
                 severity = ErrorSeverity.HIGH
-        
+
         super().__init__(
             message,
             severity=severity,
@@ -149,16 +150,17 @@ class NetworkError(ETLError):
             retry_after=retry_after,
             **kwargs
         )
-        
+
         self.status_code = status_code
         self.url = url
         self.timeout = timeout
 
 
-# 2. DATA ERRORS (replaces DataError, DataFormatError, DataQualityError, ValidationError, GeospatialError)
+# 2. DATA ERRORS (replaces DataError, DataFormatError, DataQualityError,
+# ValidationError, GeospatialError)
 class DataError(ETLError):
     """Data-related errors including format, quality, and validation issues."""
-    
+
     def __init__(
         self,
         message: str,
@@ -175,7 +177,7 @@ class DataError(ETLError):
             context.metadata['data_type'] = data_type
         if field_name:
             context.metadata['field_name'] = field_name
-        
+
         super().__init__(
             message,
             severity=ErrorSeverity.MEDIUM,
@@ -184,16 +186,17 @@ class DataError(ETLError):
             recoverable=False,  # Data errors usually aren't recoverable
             **kwargs
         )
-        
+
         self.data_type = data_type
         self.file_path = file_path
         self.field_name = field_name
 
 
-# 3. SYSTEM ERRORS (replaces StorageError, ResourceError, PermissionError, DiskSpaceError)
+# 3. SYSTEM ERRORS (replaces StorageError, ResourceError, PermissionError,
+# DiskSpaceError)
 class SystemError(ETLError):
     """System-related errors including storage, resources, and permissions."""
-    
+
     def __init__(
         self,
         message: str,
@@ -211,17 +214,17 @@ class SystemError(ETLError):
             context.metadata['available'] = available
         if required is not None:
             context.metadata['required'] = required
-        
+
         # Determine severity based on resource type
         severity = ErrorSeverity.HIGH
         recoverable = False
-        
+
         if resource_type == "disk_space":
             severity = ErrorSeverity.CRITICAL
         elif resource_type == "memory":
             severity = ErrorSeverity.HIGH
             recoverable = True
-            
+
         super().__init__(
             message,
             severity=severity,
@@ -230,7 +233,7 @@ class SystemError(ETLError):
             recoverable=recoverable,
             **kwargs
         )
-        
+
         self.resource_type = resource_type
         self.available = available
         self.required = required
@@ -239,7 +242,7 @@ class SystemError(ETLError):
 # 4. CONFIGURATION ERRORS (replaces ConfigurationError)
 class ConfigurationError(ETLError):
     """Configuration-related errors."""
-    
+
     def __init__(
         self,
         message: str,
@@ -253,7 +256,7 @@ class ConfigurationError(ETLError):
         context.file_path = config_file
         if config_key:
             context.metadata['config_key'] = config_key
-        
+
         super().__init__(
             message,
             severity=ErrorSeverity.CRITICAL,
@@ -262,15 +265,16 @@ class ConfigurationError(ETLError):
             recoverable=False,
             **kwargs
         )
-        
+
         self.config_file = config_file
         self.config_key = config_key
 
 
-# 5. SOURCE ERRORS (replaces SourceError, SourceUnavailableError, SourceNotFoundError, AuthenticationError)
+# 5. SOURCE ERRORS (replaces SourceError, SourceUnavailableError,
+# SourceNotFoundError, AuthenticationError)
 class SourceError(ETLError):
     """Source-related errors including availability, authentication, and access."""
-    
+
     def __init__(
         self,
         message: str,
@@ -286,18 +290,18 @@ class SourceError(ETLError):
             context.metadata['source_type'] = source_type
         context.metadata['available'] = available
         context.metadata['authenticated'] = authenticated
-        
+
         # Determine severity and recoverability
         severity = ErrorSeverity.MEDIUM
         recoverable = True
         retry_after = None
-        
+
         if not available:
             retry_after = 300.0  # 5 minutes for unavailable sources
         elif not authenticated:
             recoverable = False
             severity = ErrorSeverity.HIGH
-            
+
         super().__init__(
             message,
             severity=severity,
@@ -307,16 +311,17 @@ class SourceError(ETLError):
             retry_after=retry_after,
             **kwargs
         )
-        
+
         self.source_type = source_type
         self.available = available
         self.authenticated = authenticated
 
 
-# 6. PROCESSING ERRORS (replaces TransformationError, GeoprocessingError, LoadError)
+# 6. PROCESSING ERRORS (replaces TransformationError, GeoprocessingError,
+# LoadError)
 class ProcessingError(ETLError):
     """Processing-related errors including transformation, geoprocessing, and loading."""
-    
+
     def __init__(
         self,
         message: str,
@@ -331,7 +336,7 @@ class ProcessingError(ETLError):
             context.metadata['process_type'] = process_type
         if stage:
             context.metadata['stage'] = stage
-        
+
         super().__init__(
             message,
             severity=ErrorSeverity.MEDIUM,
@@ -340,15 +345,16 @@ class ProcessingError(ETLError):
             recoverable=True,
             **kwargs
         )
-        
+
         self.process_type = process_type
         self.stage = stage
 
 
-# 7. PIPELINE ERRORS (replaces PipelineError, DependencyError, CircuitBreakerError)
+# 7. PIPELINE ERRORS (replaces PipelineError, DependencyError,
+# CircuitBreakerError)
 class PipelineError(ETLError):
     """Pipeline-level errors including dependencies and circuit breakers."""
-    
+
     def __init__(
         self,
         message: str,
@@ -363,7 +369,7 @@ class PipelineError(ETLError):
             context.metadata['pipeline_stage'] = pipeline_stage
         if dependency:
             context.metadata['dependency'] = dependency
-        
+
         super().__init__(
             message,
             severity=ErrorSeverity.HIGH,
@@ -373,7 +379,7 @@ class PipelineError(ETLError):
             retry_after=300.0,  # 5 minutes for pipeline errors
             **kwargs
         )
-        
+
         self.pipeline_stage = pipeline_stage
         self.dependency = dependency
 
@@ -381,7 +387,7 @@ class PipelineError(ETLError):
 # 8. CONCURRENT ERRORS (new - for concurrent operations)
 class ConcurrentError(ETLError):
     """Concurrent operation errors including thread pool and task failures."""
-    
+
     def __init__(
         self,
         message: str,
@@ -399,7 +405,7 @@ class ConcurrentError(ETLError):
             context.metadata['worker_count'] = worker_count
         if failed_tasks:
             context.metadata['failed_tasks'] = failed_tasks
-        
+
         super().__init__(
             message,
             severity=ErrorSeverity.MEDIUM,
@@ -408,7 +414,7 @@ class ConcurrentError(ETLError):
             recoverable=True,
             **kwargs
         )
-        
+
         self.task_name = task_name
         self.worker_count = worker_count
         self.failed_tasks = failed_tasks
@@ -419,7 +425,7 @@ def classify_exception(exc: Exception) -> ETLError:
     """Classify a standard exception into our error hierarchy."""
     if isinstance(exc, ETLError):
         return exc
-    
+
     # Network-related exceptions
     if isinstance(exc, (ConnectionError, TimeoutError)):
         return NetworkError(
@@ -427,7 +433,7 @@ def classify_exception(exc: Exception) -> ETLError:
             cause=exc,
             context=ErrorContext(operation="network_request")
         )
-    
+
     # File system exceptions
     if isinstance(exc, (FileNotFoundError, PermissionError, OSError)):
         return SystemError(
@@ -436,7 +442,7 @@ def classify_exception(exc: Exception) -> ETLError:
             cause=exc,
             context=ErrorContext(operation="file_system")
         )
-    
+
     # Data format exceptions
     if isinstance(exc, (ValueError, TypeError)) and "json" in str(exc).lower():
         return DataError(
@@ -445,7 +451,7 @@ def classify_exception(exc: Exception) -> ETLError:
             cause=exc,
             context=ErrorContext(operation="data_parsing")
         )
-    
+
     # Generic system error
     return SystemError(
         f"Unexpected error: {exc}",
@@ -458,11 +464,11 @@ def is_recoverable_error(error: Exception) -> bool:
     """Check if an error is recoverable and should be retried."""
     if isinstance(error, ETLError):
         return error.recoverable
-    
+
     # Standard exceptions that are usually recoverable
     if isinstance(error, (ConnectionError, TimeoutError)):
         return True
-    
+
     return False
 
 
@@ -470,13 +476,13 @@ def get_retry_delay(error: Exception) -> Optional[float]:
     """Get suggested retry delay for an error."""
     if isinstance(error, ETLError):
         return error.retry_after
-    
+
     # Default delays for standard exceptions
     if isinstance(error, ConnectionError):
         return 30.0
     elif isinstance(error, TimeoutError):
         return 60.0
-    
+
     return None
 
 
@@ -484,7 +490,7 @@ def format_error_for_logging(error: Exception) -> Dict[str, Any]:
     """Format error for structured logging."""
     if isinstance(error, ETLError):
         return error.to_dict()
-    
+
     # Format standard exceptions
     return {
         "error_type": error.__class__.__name__,

@@ -9,7 +9,8 @@ from typing import Final
 
 # ---------------------------------------------------------------------------
 
-LOG_DIR: Final = Path("logs")         # <— adjust if you want a different folder
+# <— adjust if you want a different folder
+LOG_DIR: Final = Path("logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -18,7 +19,7 @@ def configure_logging(level_on_console: str = "INFO") -> None:
     today = datetime.now().strftime("%Y%m%d")
 
     summary_file = LOG_DIR / f"etl-{today}.log"
-    debug_file   = LOG_DIR / f"etl-{today}-debug.log"
+    debug_file = LOG_DIR / f"etl-{today}-debug.log"
 
     cfg: dict = {
         "version": 1,
@@ -59,7 +60,7 @@ def configure_logging(level_on_console: str = "INFO") -> None:
                 "encoding": "utf-8",
                 "formatter": "debug",
             },
-        },        "loggers": {
+        }, "loggers": {
             "summary": {
                 "level": "INFO",
                 "handlers": ["console", "summary_file"],
@@ -71,7 +72,7 @@ def configure_logging(level_on_console: str = "INFO") -> None:
                 "propagate": False,
             },
             "etl.utils.io": {
-                "level": "DEBUG", 
+                "level": "DEBUG",
                 "handlers": ["summary_file", "debug_file"],
                 "propagate": False,
             },
