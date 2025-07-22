@@ -38,10 +38,11 @@ jobs:
           echo "changes=false" >> $GITHUB_OUTPUT
         fi
         
-    - name: Commit changes
+    - name: Commit & push changes
       if: steps.autopep8.outputs.changes == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add -A
         git commit -m "🤖 Auto-format: Apply autopep8 formatting" || exit 0
+        git push
