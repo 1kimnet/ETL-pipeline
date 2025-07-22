@@ -1,11 +1,14 @@
 name: AutoPEP8 Formatter
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
-
 jobs:
   autopep8:
     runs-on: ubuntu-latest
