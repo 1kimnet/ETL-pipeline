@@ -236,6 +236,8 @@ jobs:
         comment-on-alert: true
         alert-threshold: '200%'
         fail-on-alert: false
+        gh-pages-branch: 'gh-pages'
+        benchmark-data-dir-path: 'dev/bench'
 
     - name: Upload performance artifacts
       uses: actions/upload-artifact@v4
