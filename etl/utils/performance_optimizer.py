@@ -125,7 +125,8 @@ class MemoryOptimizer:
                 peak_memory = current
 
         # Start memory monitoring
-        monitor_thread = threading.Thread(target=lambda: monitor_memory(), daemon=True)
+        monitor_thread = threading.Thread(
+            target=lambda: monitor_memory(), daemon=True)
         monitor_thread.start()
 
         try:
@@ -145,7 +146,8 @@ class MemoryOptimizer:
 
             # Trigger garbage collection if memory usage is high
             if self.get_memory_usage() > self.gc_threshold:
-                log.info("🧹 High memory usage detected, triggering garbage collection")
+                log.info(
+                    "🧹 High memory usage detected, triggering garbage collection")
                 collected = gc.collect()
                 log.debug("Garbage collection freed %d objects", collected)
 
@@ -154,7 +156,9 @@ class MemoryOptimizer:
         current_usage = self.get_memory_usage()
 
         if current_usage > self.memory_threshold:
-            log.info("🧹 Memory usage at %.1f%%, optimizing...", current_usage * 100)
+            log.info(
+                "🧹 Memory usage at %.1f%%, optimizing...",
+                current_usage * 100)
 
             # Force garbage collection
             collected = gc.collect()
@@ -167,8 +171,10 @@ class MemoryOptimizer:
 
             log.info(
                 "✅ Memory optimization complete: %.1f%% → %.1f%% (reduced by %.1f%%)",
-                current_usage * 100,
-                new_usage * 100,
+                current_usage *
+                100,
+                new_usage *
+                100,
                 reduction,
             )
 
@@ -299,10 +305,10 @@ class ConcurrencyOptimizer:
 
         # Analyze recent performance
         recent_metrics = performance_metrics[-5:]  # Last 5 operations
-        avg_cpu = sum(m.cpu_percent for m in recent_metrics) / len(recent_metrics)
-        avg_throughput = sum(m.throughput_items_per_sec for m in recent_metrics) / len(
-            recent_metrics
-        )
+        avg_cpu = sum(m.cpu_percent for m in recent_metrics) / \
+            len(recent_metrics)
+        avg_throughput = sum(
+            m.throughput_items_per_sec for m in recent_metrics) / len(recent_metrics)
 
         # Get current system state
         resources = self._get_current_resources()
@@ -402,8 +408,7 @@ class AdaptiveExecutor:
             try:
                 # Choose executor type
                 executor_class = (
-                    ProcessPoolExecutor if use_processes else ThreadPoolExecutor
-                )
+                    ProcessPoolExecutor if use_processes else ThreadPoolExecutor)
 
                 with executor_class(max_workers=optimal_workers) as executor:
                     self.current_executor = executor
@@ -490,18 +495,21 @@ class AdaptiveExecutor:
         recent_metrics = self.performance_history[-10:]  # Last 10 operations
 
         return {
-            "total_operations": len(self.performance_history),
+            "total_operations": len(
+                self.performance_history),
             "recent_operations": len(recent_metrics),
-            "average_duration": sum(m.duration for m in recent_metrics)
-            / len(recent_metrics),
+            "average_duration": sum(
+                m.duration for m in recent_metrics) /
+            len(recent_metrics),
             "average_throughput": sum(
-                m.throughput_items_per_sec for m in recent_metrics
-            )
-            / len(recent_metrics),
-            "average_workers": sum(m.worker_count for m in recent_metrics)
-            / len(recent_metrics),
-            "memory_efficiency": sum(m.memory_efficiency for m in recent_metrics)
-            / len(recent_metrics),
+                m.throughput_items_per_sec for m in recent_metrics) /
+            len(recent_metrics),
+            "average_workers": sum(
+                m.worker_count for m in recent_metrics) /
+            len(recent_metrics),
+            "memory_efficiency": sum(
+                m.memory_efficiency for m in recent_metrics) /
+            len(recent_metrics),
             "current_workers": self.current_workers,
         }
 
@@ -514,8 +522,10 @@ class BatchProcessor:
         self.memory_optimizer = MemoryOptimizer()
 
     def calculate_optimal_batch_size(
-        self, total_items: int, item_size_mb: float, processing_overhead: float = 1.5
-    ) -> int:
+            self,
+            total_items: int,
+            item_size_mb: float,
+            processing_overhead: float = 1.5) -> int:
         """Calculate optimal batch size based on memory constraints."""
 
         # Calculate how many items fit in memory
@@ -551,15 +561,19 @@ class BatchProcessor:
             return []
 
         total_items = len(items)
-        batch_size = self.calculate_optimal_batch_size(total_items, item_size_mb)
+        batch_size = self.calculate_optimal_batch_size(
+            total_items, item_size_mb)
 
-        log.info("🔄 Processing %d items in batches of %d", total_items, batch_size)
+        log.info(
+            "🔄 Processing %d items in batches of %d",
+            total_items,
+            batch_size)
 
         results = []
         processed_count = 0
 
         for i in range(0, total_items, batch_size):
-            batch = items[i : i + batch_size]
+            batch = items[i: i + batch_size]
             batch_num = i // batch_size + 1
             total_batches = (total_items + batch_size - 1) // batch_size
 
@@ -586,11 +600,17 @@ class BatchProcessor:
                         self.memory_optimizer.optimize_memory_usage()
 
                 except Exception as e:
-                    log.error("Batch %d/%d failed: %s", batch_num, total_batches, e)
+                    log.error(
+                        "Batch %d/%d failed: %s",
+                        batch_num,
+                        total_batches,
+                        e)
                     # Continue with next batch rather than failing entirely
                     continue
 
-        log.info("✅ Batch processing complete: %d items processed", len(results))
+        log.info(
+            "✅ Batch processing complete: %d items processed",
+            len(results))
         return results
 
 
