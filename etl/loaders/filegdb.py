@@ -40,16 +40,20 @@ class ArcPyFileGDBLoader:
         if sources_yaml_path:
             self._load_sources_configuration(sources_yaml_path)
         else:
-            log.warning("⚠️ sources_yaml_path not provided. Using fallback globbing.")
+            log.warning(
+                "⚠️ sources_yaml_path not provided. Using fallback globbing.")
 
     def _load_sources_configuration(self, sources_yaml_path: Path) -> None:
         """📋 Load and validate sources configuration from YAML file."""
         try:
             self.sources = Source.load_all(sources_yaml_path)
             if not self.sources and sources_yaml_path.exists():
-                log.warning("⚠️ Source.load_all returned empty list. Check YAML format.")
+                log.warning(
+                    "⚠️ Source.load_all returned empty list. Check YAML format.")
             elif not sources_yaml_path.exists():
-                log.warning("⚠️ Sources YAML file does not exist: %s", sources_yaml_path)
+                log.warning(
+                    "⚠️ Sources YAML file does not exist: %s",
+                    sources_yaml_path)
         except Exception as exc:
             log.error(
                 "❌ Failed to load sources from %s: %s",
@@ -106,7 +110,8 @@ class ArcPyFileGDBLoader:
                     source.name,
                     source.authority,
                 )
-                self._process_single_source(source, staging_root, used_names_set)
+                self._process_single_source(
+                    source, staging_root, used_names_set)
             except Exception as exc:
                 log.error(
                     "❌ Failed to process source '%s': %s",
@@ -120,9 +125,12 @@ class ArcPyFileGDBLoader:
     ) -> None:
         """🔄 Process a single source based on its type."""
         source_staging_dir = (
-            staging_root / source.authority / sanitize_for_filename(source.name)
-        )
-        normalized_data_type = self._normalize_staged_data_type(source.staged_data_type)
+            staging_root /
+            source.authority /
+            sanitize_for_filename(
+                source.name))
+        normalized_data_type = self._normalize_staged_data_type(
+            source.staged_data_type)
 
         log.info(
             "🔍 Processing source '%s': staged_data_type='%s', normalized='%s'",
@@ -132,21 +140,29 @@ class ArcPyFileGDBLoader:
         )
 
         if normalized_data_type == "gpkg":
-            # ALWAYS use GPKG loader when configured as GPKG, regardless of other files present
+            # ALWAYS use GPKG loader when configured as GPKG, regardless of
+            # other files present
             log.info(
                 "📦 Source '%s' configured for GPKG - using GPKG loader exclusively",
                 source.name,
             )
-            self._handle_gpkg_source(source, source_staging_dir, used_names_set)
+            self._handle_gpkg_source(
+                source, source_staging_dir, used_names_set)
         elif normalized_data_type in ("geojson", "json"):
-            self._handle_geojson_source(source, source_staging_dir, used_names_set)
+            self._handle_geojson_source(
+                source, source_staging_dir, used_names_set)
         elif normalized_data_type == "shapefile_collection":
-            log.info("📐 Handling shapefile collection source '%s'", source.name)
+            log.info(
+                "📐 Handling shapefile collection source '%s'",
+                source.name)
             loader = ShapefileLoader(src=source)
             loader.load(used_names=used_names_set)
         elif not normalized_data_type:
-            # When no staged_data_type is specified, fall back to shapefile processing
-            log.info("📐 Handling shapefile collection source '%s'", source.name)
+            # When no staged_data_type is specified, fall back to shapefile
+            # processing
+            log.info(
+                "📐 Handling shapefile collection source '%s'",
+                source.name)
             loader = ShapefileLoader(src=source)
             loader.load(used_names=used_names_set)
         else:
@@ -173,8 +189,10 @@ class ArcPyFileGDBLoader:
         return normalized
 
     def _handle_gpkg_source(
-        self, source: Source, source_staging_dir: Path, used_names_set: Set[str]
-    ) -> None:
+            self,
+            source: Source,
+            source_staging_dir: Path,
+            used_names_set: Set[str]) -> None:
         """📦 Handle GPKG source loading."""
         if not source_staging_dir.exists():
             log.warning(
@@ -223,8 +241,10 @@ class ArcPyFileGDBLoader:
                 )
 
     def _handle_geojson_source(
-        self, source: Source, source_staging_dir: Path, used_names_set: Set[str]
-    ) -> None:
+            self,
+            source: Source,
+            source_staging_dir: Path,
+            used_names_set: Set[str]) -> None:
         """🌍 Handle JSON/GeoJSON source loading."""
         if not source_staging_dir.exists():
             log.warning(
@@ -253,7 +273,9 @@ class ArcPyFileGDBLoader:
                     self.summary,
                 )
         else:
-            log.info("ℹ️ No JSON/GeoJSON files found for source '%s'.", source.name)
+            log.info(
+                "ℹ️ No JSON/GeoJSON files found for source '%s'.",
+                source.name)
 
     def _handle_shapefile_source(
         self,
@@ -277,7 +299,9 @@ class ArcPyFileGDBLoader:
         self, source: Source, staging_root: Path, used_names_set: Set[str]
     ) -> None:
         """📐 Process multi-part shapefile collections based on include list."""
-        log.info("📐 Processing multi-part shapefile collection for '%s'.", source.name)
+        log.info(
+            "📐 Processing multi-part shapefile collection for '%s'.",
+            source.name)
 
         for included_item_stem in source.include or []:
             sanitized_item_stem = sanitize_for_filename(included_item_stem)
@@ -305,8 +329,10 @@ class ArcPyFileGDBLoader:
                     pass  # The main call is now sufficient
 
     def _process_single_shapefile_source(
-        self, source: Source, source_staging_dir: Path, used_names_set: Set[str]
-    ) -> None:
+            self,
+            source: Source,
+            source_staging_dir: Path,
+            used_names_set: Set[str]) -> None:
         """📐 Process a single shapefile source."""
         if not source_staging_dir.exists():
             log.warning(
@@ -324,7 +350,8 @@ class ArcPyFileGDBLoader:
         self, staging_root: Path, used_names_set: Set[str]
     ) -> None:
         """🔍 Perform fallback globbing when no source configuration is available."""
-        log.warning("⚠️ No Source configurations loaded. Using fallback globbing.")
+        log.warning(
+            "⚠️ No Source configurations loaded. Using fallback globbing.")
 
         self._glob_and_load_shapefiles(staging_root, used_names_set)
         self._glob_and_load_geopackages(staging_root, used_names_set)
@@ -336,7 +363,9 @@ class ArcPyFileGDBLoader:
         """📐 Fallback: glob and load all shapefiles."""
         shp_files = list(staging_root.rglob("*.shp"))
         if shp_files:
-            log.info("🔍 Fallback: Found %d shapefile(s) to process.", len(shp_files))
+            log.info(
+                "🔍 Fallback: Found %d shapefile(s) to process.",
+                len(shp_files))
             for shp_file_path in shp_files:
                 derived_authority = derive_authority_from_path(
                     shp_file_path, staging_root
@@ -345,7 +374,8 @@ class ArcPyFileGDBLoader:
                 # Fallback globbing is complex with the new model.
                 # For now, we'll assume a source-based approach.
                 # A proper fix would require creating temporary Source objects.
-                log.warning("Fallback globbing for shapefiles is not fully supported with the new loader structure.")
+                log.warning(
+                    "Fallback globbing for shapefiles is not fully supported with the new loader structure.")
 
     def _glob_and_load_geopackages(
         self, staging_root: Path, used_names_set: Set[str]
@@ -353,7 +383,9 @@ class ArcPyFileGDBLoader:
         """📦 Fallback: glob and load all geopackages."""
         gpkg_files = list(staging_root.rglob("*.gpkg"))
         if gpkg_files:
-            log.info("🔍 Fallback: Found %d GeoPackage(s) to process.", len(gpkg_files))
+            log.info(
+                "🔍 Fallback: Found %d GeoPackage(s) to process.",
+                len(gpkg_files))
             for gpkg_file_path in gpkg_files:
                 derived_authority = derive_authority_from_path(
                     gpkg_file_path, staging_root
@@ -398,7 +430,9 @@ class ArcPyFileGDBLoader:
 
     def load_from_staging(self, staging_root: Path) -> None:
         """🔄 Compatibility method that mimics the old interface."""
-        log.info("🔄 Starting FileGDB loading from staging directory: %s", staging_root)
+        log.info(
+            "🔄 Starting FileGDB loading from staging directory: %s",
+            staging_root)
 
         # Reset GDB to start fresh
         reset_gdb(self.gdb_path)

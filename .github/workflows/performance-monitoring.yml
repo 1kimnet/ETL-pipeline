@@ -1,0 +1,371 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+
+jobs:
+  performance-benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-benchmark memory-profiler psutil
+        pip install -r requirements.txt
+
+    - name: Create performance test suite
+      run: |
+        mkdir -p tests/performance
+        cat > tests/performance/test_etl_performance.py << 'EOF'
+        """Performance tests for ETL pipeline components."""
+        import pytest
+        import time
+        import psutil
+        import os
+        from pathlib import Path
+
+        # Mock ETL components for testing
+        class MockETLComponent:
+            def process_small_dataset(self):
+                """Simulate processing a small dataset."""
+                time.sleep(0.1)
+                return [{"id": i, "value": f"data_{i}"} for i in range(100)]
+            
+            def process_medium_dataset(self):
+                """Simulate processing a medium dataset.""" 
+                time.sleep(0.5)
+                return [{"id": i, "value": f"data_{i}"} for i in range(1000)]
+            
+            def process_memory_intensive(self):
+                """Simulate memory-intensive operation."""
+                large_data = [list(range(1000)) for _ in range(100)]
+                return len(large_data)
+
+        @pytest.fixture
+        def etl_component():
+            return MockETLComponent()
+
+        def test_small_dataset_performance(benchmark, etl_component):
+            """Benchmark small dataset processing."""
+            result = benchmark(etl_component.process_small_dataset)
+            assert len(result) == 100
+
+        def test_medium_dataset_performance(benchmark, etl_component):
+            """Benchmark medium dataset processing."""
+            result = benchmark(etl_component.process_medium_dataset)
+            assert len(result) == 1000
+
+        def test_memory_usage(benchmark, etl_component):
+            """Monitor memory usage during processing."""
+            def measure_memory():
+                process = psutil.Process()
+                initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+                result = etl_component.process_memory_intensive()
+                final_memory = process.memory_info().rss / 1024 / 1024  # MB
+                return {
+                    'result': result,
+                    'memory_increase': final_memory - initial_memory
+                }
+            
+            result = benchmark(measure_memory)
+            assert result['memory_increase'] < 100  # Should not use more than 100MB
+
+        def test_concurrent_processing_performance(benchmark):
+            """Test performance under concurrent load."""
+            import concurrent.futures
+            
+            def concurrent_task():
+                etl = MockETLComponent()
+                return etl.process_small_dataset()
+            
+            def run_concurrent():
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+                    futures = [executor.submit(concurrent_task) for _ in range(4)]
+                    results = [future.result() for future in futures]
+                return len(results)
+            
+            result = benchmark(run_concurrent)
+            assert result == 4
+        EOF
+
+    - name: Run performance benchmarks
+      run: |
+        echo "🚀 Running performance benchmarks..."
+        pytest tests/performance/ --benchmark-json=benchmark_results.json --benchmark-only
+        
+        # Generate human-readable benchmark report
+        python -c "
+        import json
+        import sys
+
+        try:
+            with open('benchmark_results.json') as f:
+                data = json.load(f)
+            
+            print('## 🚀 Performance Benchmark Results')
+            print()
+            
+            for benchmark in data['benchmarks']:
+                name = benchmark['name']
+                stats = benchmark['stats']
+                
+                print(f'### {name}')
+                print(f'- **Mean time:** {stats[\"mean\"]:.4f}s')
+                print(f'- **Min time:** {stats[\"min\"]:.4f}s') 
+                print(f'- **Max time:** {stats[\"max\"]:.4f}s')
+                print(f'- **Standard deviation:** {stats[\"stddev\"]:.4f}s')
+                print()
+                
+        except Exception as e:
+            print(f'Error processing benchmark results: {e}')
+            sys.exit(1)
+        " > benchmark_report.md
+
+    - name: Memory profiling
+      run: |
+        echo "🧠 Running memory profiling..."
+        cat > memory_test.py << 'EOF'
+        import psutil
+        import time
+        from memory_profiler import profile
+
+        @profile
+        def memory_intensive_function():
+            # Simulate ETL data processing
+            data = []
+            for i in range(10000):
+                row = {
+                    'id': i,
+                    'name': f'record_{i}',
+                    'data': list(range(100))
+                }
+                data.append(row)
+            
+            # Simulate processing
+            processed = [row for row in data if row['id'] % 2 == 0]
+            return len(processed)
+
+        if __name__ == '__main__':
+            print("Memory usage before:", psutil.virtual_memory().percent, "%")
+            result = memory_intensive_function()
+            print("Memory usage after:", psutil.virtual_memory().percent, "%")
+            print("Processed records:", result)
+        EOF
+        
+        python memory_test.py > memory_profile.txt 2>&1
+
+    - name: System resource monitoring
+      run: |
+        echo "📊 Monitoring system resources..."
+        python -c "
+        import psutil
+        import json
+
+        def get_system_info():
+            return {
+                'cpu_percent': psutil.cpu_percent(interval=1),
+                'memory_percent': psutil.virtual_memory().percent,
+                'disk_percent': psutil.disk_usage('/').percent,
+                'load_average': psutil.getloadavg() if hasattr(psutil, 'getloadavg') else None,
+                'cpu_count': psutil.cpu_count(),
+                'memory_total_gb': psutil.virtual_memory().total / (1024**3),
+                'disk_free_gb': psutil.disk_usage('/').free / (1024**3)
+            }
+
+        system_info = get_system_info()
+        print('System Resource Report:')
+        for key, value in system_info.items():
+            if isinstance(value, float):
+                print(f'- {key}: {value:.2f}')
+            else:
+                print(f'- {key}: {value}')
+
+        # Save for later analysis
+        with open('system_resources.json', 'w') as f:
+            json.dump(system_info, f, indent=2)
+        " > system_report.txt
+
+    - name: Generate performance summary
+      run: |
+        echo "## 📈 Performance Monitoring Summary" > performance_summary.md
+        echo "" >> performance_summary.md
+        echo "**Date:** $(date)" >> performance_summary.md
+        echo "**Branch:** ${{ github.ref_name }}" >> performance_summary.md
+        echo "**Commit:** ${{ github.sha }}" >> performance_summary.md
+        echo "" >> performance_summary.md
+        
+        # Add benchmark results
+        if [ -f benchmark_report.md ]; then
+          cat benchmark_report.md >> performance_summary.md
+        fi
+        
+        echo "" >> performance_summary.md
+        echo "## 🧠 Memory Profile" >> performance_summary.md
+        echo '```' >> performance_summary.md
+        head -20 memory_profile.txt >> performance_summary.md
+        echo '```' >> performance_summary.md
+        
+        echo "" >> performance_summary.md
+        echo "## 📊 System Resources" >> performance_summary.md
+        echo '```' >> performance_summary.md
+        cat system_report.txt >> performance_summary.md
+        echo '```' >> performance_summary.md
+
+    - name: Store benchmark results for comparison
+      uses: benchmark-action/github-action-benchmark@v1
+      if: github.ref == 'refs/heads/main'
+      with:
+        tool: 'pytest'
+        output-file-path: benchmark_results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        comment-on-alert: true
+        alert-threshold: '200%'
+        fail-on-alert: false
+
+    - name: Upload performance artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-reports
+        path: |
+          benchmark_results.json
+          benchmark_report.md
+          memory_profile.txt
+          system_resources.json
+          performance_summary.md
+        retention-days: 30
+
+    - name: Comment performance results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const summary = fs.readFileSync('performance_summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          } catch (error) {
+            console.log('Could not read performance summary:', error.message);
+          }
+
+  database-performance:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: etl_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psycopg2-binary pytest
+        pip install -r requirements.txt
+
+    - name: Test database connection performance
+      run: |
+        echo "🗄️ Testing database performance..."
+        python -c "
+        import psycopg2
+        import time
+        import json
+
+        def test_db_performance():
+            # Connection performance
+            start_time = time.time()
+            conn = psycopg2.connect(
+                host='localhost',
+                database='etl_test', 
+                user='postgres',
+                password='postgres',
+                port=5432
+            )
+            connection_time = time.time() - start_time
+            
+            cursor = conn.cursor()
+            
+            # Simple query performance
+            start_time = time.time()
+            cursor.execute('SELECT version();')
+            result = cursor.fetchone()
+            query_time = time.time() - start_time
+            
+            # Bulk insert performance
+            start_time = time.time()
+            cursor.execute('CREATE TEMP TABLE test_table (id INT, name VARCHAR(50));')
+            
+            data = [(i, f'name_{i}') for i in range(1000)]
+            cursor.executemany('INSERT INTO test_table VALUES (%s, %s)', data)
+            conn.commit()
+            bulk_insert_time = time.time() - start_time
+            
+            conn.close()
+            
+            results = {
+                'connection_time_ms': connection_time * 1000,
+                'simple_query_time_ms': query_time * 1000,
+                'bulk_insert_1000_records_ms': bulk_insert_time * 1000,
+                'database_version': str(result[0])
+            }
+            
+            print('Database Performance Results:')
+            for key, value in results.items():
+                if 'time_ms' in key:
+                    print(f'- {key}: {value:.2f}ms')
+                else:
+                    print(f'- {key}: {value}')
+            
+            # Save results
+            with open('db_performance.json', 'w') as f:
+                json.dump(results, f, indent=2)
+
+        test_db_performance()
+        " > db_performance.txt
+
+    - name: Upload database performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: database-performance
+        path: |
+          db_performance.json
+          db_performance.txt
+        retention-days: 30

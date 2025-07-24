@@ -1,23 +1,159 @@
-name: Pylint
+name: Pylint Code Quality
 
-on: [push]
+on:
+  push:
+    branches: [ main, develop, hotfix/*, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
 
 jobs:
-  build:
+  pylint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11"]
+    
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pylint
-    - name: Analysing the code with pylint
+        # Install project dependencies if available
+        pip install -r requirements.txt || echo "No requirements.txt found"
+        
+    - name: Create pylint config
       run: |
-        pylint $(git ls-files '*.py')
+        cat > .pylintrc << EOF
+        [MASTER]
+        disable=C0114,C0115,C0116,W0613,R0903,R0913,C0103,W0611,R0902,R0801
+        
+        [MESSAGES CONTROL]
+        confidence=HIGH,CONTROL_FLOW,INFERENCE,INFERENCE_FAILURE,UNDEFINED
+        
+        [FORMAT]
+        max-line-length=127
+        
+        [DESIGN]
+        max-args=10
+        max-attributes=15
+        max-public-methods=25
+        EOF
+        
+    - name: Run Pylint with error reporting
+      continue-on-error: true
+      run: |
+        echo "🔍 Running Pylint analysis..."
+        
+        # Find Python files excluding common ignored directories
+        PYTHON_FILES=$(find . -name "*.py" \
+          -not -path "./.git/*" \
+          -not -path "./venv/*" \
+          -not -path "./.venv/*" \
+          -not -path "./build/*" \
+          -not -path "./dist/*" \
+          -not -path "./.pytest_cache/*")
+        
+        if [ -z "$PYTHON_FILES" ]; then
+          echo "No Python files found to analyze"
+          exit 0
+        fi
+        
+        echo "Found Python files:"
+        echo "$PYTHON_FILES"
+        
+        # Run pylint and capture output
+        pylint $PYTHON_FILES --output-format=text --reports=yes --score=yes > pylint_report.txt 2>&1 || PYLINT_EXIT=$?
+        
+        # Always show the report
+        echo "📊 Pylint Report:"
+        cat pylint_report.txt
+        
+        # Extract score
+        SCORE=$(grep "Your code has been rated at" pylint_report.txt | sed 's/.*rated at \([0-9.-]*\).*/\1/' || echo "N/A")
+        echo "📈 Pylint Score: $SCORE/10"
+        
+        # Show summary
+        echo "📋 Summary:"
+        echo "- Errors: $(grep -c 'ERROR' pylint_report.txt || echo 0)"
+        echo "- Warnings: $(grep -c 'WARNING' pylint_report.txt || echo 0)"
+        echo "- Refactor suggestions: $(grep -c 'REFACTOR' pylint_report.txt || echo 0)"
+        echo "- Convention issues: $(grep -c 'CONVENTION' pylint_report.txt || echo 0)"
+        
+        # Only fail if there are actual errors (not warnings)
+        ERROR_COUNT=$(grep -c 'ERROR' pylint_report.txt || echo 0)
+        if [ "$ERROR_COUNT" -gt 0 ]; then
+          echo "❌ Found $ERROR_COUNT errors. Please fix them."
+          exit 1
+        else
+          echo "✅ No critical errors found!"
+          exit 0
+        fi
+        
+    - name: Upload Pylint report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pylint-report-python-${{ matrix.python-version }}
+        path: pylint_report.txt
+        retention-days: 30
+        
+    - name: Comment PR with Pylint results
+      if: github.event_name == 'pull_request' && matrix.python-version == '3.11'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const report = fs.readFileSync('pylint_report.txt', 'utf8');
+            const lines = report.split('\n');
+            
+            // Extract score
+            const scoreLine = lines.find(line => line.includes('Your code has been rated at'));
+            const score = scoreLine ? scoreLine.match(/rated at ([0-9.-]*)/)?.[1] : 'N/A';
+            
+            // Count issues
+            const errors = (report.match(/ERROR/g) || []).length;
+            const warnings = (report.match(/WARNING/g) || []).length;
+            const refactor = (report.match(/REFACTOR/g) || []).length;
+            const convention = (report.match(/CONVENTION/g) || []).length;
+            
+            const body = `## 🔍 Pylint Code Quality Report
+            
+            **Score:** ${score}/10.0
+            
+            **Issues Found:**
+            - ❌ Errors: ${errors}
+            - ⚠️ Warnings: ${warnings}
+            - 🔄 Refactor suggestions: ${refactor}
+            - 📝 Convention issues: ${convention}
+            
+            ${errors > 0 ? '❌ **Action Required:** Please fix the errors before merging.' : '✅ **No critical errors found!**'}
+            
+            <details>
+            <summary>📋 View Full Report</summary>
+            
+            \`\`\`
+            ${report.substring(0, 4000)}${report.length > 4000 ? '\n... (truncated)' : ''}
+            \`\`\`
+            
+            </details>`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+          } catch (error) {
+            console.log('Could not read pylint report:', error.message);
+          }

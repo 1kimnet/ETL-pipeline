@@ -30,9 +30,12 @@ def detect_geojson_geometry_type(json_file_path: Path) -> str:
         # Handle FeatureCollection
         if data.get("type") == "FeatureCollection":
             features = data.get("features", [])
-            log.debug("🔍 Found %d features in FeatureCollection", len(features))
+            log.debug(
+                "🔍 Found %d features in FeatureCollection",
+                len(features))
 
-            for i, feature in enumerate(features[:10]):  # Sample first 10 features
+            for i, feature in enumerate(
+                    features[:10]):  # Sample first 10 features
                 geom = feature.get("geometry", {})
                 geom_type = geom.get("type")
                 if geom_type:
@@ -48,8 +51,9 @@ def detect_geojson_geometry_type(json_file_path: Path) -> str:
                 log.debug("🔍 Single feature: geometry type = %s", geom_type)
 
         log.info(
-            "🔍 Detected geometry types in %s: %s", json_file_path.name, geometry_types
-        )
+            "🔍 Detected geometry types in %s: %s",
+            json_file_path.name,
+            geometry_types)
 
         # Map GeoJSON types to ArcGIS types
         type_mapping = {
@@ -123,8 +127,9 @@ def process_geojson_file(
         # Detect geometry type from GeoJSON content
         geometry_type = detect_geojson_geometry_type(json_file_path)
         log.info(
-            "📍 Detected geometry type: %s for %s", geometry_type, json_file_path.name
-        )
+            "📍 Detected geometry type: %s for %s",
+            geometry_type,
+            json_file_path.name)
 
         input_json_full_path: str = str(json_file_path.resolve())
         base_name: str = generate_fc_name(authority, json_file_path.stem)
@@ -173,7 +178,9 @@ def process_geojson_file(
             except Exception as verify_error:
                 log.warning("⚠️ Could not verify output FC: %s", verify_error)
         else:
-            log.error("❌ Output feature class was not created: %s", out_fc_full_path)
+            log.error(
+                "❌ Output feature class was not created: %s",
+                out_fc_full_path)
 
         lg_sum.info("   📄 JSON ➜ staged : %s", tgt_name)
         summary.log_staging("done")
@@ -189,7 +196,9 @@ def process_geojson_file(
             exc_info=True,
         )
         summary.log_staging("error")
-        summary.log_error(json_file_path.name, f"JSONToFeatures failed: {arc_error}")
+        summary.log_error(
+            json_file_path.name,
+            f"JSONToFeatures failed: {arc_error}")
     except Exception as generic_error:
         log.error(
             "❌ Unexpected error processing JSON/GeoJSON %s: %s",
@@ -198,4 +207,6 @@ def process_geojson_file(
             exc_info=True,
         )
         summary.log_staging("error")
-        summary.log_error(json_file_path.name, f"Unexpected error: {generic_error}")
+        summary.log_error(
+            json_file_path.name,
+            f"Unexpected error: {generic_error}")

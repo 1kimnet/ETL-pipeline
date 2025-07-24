@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import gc
 import json
 import logging
-import shutil
 import statistics
-import sys
 import threading
 import time
 from collections import defaultdict, deque
@@ -153,8 +150,8 @@ class PerformanceMonitor:
         self.report_interval_minutes = report_interval_minutes
 
         # Data storage
-        self.performance_history: defaultdict[str, deque[PerformanceMetrics]] = (
-            defaultdict(lambda: deque(maxlen=1000))
+        self.performance_history: Dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=1000)
         )
         self.system_history: deque = deque(maxlen=1000)
         self.alerts: List[PerformanceAlert] = []
@@ -263,9 +260,8 @@ class PerformanceMonitor:
 
         # Summary for all operations
         summary = {}
-        for op_name, history_deque in self.performance_history.items():
-            history_list = list(history_deque)  # Convert deque to list explicitly
-            summary[op_name] = self._summarize_operation_metrics(op_name, history_list)
+        for op_name, history in self.performance_history.items():
+            summary[op_name] = self._summarize_operation_metrics(op_name, list(history))
 
         return summary
 
@@ -312,7 +308,7 @@ class PerformanceMonitor:
         for op_name, history_deque in self.performance_history.items():
             history_list = list(history_deque)  # Convert deque to list explicitly
             relevant_metrics = [
-                m for m in history_list if start_time <= m.start_time <= end_time
+                m for m in history if start_time <= m.start_time <= end_time
             ]
 
             if relevant_metrics:
@@ -324,9 +320,8 @@ class PerformanceMonitor:
         relevant_system_metrics = [
             m
             for m in self.system_history
-            if start_time
-            <= time.time()
-            <= end_time  # Approximate, system metrics don't have timestamps
+            # Approximate, system metrics don't have timestamps
+            if start_time <= time.time() <= end_time
         ]
 
         system_metrics = {}
@@ -405,47 +400,17 @@ class PerformanceMonitor:
                 log.warning("Error in monitoring loop: %s", e)
 
     def _get_system_resources(self) -> SystemResources:
-        """Get current system resources using Windows-compatible methods."""
-        # Use basic Windows-compatible monitoring
-        disk_free_gb = self._get_disk_free_space()
-
-        # Estimate system load based on thread count
-        thread_count = threading.active_count()
-        estimated_cpu = min(100.0, thread_count * 5)  # Conservative estimation
-
-        # Estimate memory usage based on garbage collection pressure
-        gc_objects = len(gc.get_objects())
-        estimated_memory = min(
-            85.0, gc_objects / 100000.0 * 30
-        )  # Conservative estimation
-
-        # Calculate available memory (assume 8GB total)
-        total_memory_gb = 8.0
-        available_memory_gb = max(
-            1.0, total_memory_gb - (estimated_memory * total_memory_gb / 100)
-        )
+        """Get current system resources."""
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage(getattr(self, "_ROOT_PATH", Path.cwd().anchor))
 
         return SystemResources(
-            cpu_percent=estimated_cpu,
-            memory_percent=estimated_memory,
-            memory_available_gb=available_memory_gb,
-            disk_free_gb=disk_free_gb,
-            network_connections=5,  # Conservative estimate
+            cpu_percent=psutil.cpu_percent(interval=0.1),
+            memory_percent=memory.percent,
+            memory_available_gb=memory.available / (1024**3),
+            disk_free_gb=disk.free / (1024**3),
+            network_connections=len(psutil.net_connections()),
         )
-
-    def _get_disk_free_space(self) -> float:
-        """Get disk free space in GB with Windows compatibility."""
-        try:
-            if sys.platform.startswith("win"):
-                # Use shutil for cross-platform disk usage
-                disk_usage = shutil.disk_usage("C:")
-                return disk_usage.free / (1024**3)
-            else:
-                disk_usage = shutil.disk_usage("/")
-                return disk_usage.free / (1024**3)
-        except (OSError, PermissionError) as e:
-            log.debug("Failed to get disk usage: %s", e)
-        return 10.0  # 10GB fallback
 
     def _check_performance_alerts(self, metrics: PerformanceMetrics) -> None:
         """Check performance metrics against alert rules."""
@@ -532,9 +497,6 @@ class PerformanceMonitor:
         if not metrics:
             return {"error": "No metrics available"}
 
-        # Log operation name for debugging
-        log.debug("Summarizing metrics for operation: %s", operation)
-
         durations = [m.duration for m in metrics]
         throughputs = [m.throughput_items_per_sec for m in metrics]
         memory_usage = [m.memory_peak for m in metrics]
@@ -578,9 +540,6 @@ class PerformanceMonitor:
     ) -> List[str]:
         """Generate performance recommendations."""
         recommendations = []
-
-        # Log number of alerts for context
-        log.debug("Generating recommendations with %d alerts", len(alerts))
 
         # Check for high-variance operations
         for op_name, metrics in operations.items():
@@ -632,25 +591,23 @@ class PerformanceMonitor:
             report = self.generate_report(hours_back=1)
 
             log.info("📊 Performance Report (last hour):")
-            log.info("   Operations monitored: %d", len(report.operations))
+            log.info(f"   Operations monitored: {len(report.operations)}")
             log.info(
-                "   Active alerts: %d",
-                len([a for a in report.alerts if not a.resolved]),
+                f"   Active alerts: {len([a for a in report.alerts if not a.resolved])}"
             )
-            log.info("   Recommendations: %d", len(report.recommendations))
+            log.info(f"   Recommendations: {len(report.recommendations)}")
 
             if report.system_metrics:
                 log.info(
-                    "   Avg CPU: %.1f%%",
-                    report.system_metrics.get("avg_cpu_percent", 0),
+                    f"   Avg CPU: {report.system_metrics.get('avg_cpu_percent', 0):.1f}%"
                 )
                 log.info(
-                    "   Avg Memory: %.1f%%",
-                    report.system_metrics.get("avg_memory_percent", 0),
+                    f"   Avg Memory: {report.system_metrics.get('avg_memory_percent', 0):.1f}%"
                 )
 
-            for rec in report.recommendations[:3]:  # Show top 3 recommendations
-                log.info("   💡 %s", rec)
+            # Show top 3 recommendations
+            for rec in report.recommendations[:3]:
+                log.info(f"   💡 {rec}")
 
         except Exception as e:
             log.error("Failed to generate periodic report: %s", e)
@@ -781,14 +738,14 @@ def performance_monitored(operation_name: str):
 
             # Record performance
             start_time = time.time()
-            start_memory = len(gc.get_objects()) * 0.001  # Rough estimation
+            start_memory = psutil.Process().memory_info().rss / (1024 * 1024)
 
             try:
                 result = func(*args, **kwargs)
 
                 # Create performance metrics
                 end_time = time.time()
-                end_memory = len(gc.get_objects()) * 0.001
+                end_memory = psutil.Process().memory_info().rss / (1024 * 1024)
 
                 metrics = PerformanceMetrics(
                     operation_name=operation_name,
@@ -809,7 +766,7 @@ def performance_monitored(operation_name: str):
             except Exception:
                 # Still record performance for failed operations
                 end_time = time.time()
-                end_memory = len(gc.get_objects()) * 0.001
+                end_memory = psutil.Process().memory_info().rss / (1024 * 1024)
 
                 metrics = PerformanceMetrics(
                     operation_name=f"{operation_name}_failed",

@@ -1,20 +1,18 @@
-"""Concurrent processing utilities for ETL pipeline operations."""
+"""Concurrent processing utilities for ETL pipeline operations.
+
+Uses ONLY standard library and ArcGIS Pro 3.3 bundled libraries.
+No external dependencies required.
+"""
 
 from __future__ import annotations
 
 import logging
+import os
 import threading
-import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, TypeVar
-
-from .performance_optimizer import (
-    AdaptiveExecutor,
-    get_concurrency_optimizer,
-    get_memory_optimizer,
-    performance_optimization,
-)
 
 log = logging.getLogger(__name__)
 
@@ -75,30 +73,25 @@ class ConcurrentStats:
 
 
 class ConcurrentDownloadManager:
-    """Manages concurrent download operations with adaptive optimization and monitoring."""
+    """Manages concurrent download operations using only standard library."""
 
     def __init__(
         self, max_workers: Optional[int] = None, timeout: Optional[float] = None
     ):
-        self.adaptive_executor = AdaptiveExecutor(operation_type="network_io")
-        self.concurrency_optimizer = get_concurrency_optimizer()
-        self.memory_optimizer = get_memory_optimizer()
-
         self.max_workers = max_workers or self._get_optimal_worker_count()
-        self.timeout = timeout
+        self.timeout = timeout or 300.0
         self.stats = ConcurrentStats()
         self.lock = threading.RLock()
 
-        log.info("Initialized ConcurrentDownloadManager with adaptive optimization")
+        log.info(
+            "Initialized ConcurrentDownloadManager with %d workers", self.max_workers
+        )
 
     def _get_optimal_worker_count(self) -> int:
-        """Determine optimal number of workers using performance optimizer."""
-        return self.concurrency_optimizer.calculate_optimal_workers(
-            operation_type="network_io",
-            workload_size=10,  # Default assumption
-            item_complexity="medium",
-            memory_per_item_mb=5.0,
-        )
+        """Determine optimal number of workers based on CPU count."""
+        cpu_count = os.cpu_count() or 4
+        # Conservative approach: don't exceed 2x CPU count for I/O bound tasks
+        return min(max(2, cpu_count), 8)
 
     def execute_concurrent(
         self,
@@ -107,7 +100,7 @@ class ConcurrentDownloadManager:
         fail_fast: bool = False,
     ) -> List[ConcurrentResult]:
         """
-        Execute multiple tasks concurrently with adaptive optimization.
+        Execute multiple tasks concurrently using ThreadPoolExecutor.
 
         Args:
             tasks: List of (function, args, kwargs) tuples
@@ -125,81 +118,69 @@ class ConcurrentDownloadManager:
 
         task_names = task_names or [f"task_{i}" for i in range(len(tasks))]
 
-        # Note: fail_fast parameter is accepted for API compatibility but not implemented
-        # in the adaptive executor approach. Tasks are executed with built-in error handling.
-
-        # Update optimal worker count based on current workload
-        optimal_workers = self.concurrency_optimizer.calculate_optimal_workers(
-            operation_type="network_io",
-            workload_size=len(tasks),
-            item_complexity="medium",
-            memory_per_item_mb=5.0,
-        )
-        self.max_workers = optimal_workers
-
         log.info(
-            "Starting adaptive concurrent execution of %d tasks with %d workers",
+            "Starting concurrent execution of %d tasks with %d workers",
             len(tasks),
             self.max_workers,
         )
 
-        # Use performance optimization context
-        with performance_optimization():
-            # Prepare callables for adaptive executor
-            task_callables = []
-            task_args_list = []
+        results = []
 
-            for func, args, kwargs in tasks:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all tasks
+            future_to_task = {}
+            for i, (func, args, kwargs) in enumerate(tasks):
+                future = executor.submit(
+                    self._execute_task, func, args, kwargs, task_names[i]
+                )
+                future_to_task[future] = i
 
-                def wrapped_task(f=func, a=args, k=kwargs):
-                    return self._execute_task(f, a, k, "task")
+            # Collect results as they complete
+            for future in as_completed(future_to_task, timeout=self.timeout):
+                task_index = future_to_task[future]
 
-                task_callables.append(wrapped_task)
-                task_args_list.append(())
+                try:
+                    result = future.result()
+                    results.append((task_index, result))
 
-            # Execute using adaptive executor
-            raw_results = self.adaptive_executor.execute_workload(
-                tasks=task_callables,
-                task_args=task_args_list,
-                workload_name=f"concurrent_download_{len(tasks)}_tasks",
-                memory_per_item_mb=5.0,
-                use_processes=False,
+                    with self.lock:
+                        self.stats.update(result)
+
+                    if fail_fast and not result.success:
+                        log.warning("Fail-fast enabled, cancelling remaining tasks")
+                        # Cancel remaining futures
+                        for remaining_future in future_to_task:
+                            if not remaining_future.done():
+                                remaining_future.cancel()
+                        break
+
+                except Exception as e:
+                    # Handle timeout or other executor errors
+                    error_result = ConcurrentResult(
+                        success=False,
+                        error=e,
+                        metadata={"task_name": task_names[task_index]},
+                    )
+                    results.append((task_index, error_result))
+
+                    with self.lock:
+                        self.stats.update(error_result)
+
+        # Sort results by original task order
+        results.sort(key=lambda x: x[0])
+        final_results = [result for _, result in results]
+
+        # Pad with error results for any missing tasks (cancelled, etc.)
+        while len(final_results) < len(tasks):
+            missing_result = ConcurrentResult(
+                success=False,
+                error=Exception("Task was cancelled or timed out"),
+                metadata={"task_name": f"cancelled_task_{len(final_results)}"},
             )
+            final_results.append(missing_result)
 
-            # Convert to ConcurrentResult format
-            results = []
-            for i, raw_result in enumerate(raw_results):
-                if isinstance(raw_result, ConcurrentResult):
-                    results.append(raw_result)
-                elif raw_result is None:
-                    # Failed task
-                    results.append(
-                        ConcurrentResult(
-                            success=False,
-                            error=Exception("Task failed"),
-                            metadata={"task_name": task_names[i]},
-                        )
-                    )
-                else:
-                    # Successful task
-                    results.append(
-                        ConcurrentResult(
-                            success=True,
-                            result=raw_result,
-                            metadata={"task_name": task_names[i]},
-                        )
-                    )
-
-        # Update statistics
-        for result in results:
-            with self.lock:
-                self.stats.completed_tasks += 1
-                if result.success:
-                    self.stats.successful_tasks += 1
-                else:
-                    self.stats.failed_tasks += 1
-
-        return results
+        self._log_completion_stats()
+        return final_results
 
     def _execute_task(
         self, func: Callable, args: Tuple, kwargs: Dict, task_name: str

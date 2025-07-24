@@ -37,11 +37,12 @@ DEFAULT_TIMEOUT: Final = 10  # seconds
 class OgcApiDownloadHandler(HTTPSessionHandler):
     """🔄 Downloads data from OGC API Features endpoints with BBOX filtering."""
 
-    def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, src: Source,
+                 global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
         self.bbox_params: Dict[str, str] = {}
-        
+
         # Initialize HTTP session with connection pooling
         super().__init__(
             base_url=src.url,
@@ -50,25 +51,26 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
             max_retries=2,
             timeout=DEFAULT_TIMEOUT
         )
-        
+
         # Update session headers
         self.session.headers.update({
             "User-Agent": "ETL-Pipeline/1.0",
             "Accept": "application/geo+json, application/json;q=0.9",
         })
-        
+
         self._setup_bbox_params()
 
     def _setup_bbox_params(self) -> None:
         """🔧 Setup BBOX query parameters based on configuration."""
         if not self.global_config.get("use_bbox_filter", False):
-            log.info("    BBOX filtering disabled for source '%s'", self.src.name)
+            log.info(
+                "    BBOX filtering disabled for source '%s'",
+                self.src.name)
             return
 
         bbox_coords_str = self.src.raw.get(
-            "ogc_bbox",
-            self.global_config.get("global_ogc_bbox_coords", DEFAULT_OGC_BBOX_COORDS),
-        )
+            "ogc_bbox", self.global_config.get(
+                "global_ogc_bbox_coords", DEFAULT_OGC_BBOX_COORDS), )
 
         bbox_crs_input = str(
             self.src.raw.get(
@@ -87,7 +89,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
             # Only add bbox-crs if not using the default CRS84
             # Many OGC APIs assume CRS84 for BBOX when bbox-crs is omitted
             if bbox_crs_uri_str != CRS84_URI:
-                # Check if service supports bbox-crs (can be configured per source)
+                # Check if service supports bbox-crs (can be configured per
+                # source)
                 if self.src.raw.get("supports_bbox_crs", True):
                     self.bbox_params["bbox-crs"] = bbox_crs_uri_str
                 else:
@@ -145,12 +148,14 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 "f": "json",
             }
 
-            response = self.session.get(test_url, params=test_params, timeout=10)
+            response = self.session.get(
+                test_url, params=test_params, timeout=10)
 
             # If we get 500 or 400 with bbox-crs, try without it
             if response.status_code in [400, 500]:
                 test_params.pop("bbox-crs")
-                response2 = self.session.get(test_url, params=test_params, timeout=10)
+                response2 = self.session.get(
+                    test_url, params=test_params, timeout=10)
 
                 # If it works without bbox-crs, the service doesn't support it
                 if response2.status_code == 200:
@@ -166,8 +171,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
         """🔄 Main entry point - downloads OGC API data, one file per collection."""
         if not self.src.enabled:
             log.info(
-                "⏭️ Source '%s' (OGC API) is disabled, skipping fetch.", self.src.name
-            )
+                "⏭️ Source '%s' (OGC API) is disabled, skipping fetch.",
+                self.src.name)
             return True
 
         log.info(
@@ -187,7 +192,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
 
             # Use concurrent downloads for multiple collections
             if len(collections) > 1:
-                processed_at_least_one_collection_successfully = self._fetch_collections_concurrent(collections)
+                processed_at_least_one_collection_successfully = self._fetch_collections_concurrent(
+                    collections)
             else:
                 # Single collection - use original sequential approach
                 processed_at_least_one_collection_successfully = False
@@ -197,7 +203,9 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                         log.warning(
                             "    Skipping a collection with no ID for source '%s'. Title: '%s'",
                             self.src.name,
-                            collection_data.get("title", "N/A"),
+                            collection_data.get(
+                                "title",
+                                "N/A"),
                         )
                         continue
 
@@ -233,17 +241,22 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
             )
             return False
 
-    def _fetch_collections_concurrent(self, collections: List[Dict[str, Any]]) -> bool:
+    def _fetch_collections_concurrent(
+            self, collections: List[Dict[str, Any]]) -> bool:
         """Fetch multiple collections concurrently for improved performance."""
-        log.info("🚀 Starting concurrent download of %d collections", len(collections))
-        
+        log.info(
+            "🚀 Starting concurrent download of %d collections",
+            len(collections))
+
         # Get concurrent downloader
         downloader = get_collection_downloader()
-        
+
         # Enable parallel processing based on configuration
-        use_concurrent = self.global_config.get("enable_concurrent_downloads", True)
-        max_workers = self.global_config.get("concurrent_collection_workers", 3)
-        
+        use_concurrent = self.global_config.get(
+            "enable_concurrent_downloads", True)
+        max_workers = self.global_config.get(
+            "concurrent_collection_workers", 3)
+
         if not use_concurrent:
             log.info("⚠️ Concurrent downloads disabled, falling back to sequential")
             processed_successfully = False
@@ -251,31 +264,36 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 if self._fetch_collection(collection_data):
                     processed_successfully = True
             return processed_successfully
-        
+
         # Update worker count if specified
         if max_workers != downloader.manager.max_workers:
             downloader.manager.max_workers = max_workers
-        
+
         # Execute concurrent downloads
         results = downloader.download_collections_concurrent(
             handler=self,
             collections=collections,
             fail_fast=self.global_config.get("fail_fast_downloads", False)
         )
-        
+
         # Process results and log statistics
         successful_downloads = sum(1 for r in results if r.success)
         failed_downloads = len(results) - successful_downloads
-        
-        log.info("🏁 Concurrent collection downloads completed: %d successful, %d failed", 
-                successful_downloads, failed_downloads)
-        
+
+        log.info(
+            "🏁 Concurrent collection downloads completed: %d successful, %d failed",
+            successful_downloads,
+            failed_downloads)
+
         # Log any failures
         for result in results:
             if not result.success:
                 collection_name = result.metadata.get("task_name", "unknown")
-                log.error("❌ Collection download failed: %s - %s", collection_name, result.error)
-        
+                log.error(
+                    "❌ Collection download failed: %s - %s",
+                    collection_name,
+                    result.error)
+
         return successful_downloads > 0
 
     def _get_collections(self) -> List[Dict[str, Any]]:
@@ -309,7 +327,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 if str(col.get("id")) in configured_collection_ids_str
             ]
             if len(selected_collections) != len(configured_collection_ids_str):
-                found_ids = {str(col.get("id")) for col in selected_collections}
+                found_ids = {str(col.get("id"))
+                             for col in selected_collections}
                 missing_ids = configured_collection_ids_str - found_ids
                 if missing_ids:
                     log.warning(
@@ -332,7 +351,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
             collections_url = self.src.url.rstrip("/")
             log.info("🔄 Discovering collections from: %s", collections_url)
 
-            response = self.session.get(collections_url, timeout=DEFAULT_TIMEOUT)
+            response = self.session.get(
+                collections_url, timeout=DEFAULT_TIMEOUT)
             response.raise_for_status()
             data = response.json()
             discovered = data.get("collections", [])
@@ -341,7 +361,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 for link in data["links"]:
                     if link.get("rel") == "data":
                         new_collections_url = link["href"]
-                        if not new_collections_url.startswith(("http://", "https://")):
+                        if not new_collections_url.startswith(
+                                ("http://", "https://")):
                             new_collections_url = urljoin(
                                 (
                                     collections_url
@@ -403,7 +424,10 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
         collection_id = collection_data.get("id", "unknown_collection")
         collection_title = collection_data.get("title", collection_id)
 
-        log.info("    📦 Fetching collection: %s (%s)", collection_id, collection_title)
+        log.info(
+            "    📦 Fetching collection: %s (%s)",
+            collection_id,
+            collection_title)
 
         items_link = self._find_items_link(collection_data)
         if not items_link:
@@ -417,8 +441,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
         items_link_with_bbox = self._add_bbox_to_url(items_link)
         if items_link_with_bbox != items_link:
             log.info(
-                "    🗺️ Applied BBOX to items URL for collection '%s'", collection_id
-            )
+                "    🗺️ Applied BBOX to items URL for collection '%s'",
+                collection_id)
 
         sanitized_source_name = sanitize_for_filename(self.src.name)
         sanitized_collection_id = sanitize_for_filename(collection_id)
@@ -467,7 +491,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
 
             page += 1
             ogc_api_delay_val = self.global_config.get("ogc_api_delay", 0.1)
-            if isinstance(ogc_api_delay_val, (int, float)) and ogc_api_delay_val > 0:
+            if isinstance(ogc_api_delay_val, (int, float)
+                          ) and ogc_api_delay_val > 0:
                 time.sleep(ogc_api_delay_val)
 
         if collection_fetch_had_critical_error:
@@ -489,9 +514,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
 
             try:
                 with open(output_path, "w", encoding="utf-8") as f:
-                    json.dump(
-                        feature_collection_output, f, ensure_ascii=False, indent=2
-                    )
+                    json.dump(feature_collection_output, f,
+                              ensure_ascii=False, indent=2)
                 log.info(
                     "    💾 Saved %d features for collection '%s' to %s",
                     len(all_features_for_this_collection),
@@ -509,7 +533,9 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 )
                 return False
         else:
-            log.info("    ℹ️ No features retrieved for collection '%s'.", collection_id)
+            log.info(
+                "    ℹ️ No features retrieved for collection '%s'.",
+                collection_id)
             return True
 
     def _determine_output_crs(
@@ -537,9 +563,11 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
         # 2. Check storageCrs from collection metadata
         storage_crs_uri = collection_data.get("storageCrs")
         if storage_crs_uri:
-            epsg_match = re.search(r"EPSG/(?:0/)?(\d+)", storage_crs_uri) or re.search(
-                r"EPSG::(\d+)", storage_crs_uri
-            )
+            epsg_match = re.search(
+                r"EPSG/(?:0/)?(\d+)",
+                storage_crs_uri) or re.search(
+                r"EPSG::(\d+)",
+                storage_crs_uri)
             if epsg_match:
                 epsg_code = epsg_match.group(1)
 
@@ -559,10 +587,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                         )
                         epsg_code = "4326"
 
-                crs_from_storage = {
-                    "type": "name",
-                    "properties": {"name": f"urn:ogc:def:crs:EPSG::{epsg_code}"},
-                }
+                crs_from_storage = {"type": "name", "properties": {
+                    "name": f"urn:ogc:def:crs:EPSG::{epsg_code}"}, }
                 log.info(
                     "    🗺️ Using CRS from storageCrs for collection '%s': EPSG:%s",
                     collection_id,
@@ -618,15 +644,20 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
 
             if coord_to_check:
                 # WGS84 coordinates should be within [-180, 180] for longitude and [-90, 90] for latitude
-                # SWEREF99 TM coordinates are much larger (hundreds of thousands)
-                return abs(coord_to_check[0]) <= 180 and abs(coord_to_check[1]) <= 90
+                # SWEREF99 TM coordinates are much larger (hundreds of
+                # thousands)
+                return abs(
+                    coord_to_check[0]) <= 180 and abs(
+                    coord_to_check[1]) <= 90
 
         except (KeyError, IndexError, TypeError) as e:
             log.debug("    Could not inspect coordinates: %s", e)
 
         return False
 
-    def _find_items_link(self, collection_data: Dict[str, Any]) -> Optional[str]:
+    def _find_items_link(self,
+                         collection_data: Dict[str,
+                                               Any]) -> Optional[str]:
         """🔍 Find the best items link from collection metadata."""
         links = collection_data.get("links", [])
         preferred_formats = [
@@ -669,7 +700,9 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 if href:
                     log.warning(
                         "    ⚠️ Using potentially non-preferred format ('%s') for items link in collection '%s'.",
-                        link_info.get("type", "Unknown"),
+                        link_info.get(
+                            "type",
+                            "Unknown"),
                         collection_data.get("id"),
                     )
                     if not href.startswith(("http://", "https://")):
@@ -692,8 +725,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                     return href
 
         log.error(
-            "    ❌ No 'items' link found in collection: %s", collection_data.get("id")
-        )
+            "    ❌ No 'items' link found in collection: %s",
+            collection_data.get("id"))
         return None
 
     @smart_retry("fetch_ogc_page")
@@ -709,7 +742,8 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
             data = response.json()
 
             features_on_page: List[Dict[str, Any]] = []
-            if isinstance(data, dict) and data.get("type") == "FeatureCollection":
+            if isinstance(data, dict) and data.get(
+                    "type") == "FeatureCollection":
                 features_on_page = data.get("features", [])
             elif isinstance(data, list):
                 features_on_page = data
@@ -717,18 +751,19 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 features_on_page = data.get("features", [])
             else:
                 log.warning(
-                    "        ⚠️ Unexpected JSON structure for OGC API features page at %s",
-                    url,
-                )
+                    "        ⚠️ Unexpected JSON structure for OGC API features page at %s", url, )
 
             next_page_url: Optional[str] = None
             if isinstance(data, dict):
                 next_page_url = self._find_next_link(data.get("links", []))
 
-            if next_page_url and not next_page_url.startswith(("http://", "https://")):
+            if next_page_url and not next_page_url.startswith(
+                    ("http://", "https://")):
                 base_url_for_next_link = response.url
                 next_page_url = urljoin(base_url_for_next_link, next_page_url)
-                log.debug("        Resolved relative next link to: %s", next_page_url)
+                log.debug(
+                    "        Resolved relative next link to: %s",
+                    next_page_url)
 
             return features_on_page, next_page_url
 
@@ -751,9 +786,7 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
                 context=ErrorContext(
                     source_name=self.src.name,
                     url=url,
-                    operation="fetch_ogc_page"
-                )
-            ) from e
+                    operation="fetch_ogc_page")) from e
         except requests.exceptions.RequestException as e:
             raise NetworkError(
                 f"Network error fetching OGC API page {url}: {e}",
@@ -781,4 +814,3 @@ class OgcApiDownloadHandler(HTTPSessionHandler):
             if link_info.get("rel") == "next" and link_info.get("href"):
                 return link_info["href"]
         return None
-

@@ -18,12 +18,15 @@ if __name__ == "__main__":
 
     # 2) determine YAML paths (allow overrides via CLI args)
     default_sources = Path("config/sources.yaml")
-    default_config  = Path("config/config.yaml")
+    default_config = Path("config/config.yaml")
     default_mappings = Path("config/mappings.yaml")
 
     sources_path = Path(sys.argv[1]) if len(sys.argv) > 1 else default_sources
-    config_path  = Path(sys.argv[2]) if len(sys.argv) > 2 else default_config
-    mappings_path = Path(sys.argv[3]) if len(sys.argv) > 3 else (default_mappings if default_mappings.exists() else None)
+    config_path = Path(sys.argv[2]) if len(sys.argv) > 2 else default_config
+    mappings_path = Path(
+        sys.argv[3]) if len(
+        sys.argv) > 3 else (
+            default_mappings if default_mappings.exists() else None)
 
     # 3) run the pipeline
     Pipeline(

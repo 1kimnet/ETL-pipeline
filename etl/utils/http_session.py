@@ -1,9 +1,4 @@
-"""HTTP session management with connection pooling an        # Configure connection pooling
-adapter = HTTPAdapter(
-    pool_connections=session_config["pool_connections"],
-    pool_maxsize=session_config["pool_maxsize"],
-    max_retries=session_config["max_retries"]
-)leanup."""
+"""HTTP session management with connection pooling and proper cleanup."""
 
 from __future__ import annotations
 
@@ -15,6 +10,7 @@ from urllib.parse import urlparse
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 log = logging.getLogger(__name__)
 
@@ -60,11 +56,18 @@ class HTTPSessionManager:
         adapter = HTTPAdapter(
             pool_connections=session_config["pool_connections"],
             pool_maxsize=session_config["pool_maxsize"],
-            max_retries=session_config["max_retries"],
+            max_retries=Retry(
+                total=session_config["max_retries"],
+                backoff_factor=session_config["backoff_factor"],
+                status_forcelist=[500, 502, 503, 504],
+            ),
         )
 
         session.mount("http://", adapter)
         session.mount("https://", adapter)
+
+        # Set default timeout
+        session.timeout = session_config["timeout"]
 
         # Set common headers
         session.headers.update(
@@ -75,6 +78,9 @@ class HTTPSessionManager:
                 "Connection": "keep-alive",
             }
         )
+
+        # Store timeout in session for use in request method override
+        session._etl_timeout = session_config["timeout"]
 
         return session
 
@@ -113,8 +119,23 @@ _session_manager = HTTPSessionManager()
 
 
 def get_http_session(base_url: Optional[str] = None, **config) -> requests.Session:
-    """Get a managed HTTP session."""
-    return _session_manager.get_session(base_url, **config)
+    """Get a managed HTTP session with timeout override."""
+    session = _session_manager.get_session(base_url, **config)
+
+    # Override the request method to ensure timeout is always passed
+    if not hasattr(session, "_etl_request_override"):
+        original_request = session.request
+
+        def request_with_timeout(method, url, **kwargs):
+            # Use session timeout if no timeout specified
+            if "timeout" not in kwargs and hasattr(session, "_etl_timeout"):
+                kwargs["timeout"] = session._etl_timeout
+            return original_request(method, url, **kwargs)
+
+        session.request = request_with_timeout
+        session._etl_request_override = True
+
+    return session
 
 
 @contextmanager

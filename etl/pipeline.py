@@ -286,6 +286,10 @@ class Pipeline:
 
                         if not self.global_cfg.get("continue_on_failure", True):
                             self.monitor.end_run("failed")
+                            # Execute pipeline rollback before raising
+                            execute_pipeline_rollback(
+                                f"Source download failed: {src.name}"
+                            )
                             raise  # ---------- 2. STAGE → staging.gdb --------------------------------
         self.logger.info("📦 Starting staging phase")
 
@@ -541,7 +545,8 @@ class Pipeline:
         """🚚 Load single FC to SDE with truncate-and-load strategy."""
         lg_sum = logging.getLogger("summary")
 
-        # Apply naming logic: RAA_byggnader_sverige_point → GNG.RAA\byggnader_sverige_point
+        # Apply naming logic: RAA_byggnader_sverige_point →
+        # GNG.RAA\byggnader_sverige_point
         dataset, sde_fc_name = self._get_sde_names(fc_name)
         sde_dataset_path = f"{sde_connection}\\{dataset}"
         target_path = f"{sde_dataset_path}\\{sde_fc_name}"

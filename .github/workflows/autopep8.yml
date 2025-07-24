@@ -1,0 +1,48 @@
+name: AutoPEP8 Formatter
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  autopep8:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install autopep8
+      run: |
+        python -m pip install --upgrade pip
+        pip install autopep8
+        
+    - name: Run autopep8
+      id: autopep8
+      run: |
+        autopep8 --recursive --diff . > autopep8_changes.diff
+        if [ -s autopep8_changes.diff ]; then
+          echo "changes=true" >> $GITHUB_OUTPUT
+          autopep8 --recursive --in-place --aggressive --aggressive .
+        else
+          echo "changes=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Commit & push changes
+      if: steps.autopep8.outputs.changes == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git commit -m "🤖 Auto-format: Apply autopep8 formatting" || exit 0
+        git push

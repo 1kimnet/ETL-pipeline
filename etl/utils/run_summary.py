@@ -6,6 +6,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import List
 
+
 @dataclass(slots=True)
 class Summary:
     downloads: Counter = field(default_factory=Counter)
@@ -39,7 +40,7 @@ class Summary:
                 sum(self.staging.values()))
         lg.info("📊 SDE loading complete: %d loaded, %d errors",
                 self.sde["done"], self.sde["error"])
-        
+
         if self.errors:
             lg.info("🚨 First errors:")
             for line in self.errors:

@@ -32,9 +32,11 @@ def download(url: str, dest: Path) -> Path:
     # Get content length if available for size estimate
     try:
         with requests.head(url, timeout=10) as head_resp:
-            content_length: Optional[str] = head_resp.headers.get("content-length")
-            total_size: Optional[int] = int(content_length) if content_length else None
-    except:
+            content_length: Optional[str] = head_resp.headers.get(
+                "content-length")
+            total_size: Optional[int] = int(
+                content_length) if content_length else None
+    except BaseException:
         total_size = None
 
     # Single console message with size if known

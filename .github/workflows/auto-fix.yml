@@ -1,0 +1,262 @@
+name: Auto-Fix Issues
+
+on:
+  push:
+    branches: [ main, develop, hotfix/*, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort autopep8 pylint flake8 mypy
+        pip install -r requirements.txt || echo "No requirements.txt found"
+
+    - name: Run Black (Code Formatting)
+      run: |
+        echo "🔧 Running Black formatter..."
+        black --check --diff . || {
+          echo "⚠️ Black formatting issues found. Fixing..."
+          black .
+          echo "✅ Black formatting applied"
+        }
+
+    - name: Run isort (Import Sorting)
+      run: |
+        echo "🔧 Running isort..."
+        isort --check-only --diff . || {
+          echo "⚠️ Import sorting issues found. Fixing..."
+          isort .
+          echo "✅ Import sorting applied"
+        }
+
+    - name: Run autopep8 (PEP8 Fixes)
+      run: |
+        echo "🔧 Running autopep8..."
+        autopep8 --recursive --diff . | head -50 || echo "No changes needed"
+        autopep8 --recursive --in-place --aggressive --aggressive .
+        echo "✅ PEP8 fixes applied"
+
+    - name: Fix common Python issues
+      run: |
+        echo "🔧 Fixing common Python issues..."
+
+        # Ensure dos2unix is installed
+        if ! command -v dos2unix >/dev/null 2>&1; then
+          echo "Installing dos2unix..."
+          if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y dos2unix
+          elif command -v yum >/dev/null 2>&1; then
+            sudo yum install -y dos2unix
+          else
+            echo "No supported package manager found to install dos2unix."
+            exit 1
+          fi
+        fi
+
+        # Fix missing newlines at end of files
+        find . -name "*.py" -type f -exec sh -c '
+          if [ -n "$(tail -c1 "$1")" ]; then
+            echo "Adding newline to $1"
+            echo "" >> "$1"
+          fi
+        ' _ {} \;
+
+        # Fix Windows line endings
+        find . -name "*.py" -type f -exec dos2unix {} \;
+
+        # Remove trailing whitespace
+        find . -name "*.py" -type f -exec sed -i 's/[[:space:]]*$//' {} \;
+
+        echo "✅ Common fixes applied"
+
+    - name: Check for Python syntax errors
+      run: |
+        echo "🔍 Checking Python syntax..."
+        python -m py_compile $(find . -name "*.py" -not -path "./.git/*" -not -path "./venv/*" -not -path "./.venv/*") || {
+          echo "❌ Syntax errors found!"
+          exit 1
+        }
+        echo "✅ No syntax errors found"
+
+    - name: Run limited Pylint (only errors and warnings)
+      run: |
+        echo "🔍 Running Pylint (errors and warnings only)..."
+        pylint --errors-only $(find . -name "*.py" -not -path "./.git/*" -not -path "./venv/*" -not -path "./.venv/*") || {
+          echo "⚠️ Pylint found errors"
+          echo "📝 Consider fixing these issues manually"
+        }
+        
+        # Run with warnings but don't fail the build
+        pylint --disable=all --enable=W $(find . -name "*.py" -not -path "./.git/*" -not -path "./venv/*" -not -path "./.venv/*") || echo "⚠️ Pylint warnings found (not blocking)"
+
+    - name: Check for security issues
+      run: |
+        echo "🔍 Checking for common security issues..."
+        
+        # Check for hardcoded secrets/passwords
+        if grep -r -i "password\s*=\s*['\"]" --include="*.py" . | grep -v "password.*input\|password.*getpass\|password.*env"; then
+          echo "⚠️ Potential hardcoded passwords found!"
+        fi
+        
+        # Check for SQL injection patterns
+        if grep -r "\.execute.*%\|\.execute.*format\|\.execute.*+" --include="*.py" .; then
+          echo "⚠️ Potential SQL injection patterns found!"
+        fi
+        
+        # Check for dangerous imports
+        if grep -r "import os.*system\|from os import system\|exec(\|eval(" --include="*.py" .; then
+          echo "⚠️ Potentially dangerous code patterns found!"
+        fi
+        
+        echo "✅ Security check completed"
+
+-        pip install black isort autopep8 pylint flake8 mypy
++        pip install black isort autopep8 pylint flake8 mypy pyyaml
+    - name: Generate fix summary
+      run: |
+        echo "📊 Auto-Fix Summary:" > fix_summary.md
+        echo "- ✅ Code formatting (Black)" >> fix_summary.md
+        echo "- ✅ Import sorting (isort)" >> fix_summary.md
+        echo "- ✅ PEP8 compliance (autopep8)" >> fix_summary.md
+        echo "- ✅ Common file issues fixed" >> fix_summary.md
+        echo "- ✅ Syntax validation completed" >> fix_summary.md
+        echo "- ✅ Security scan completed" >> fix_summary.md
+        
+        if git diff --quiet; then
+          echo "- 🎉 No changes needed!" >> fix_summary.md
+        else
+          echo "- 🔧 Files were modified and fixed" >> fix_summary.md
+        fi
+        
+        cat fix_summary.md
+
+    - name: Commit fixes (if any)
+      run: |
+        if ! git diff --quiet; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Auto-Fix"
+          git add -A
+          git commit -m "🤖 Auto-fix: Apply code formatting and fixes
+
+          - Apply Black code formatting
+          - Sort imports with isort
+          - Fix PEP8 issues with autopep8
+          - Fix common file issues (newlines, whitespace)
+          - Validate Python syntax
+          
+          Generated by GitHub Actions Auto-Fix workflow" || echo "No changes to commit"
+        else
+          echo "✅ No changes needed - code is already properly formatted!"
+        fi
+
+    - name: Push changes (for direct pushes)
+      if: github.event_name == 'push'
+      run: |
+        if ! git diff --quiet HEAD~1; then
+          git push || echo "Failed to push - this is expected for PRs"
+        fi
+
+    - name: Comment on PR (for pull requests)
+      if: github.event_name == 'pull_request' && !cancelled()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let summary = "## 🤖 Auto-Fix Results\n\n";
+          
+          try {
+            const fixSummary = fs.readFileSync('fix_summary.md', 'utf8');
+            summary += fixSummary + "\n\n";
+          } catch (e) {
+            summary += "Fix summary not available.\n\n";
+          }
+          
+          summary += "This automated workflow:\n";
+          summary += "- ✅ Checked code formatting\n";
+          summary += "- ✅ Validated Python syntax\n";
+          summary += "- ✅ Scanned for security issues\n";
+          summary += "- ✅ Applied automatic fixes where possible\n\n";
+          summary += "Please review any changes and address any remaining issues manually.";
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+  lint-check:
+    runs-on: ubuntu-latest
+    needs: auto-fix
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 mypy bandit safety
+
+    - name: Run Flake8 (Style Guide)
+      continue-on-error: true
+      run: |
+        echo "🔍 Running Flake8..."
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || echo "Flake8 found issues"
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run MyPy (Type Checking)
+      continue-on-error: true
+      run: |
+        echo "🔍 Running MyPy type checking..."
+        mypy . --ignore-missing-imports --no-strict-optional || echo "MyPy found type issues"
+
+    - name: Run Bandit (Security)
+      continue-on-error: true
+      run: |
+        echo "🔍 Running Bandit security scan..."
+        bandit -r . -f json -o bandit-report.json || echo "Bandit found security issues"
+        bandit -r . || echo "Security scan completed with findings"
+
+    - name: Run Safety (Dependency Security)
+      continue-on-error: true
+      run: |
+        echo "🔍 Running Safety dependency check..."
+        safety check || echo "Safety found vulnerable dependencies"
+
+    - name: Upload reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: lint-reports
+        path: |
+          bandit-report.json
+        retention-days: 30

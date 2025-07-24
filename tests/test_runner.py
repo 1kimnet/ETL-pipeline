@@ -11,10 +11,11 @@ import sys
 import subprocess
 from pathlib import Path
 
+
 def run_tests(test_type="all"):
     """Run tests based on type."""
     cmd = ["python", "-m", "pytest"]
-    
+
     if test_type == "unit":
         cmd.extend(["-m", "unit", "tests/unit/"])
     elif test_type == "integration":
@@ -26,17 +27,19 @@ def run_tests(test_type="all"):
     else:
         print(f"Unknown test type: {test_type}")
         sys.exit(1)
-    
+
     # Add coverage if available
     try:
-        subprocess.run(["python", "-c", "import coverage"], check=True, capture_output=True)
+        subprocess.run(["python", "-c", "import coverage"],
+                       check=True, capture_output=True)
         cmd.extend(["--cov=etl", "--cov-report=html", "--cov-report=term"])
     except subprocess.CalledProcessError:
         pass  # Coverage not available
-    
+
     print(f"Running {test_type} tests...")
     result = subprocess.run(cmd)
     sys.exit(result.returncode)
+
 
 if __name__ == "__main__":
     test_type = sys.argv[1] if len(sys.argv) > 1 else "all"

@@ -1,0 +1,38 @@
+# Development Dependencies for GitHub Actions Workflows
+# These are ONLY used in CI/CD workflows - NOT in runtime ETL pipeline
+
+# Code formatting and linting
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+pylint>=2.17.0
+autopep8>=2.0.0
+
+# Type checking
+mypy>=1.3.0
+
+# Security scanning
+bandit>=1.7.5
+safety>=2.3.0
+semgrep>=1.30.0
+
+# Testing and benchmarking
+pytest>=7.4.0
+pytest-benchmark>=4.0.0
+memory-profiler>=0.61.0
+
+# Development tools
+pre-commit>=3.3.0
+
+# Dependency analysis
+pip-audit>=2.6.0
+cyclonedx-bom>=4.0.0
+pip-licenses>=4.3.0
+
+# Release automation
+semantic-version>=2.10.0
+gitpython>=3.1.0
+
+# NOTE: These libraries are ONLY for development workflows
+# They are NOT used in the actual ETL pipeline runtime
+# The ETL pipeline only uses standard library + ArcGIS Pro bundled libraries

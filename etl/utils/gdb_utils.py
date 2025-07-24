@@ -39,15 +39,21 @@ def ensure_unique_name(
         r"[-\s\.]+", "_", sanitized_name
     )  # hyphens, spaces, dots → underscore
     sanitized_name = re.sub(
-        r"[åäö]", lambda m: {"å": "a", "ä": "a", "ö": "o"}[m.group()], sanitized_name
-    )  # Swedish chars
+        r"[åäö]",
+        lambda m: {
+            "å": "a",
+            "ä": "a",
+            "ö": "o"}[
+            m.group()],
+        sanitized_name)  # Swedish chars
     sanitized_name = re.sub(
         r"[^\w]", "_", sanitized_name
     )  # Any remaining non-word chars → underscore
     sanitized_name = re.sub(
         r"_{2,}", "_", sanitized_name
     )  # Multiple underscores → single underscore
-    sanitized_name = sanitized_name.strip("_")  # Remove leading/trailing underscores
+    # Remove leading/trailing underscores
+    sanitized_name = sanitized_name.strip("_")
 
     # Ensure it starts with letter or underscore (not number)
     if sanitized_name and sanitized_name[0].isdigit():
@@ -116,8 +122,8 @@ def reset_gdb(gdb_path: Path) -> None:
         _remove_existing_gdb(gdb_full_path)
     else:
         log.info(
-            "ℹ️ GDB does not currently exist at %s, no removal needed.", gdb_full_path
-        )
+            "ℹ️ GDB does not currently exist at %s, no removal needed.",
+            gdb_full_path)
 
     _ensure_parent_directory_exists(gdb_path)
     _create_new_gdb(gdb_path)

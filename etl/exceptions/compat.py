@@ -74,7 +74,10 @@ def format_error_context(error: ETLError) -> str:
 
 
 # Helper functions for creating legacy-style errors
-def create_http_error(message: str, status_code: Optional[int] = None, **kwargs) -> NetworkError:
+def create_http_error(
+        message: str,
+        status_code: Optional[int] = None,
+        **kwargs) -> NetworkError:
     """Create HTTP error with legacy interface."""
     return NetworkError(
         message,
@@ -87,7 +90,10 @@ def create_http_error(message: str, status_code: Optional[int] = None, **kwargs)
     )
 
 
-def create_rate_limit_error(message: str, retry_after: Optional[int] = None, **kwargs) -> NetworkError:
+def create_rate_limit_error(
+        message: str,
+        retry_after: Optional[int] = None,
+        **kwargs) -> NetworkError:
     """Create rate limit error with legacy interface."""
     return NetworkError(
         message,
@@ -100,7 +106,10 @@ def create_rate_limit_error(message: str, retry_after: Optional[int] = None, **k
     )
 
 
-def create_data_format_error(message: str, format_type: Optional[str] = None, **kwargs) -> DataError:
+def create_data_format_error(
+        message: str,
+        format_type: Optional[str] = None,
+        **kwargs) -> DataError:
     """Create data format error with legacy interface."""
     return DataError(
         message,
@@ -126,7 +135,10 @@ def create_source_unavailable_error(message: str, **kwargs) -> SourceError:
     )
 
 
-def create_configuration_error(message: str, config_file: Optional[str] = None, **kwargs) -> ConfigurationError:
+def create_configuration_error(
+        message: str,
+        config_file: Optional[str] = None,
+        **kwargs) -> ConfigurationError:
     """Create configuration error with legacy interface."""
     return ConfigurationError(
         message,
