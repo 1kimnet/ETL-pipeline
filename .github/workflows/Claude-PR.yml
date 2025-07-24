@@ -1,7 +1,6 @@
-- name: Claude PR Assistant
-  uses: anthropics/claude-code-action@beta
+name: Claude PR Assistant
 
-  on:
+on:
   issue_comment:
     types: [created]
   pull_request_review_comment:
