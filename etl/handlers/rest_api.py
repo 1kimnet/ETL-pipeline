@@ -356,7 +356,7 @@ class RestApiDownloadHandler(HTTPSessionHandler):
             if "id" in lyr
         }
 
-            if configured_layer_ids_from_yaml:
+           if configured_layer_ids_from_yaml:
                 log.info(
                     "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
                     configured_layer_ids_from_yaml,
@@ -370,7 +370,7 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                 lid_str = str(lid_val)
                 layer_detail = metadata_layers_details.get(lid_str)
 
-                    if layer_detail:
+                   if layer_detail:
                         layer_name = layer_detail.get(
                             "name", f"layer_{lid_str}")
                         layers_to_iterate_final.append(
@@ -713,7 +713,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         params = self._prepare_query_params()
 
         source_name_sanitized = sanitize_for_filename(self.src.name)
-        staging_dir = Path(paths.STAGING) / self.src.authority / source_name_sanitized
+        staging_dir = Path(paths.STAGING) / \
+                           self.src.authority / source_name_sanitized
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         output_filename = f"{layer_name_sanitized}.{params['f']}"

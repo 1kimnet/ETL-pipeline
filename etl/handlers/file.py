@@ -26,7 +26,8 @@ class FileDownloadHandler:
     For ZIPs, extracts contents. For direct GPKGs, copies them to the staging location.
     """
 
-    def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, src: Source,
+                 global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
 
@@ -48,7 +49,9 @@ class FileDownloadHandler:
         (e.g., a collection of ZIPs based on an 'include' list).
         """
         if not self.src.enabled:
-            log.info("⏭️ Source '%s' is disabled, skipping fetch.", self.src.name)
+            log.info(
+                "⏭️ Source '%s' is disabled, skipping fetch.",
+                self.src.name)
             return
 
         if not self.src.url:
@@ -59,11 +62,8 @@ class FileDownloadHandler:
 
         try:
             is_single_direct_download_gpkg = (
-                self.src.download_format and self.src.download_format.lower() == "gpkg"
-            ) or (
-                self.src.staged_data_type
-                and self.src.staged_data_type.lower() == "gpkg"
-            )
+                self.src.download_format and self.src.download_format.lower() == "gpkg") or (
+                self.src.staged_data_type and self.src.staged_data_type.lower() == "gpkg")
 
             if self.src.include and not is_single_direct_download_gpkg:
                 self._download_multiple_files()
@@ -133,7 +133,10 @@ class FileDownloadHandler:
         for result in results:
             if not result.success:
                 file_name = result.metadata.get("task_name", "unknown")
-                log.error("❌ File download failed: %s - %s", file_name, result.error)
+                log.error(
+                    "❌ File download failed: %s - %s",
+                    file_name,
+                    result.error)
 
     def _download_single_file_stem(self, included_filename_stem: str) -> None:
         """Download a single file stem (extracted from original loop)."""
@@ -165,7 +168,8 @@ class FileDownloadHandler:
             self.src.url,
         )
 
-        true_stem_from_web, true_ext_from_web = fetch_true_filename_parts(self.src.url)
+        true_stem_from_web, true_ext_from_web = fetch_true_filename_parts(
+            self.src.url)
         consistent_local_stem = sanitize_for_filename(self.src.name)
         final_extension = true_ext_from_web
 
@@ -248,7 +252,8 @@ class FileDownloadHandler:
             "Attempting to download: %s \n    -> to local file: %s \n    -> staging dir: %s",
             download_url,
             download_target_path.name,
-            final_staging_destination_dir.relative_to(paths.ROOT),
+            final_staging_destination_dir.relative_to(
+                paths.ROOT),
         )
 
         try:
@@ -347,7 +352,9 @@ class FileDownloadHandler:
 
             if explicit_local_file_ext.lower() == ".zip":
                 try:
-                    extract_zip(downloaded_file_path, final_staging_destination_dir)
+                    extract_zip(
+                        downloaded_file_path,
+                        final_staging_destination_dir)
                     log.info(
                         "➕ Extracted and staged archive %s to %s",
                         downloaded_file_path.name,

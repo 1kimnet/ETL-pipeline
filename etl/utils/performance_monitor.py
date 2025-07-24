@@ -17,7 +17,8 @@ from .performance_optimizer import PerformanceMetrics, SystemResources
 log = logging.getLogger(__name__)
 
 
-# Global cache and tuner placeholders - these would normally be defined elsewhere
+# Global cache and tuner placeholders - these would normally be defined
+# elsewhere
 class GlobalCache:
     """Placeholder for global cache."""
 
@@ -239,7 +240,8 @@ class PerformanceMonitor:
     def remove_alert_rule(self, rule_name: str) -> bool:
         """Remove alert rule by name."""
         original_count = len(self.alert_rules)
-        self.alert_rules = [rule for rule in self.alert_rules if rule.name != rule_name]
+        self.alert_rules = [
+            rule for rule in self.alert_rules if rule.name != rule_name]
 
         if len(self.alert_rules) < original_count:
             log.info("Removed alert rule: %s", rule_name)
@@ -261,7 +263,8 @@ class PerformanceMonitor:
         # Summary for all operations
         summary = {}
         for op_name, history in self.performance_history.items():
-            summary[op_name] = self._summarize_operation_metrics(op_name, list(history))
+            summary[op_name] = self._summarize_operation_metrics(
+                op_name, list(history))
 
         return summary
 
@@ -306,7 +309,8 @@ class PerformanceMonitor:
         # Collect operation metrics
         operations = {}
         for op_name, history_deque in self.performance_history.items():
-            history_list = list(history_deque)  # Convert deque to list explicitly
+            # Convert deque to list explicitly
+            history_list = list(history_deque)
             relevant_metrics = [
                 m for m in history if start_time <= m.start_time <= end_time
             ]
@@ -343,8 +347,7 @@ class PerformanceMonitor:
 
         # Collect alerts
         relevant_alerts = [
-            alert for alert in self.alerts if start_time <= alert.timestamp <= end_time
-        ]
+            alert for alert in self.alerts if start_time <= alert.timestamp <= end_time]
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
@@ -402,7 +405,11 @@ class PerformanceMonitor:
     def _get_system_resources(self) -> SystemResources:
         """Get current system resources."""
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage(getattr(self, "_ROOT_PATH", Path.cwd().anchor))
+        disk = psutil.disk_usage(
+            getattr(
+                self,
+                "_ROOT_PATH",
+                Path.cwd().anchor))
 
         return SystemResources(
             cpu_percent=psutil.cpu_percent(interval=0.1),
@@ -543,10 +550,8 @@ class PerformanceMonitor:
 
         # Check for high-variance operations
         for op_name, metrics in operations.items():
-            if (
-                "duration" in metrics
-                and metrics["duration"]["std"] > metrics["duration"]["avg"] * 0.5
-            ):
+            if ("duration" in metrics and metrics["duration"]
+                    ["std"] > metrics["duration"]["avg"] * 0.5):
                 recommendations.append(
                     f"Operation '{op_name}' has high duration variance - consider investigating intermittent issues"
                 )
@@ -624,7 +629,8 @@ class PerformanceMonitor:
                 history.popleft()
 
         # Clean up alerts
-        self.alerts = [alert for alert in self.alerts if alert.timestamp > cutoff_time]
+        self.alerts = [
+            alert for alert in self.alerts if alert.timestamp > cutoff_time]
 
         # Clean up active alerts that are resolved
         resolved_alerts = [

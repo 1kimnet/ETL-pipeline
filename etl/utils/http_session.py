@@ -29,7 +29,10 @@ class HTTPSessionManager:
             "timeout": 30,
         }
 
-    def get_session(self, base_url: Optional[str] = None, **config) -> requests.Session:
+    def get_session(
+            self,
+            base_url: Optional[str] = None,
+            **config) -> requests.Session:
         """Get or create a session for the given base URL."""
         # Use domain as key for session reuse
         if base_url:
@@ -106,7 +109,8 @@ class HTTPSessionManager:
                     session.close()
                     log.debug("Closed HTTP session for: %s", session_key)
                 except Exception as e:
-                    log.warning("Failed to close session %s: %s", session_key, e)
+                    log.warning(
+                        "Failed to close session %s: %s", session_key, e)
             self._sessions.clear()
 
     def __del__(self):
@@ -118,7 +122,9 @@ class HTTPSessionManager:
 _session_manager = HTTPSessionManager()
 
 
-def get_http_session(base_url: Optional[str] = None, **config) -> requests.Session:
+def get_http_session(
+        base_url: Optional[str] = None,
+        **config) -> requests.Session:
     """Get a managed HTTP session with timeout override."""
     session = _session_manager.get_session(base_url, **config)
 
@@ -173,7 +179,8 @@ class HTTPSessionHandler:
     def session(self) -> requests.Session:
         """Get the HTTP session for this handler."""
         if self._session is None:
-            self._session = get_http_session(self.base_url, **self.session_config)
+            self._session = get_http_session(
+                self.base_url, **self.session_config)
         return self._session
 
     def close_session(self):
