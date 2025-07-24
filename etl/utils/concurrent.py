@@ -76,16 +76,17 @@ class ConcurrentDownloadManager:
     """Manages concurrent download operations using only standard library."""
 
     def __init__(
-        self, max_workers: Optional[int] = None, timeout: Optional[float] = None
-    ):
+            self,
+            max_workers: Optional[int] = None,
+            timeout: Optional[float] = None):
         self.max_workers = max_workers or self._get_optimal_worker_count()
         self.timeout = timeout or 300.0
         self.stats = ConcurrentStats()
         self.lock = threading.RLock()
 
         log.info(
-            "Initialized ConcurrentDownloadManager with %d workers", self.max_workers
-        )
+            "Initialized ConcurrentDownloadManager with %d workers",
+            self.max_workers)
 
     def _get_optimal_worker_count(self) -> int:
         """Determine optimal number of workers based on CPU count."""
@@ -147,7 +148,8 @@ class ConcurrentDownloadManager:
                         self.stats.update(result)
 
                     if fail_fast and not result.success:
-                        log.warning("Fail-fast enabled, cancelling remaining tasks")
+                        log.warning(
+                            "Fail-fast enabled, cancelling remaining tasks")
                         # Cancel remaining futures
                         for remaining_future in future_to_task:
                             if not remaining_future.done():
@@ -201,7 +203,11 @@ class ConcurrentDownloadManager:
 
         except Exception as e:
             duration = time.time() - start_time
-            log.debug("Task '%s' failed after %.2fs: %s", task_name, duration, e)
+            log.debug(
+                "Task '%s' failed after %.2fs: %s",
+                task_name,
+                duration,
+                e)
 
             return ConcurrentResult(
                 success=False,
@@ -290,7 +296,9 @@ class ConcurrentCollectionDownloader:
             task = (handler._fetch_collection, (collection,), {})
             tasks.append(task)
 
-        log.info("Starting concurrent download of %d collections", len(collections))
+        log.info(
+            "Starting concurrent download of %d collections",
+            len(collections))
         return self.manager.execute_concurrent(tasks, task_names, fail_fast)
 
 

@@ -62,7 +62,8 @@ def test_concurrency_optimizer():
 
         # Check if ROOT_PATH exists
         if hasattr(optimizer, "ROOT_PATH"):
-            print(f"✅ SUCCESS: ROOT_PATH attribute exists: {optimizer.ROOT_PATH}")
+            print(
+                f"✅ SUCCESS: ROOT_PATH attribute exists: {optimizer.ROOT_PATH}")
             return True
         else:
             print("❌ FAILED: ROOT_PATH attribute not found")

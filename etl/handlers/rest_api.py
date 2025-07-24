@@ -342,6 +342,7 @@ class RestApiDownloadHandler(HTTPSessionHandler):
             if "id" in lyr
         }
 
+<<<<<<< HEAD
         if configured_layer_ids_from_yaml:
             log.info(
                 "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
@@ -350,11 +351,23 @@ class RestApiDownloadHandler(HTTPSessionHandler):
             )
             if not isinstance(configured_layer_ids_from_yaml, list):
                 configured_layer_ids_from_yaml = [configured_layer_ids_from_yaml]
+=======
+           if configured_layer_ids_from_yaml:
+                log.info(
+                    "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
+                    configured_layer_ids_from_yaml,
+                    self.src.name,
+                )
+                if not isinstance(configured_layer_ids_from_yaml, list):
+                    configured_layer_ids_from_yaml = [
+                        configured_layer_ids_from_yaml]
+>>>>>>> 451a390db650ddc3a12688a44583af8901886af8
 
             for lid_val in configured_layer_ids_from_yaml:
                 lid_str = str(lid_val)
                 layer_detail = metadata_layers_details.get(lid_str)
 
+<<<<<<< HEAD
                 if layer_detail:
                     layer_name = layer_detail.get("name", f"layer_{lid_str}")
                     layers_to_iterate_final.append(
@@ -375,6 +388,29 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                             "metadata": None,
                         }
                     )
+=======
+                   if layer_detail:
+                        layer_name = layer_detail.get(
+                            "name", f"layer_{lid_str}")
+                        layers_to_iterate_final.append(
+                            {"id": lid_str, "name": layer_name, "metadata": layer_detail}
+                        )
+                    else:
+                        log.warning(
+                            "Layer ID '%s' specified in config for source '%s' "
+                            "was not found in the service's layer metadata list. "
+                            "Will attempt to query it using this ID and a placeholder name.",
+                            lid_str,
+                            self.src.name,
+                        )
+                        layers_to_iterate_final.append(
+                            {
+                                "id": lid_str,
+                                "name": f"layer_{lid_str}_cfg_only",
+                                "metadata": None,
+                            }
+                        )
+>>>>>>> 451a390db650ddc3a12688a44583af8901886af8
 
         elif "layers" in service_meta:
             log.info(
@@ -673,9 +709,14 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         params = self._prepare_query_params()
 
         source_name_sanitized = sanitize_for_filename(self.src.name)
+<<<<<<< HEAD
         staging_dir = (
             Path(str(paths.STAGING)) / self.src.authority / source_name_sanitized
         )
+=======
+        staging_dir = Path(paths.STAGING) / \
+                           self.src.authority / source_name_sanitized
+>>>>>>> 451a390db650ddc3a12688a44583af8901886af8
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         output_filename = f"{layer_name_sanitized}.{params['f']}"
