@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black isort autopep8 pylint flake8 mypy
+        pip install black isort autopep8 pylint flake8 mypy pyyaml
         pip install -r requirements.txt || echo "No requirements.txt found"
 
     - name: Run Black (Code Formatting)
@@ -60,7 +60,6 @@ jobs:
     - name: Fix common Python issues
       run: |
         echo "🔧 Fixing common Python issues..."
-
         # Ensure dos2unix is installed
         if ! command -v dos2unix >/dev/null 2>&1; then
           echo "Installing dos2unix..."
@@ -73,7 +72,7 @@ jobs:
             exit 1
           fi
         fi
-
+        
         # Fix missing newlines at end of files
         find . -name "*.py" -type f -exec sh -c '
           if [ -n "$(tail -c1 "$1")" ]; then
@@ -81,13 +80,13 @@ jobs:
             echo "" >> "$1"
           fi
         ' _ {} \;
-
+        
         # Fix Windows line endings
         find . -name "*.py" -type f -exec dos2unix {} \;
-
+        
         # Remove trailing whitespace
         find . -name "*.py" -type f -exec sed -i 's/[[:space:]]*$//' {} \;
-
+        
         echo "✅ Common fixes applied"
 
     - name: Check for Python syntax errors
@@ -131,8 +130,6 @@ jobs:
         
         echo "✅ Security check completed"
 
--        pip install black isort autopep8 pylint flake8 mypy
-+        pip install black isort autopep8 pylint flake8 mypy pyyaml
     - name: Generate fix summary
       run: |
         echo "📊 Auto-Fix Summary:" > fix_summary.md
@@ -158,7 +155,7 @@ jobs:
           git config --local user.name "GitHub Action Auto-Fix"
           git add -A
           git commit -m "🤖 Auto-fix: Apply code formatting and fixes
-
+          
           - Apply Black code formatting
           - Sort imports with isort
           - Fix PEP8 issues with autopep8
