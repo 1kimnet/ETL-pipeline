@@ -33,7 +33,8 @@ SWEREF99_TM_WKID = 3006
 class RestApiDownloadHandler(HTTPSessionHandler):
     """Handles downloading data from ESRI REST API MapServer and FeatureServer Query endpoints."""
 
-    def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, src: Source,
+                 global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
         ensure_dirs()
@@ -65,10 +66,13 @@ class RestApiDownloadHandler(HTTPSessionHandler):
             expected_exceptions=[Exception],
         )
 
-        log.info("🚀 Initializing RestApiDownloadHandler for source: %s", self.src.name)
+        log.info(
+    "🚀 Initializing RestApiDownloadHandler for source: %s",
+     self.src.name)
 
     @retry_with_backoff()
-    def _get_service_metadata(self, service_url: str) -> Optional[Dict[str, Any]]:
+    def _get_service_metadata(
+        self, service_url: str) -> Optional[Dict[str, Any]]:
         """Fetches base metadata for the service (MapServer/FeatureServer) with retries."""
         return self._fetch_service_metadata_impl(service_url)
 
@@ -171,11 +175,15 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         """Fetches metadata for a specific layer."""
         try:
             params = {"f": "json"}
-            response = self.session.get(layer_url, params=params, timeout=self.timeout)
+            response = self.session.get(
+    layer_url, params=params, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            log.error("❌ Failed to fetch layer metadata from %s: %s", layer_url, e)
+            log.error(
+    "❌ Failed to fetch layer metadata from %s: %s",
+    layer_url,
+     e)
             return None
 
     def _prepare_query_params(self) -> Dict[str, Any]:
@@ -210,7 +218,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
     ) -> Optional[Dict[str, Any]]:
         """Execute a paginated request and return the JSON payload."""
         try:
-            response_obj = self.session.get(query_url, params=params, timeout=120)
+            response_obj = self.session.get(
+    query_url, params=params, timeout=120)
             response_obj.raise_for_status()
             return response_obj.json()
         except requests.exceptions.RequestException as e:
@@ -295,7 +304,10 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(final_output_data, f, ensure_ascii=False, indent=2)
-            log.info("✅ %s: %d features", layer_name_sanitized, features_written_total)
+            log.info(
+    "✅ %s: %d features",
+    layer_name_sanitized,
+     features_written_total)
             log.debug(
                 "💾 Successfully saved %d features for layer %s to %s",
                 features_written_total,
@@ -342,7 +354,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
             if "id" in lyr
         }
 
-<<<<<<< HEAD
+
+<< << << < HEAD
         if configured_layer_ids_from_yaml:
             log.info(
                 "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
@@ -350,8 +363,9 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                 self.src.name,
             )
             if not isinstance(configured_layer_ids_from_yaml, list):
-                configured_layer_ids_from_yaml = [configured_layer_ids_from_yaml]
-=======
+                configured_layer_ids_from_yaml = [
+                    configured_layer_ids_from_yaml]
+== == == =
            if configured_layer_ids_from_yaml:
                 log.info(
                     "Found explicit layer_ids in config: %s for source '%s'. Processing only these.",
@@ -361,17 +375,18 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                 if not isinstance(configured_layer_ids_from_yaml, list):
                     configured_layer_ids_from_yaml = [
                         configured_layer_ids_from_yaml]
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
+>>>>>> > 451a390db650ddc3a12688a44583af8901886af8
 
             for lid_val in configured_layer_ids_from_yaml:
                 lid_str = str(lid_val)
                 layer_detail = metadata_layers_details.get(lid_str)
 
-<<<<<<< HEAD
+<< << << < HEAD
                 if layer_detail:
                     layer_name = layer_detail.get("name", f"layer_{lid_str}")
                     layers_to_iterate_final.append(
-                        {"id": lid_str, "name": layer_name, "metadata": layer_detail}
+                        {"id": lid_str, "name": layer_name,
+                            "metadata": layer_detail}
                     )
                 else:
                     log.warning(
@@ -388,12 +403,13 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                             "metadata": None,
                         }
                     )
-=======
+== == == =
                    if layer_detail:
                         layer_name = layer_detail.get(
                             "name", f"layer_{lid_str}")
                         layers_to_iterate_final.append(
-                            {"id": lid_str, "name": layer_name, "metadata": layer_detail}
+                            {"id": lid_str, "name": layer_name,
+                                "metadata": layer_detail}
                         )
                     else:
                         log.warning(

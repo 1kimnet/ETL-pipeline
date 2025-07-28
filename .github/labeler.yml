@@ -1,0 +1,36 @@
+# Label configuration for automatic PR labeling
+
+# Documentation changes
+documentation:
+- changed-files:
+  - any-glob-to-any-file: ['docs/**', '*.md', 'README*']
+
+# Python code changes  
+python:
+- changed-files:
+  - any-glob-to-any-file: ['**/*.py']
+
+# Configuration changes
+config:
+- changed-files:
+  - any-glob-to-any-file: ['**/*.yml', '**/*.yaml', '**/*.json', '**/*.toml']
+
+# Database related
+database:
+- changed-files:
+  - any-glob-to-any-file: ['**/*migration*', '**/sql/**', '**/*.sql']
+
+# CI/CD changes
+ci/cd:
+- changed-files:
+  - any-glob-to-any-file: ['.github/**']
+
+# Tests
+tests:
+- changed-files:
+  - any-glob-to-any-file: ['**/test_*', '**/tests/**', '**/*_test.py']
+
+# Dependencies
+dependencies:
+- changed-files:
+  - any-glob-to-any-file: ['requirements*.txt', 'pyproject.toml', 'setup.py', 'Pipfile*']

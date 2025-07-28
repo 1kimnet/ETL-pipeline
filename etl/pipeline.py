@@ -173,13 +173,15 @@ class Pipeline:
 
         # ---------- 1. DOWNLOAD & STAGING ---------------------------------
         sources = list(Source.load_all(self.sources_yaml_path))
-<<<<<<< HEAD
+
+
+<< << << < HEAD
         self.logger.info(f"📋 Found sources to process: {len(sources)}")
-=======
+== == == =
         self.logger.info(
             "📋 Found sources to process",
             source_count=len(sources))
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
+>>>>>> > 451a390db650ddc3a12688a44583af8901886af8
 
         # Create SDE loader for proper source-to-dataset mapping
         from .models import AppConfig, SdeLoader
@@ -193,13 +195,15 @@ class Pipeline:
 
         # Log concurrent download configuration
         if self.global_cfg.get("enable_concurrent_downloads", True):
-            rest_workers = self.global_cfg.get("concurrent_download_workers", 5)
-            ogc_workers = self.global_cfg.get("concurrent_collection_workers", 3)
+            rest_workers = self.global_cfg.get(
+                "concurrent_download_workers", 5)
+            ogc_workers = self.global_cfg.get(
+                "concurrent_collection_workers", 3)
             file_workers = self.global_cfg.get("concurrent_file_workers", 4)
             self.logger.info(
-<<<<<<< HEAD
+<< << << < HEAD
                 f"🚀 Concurrent downloads enabled: REST={rest_workers}, OGC={ogc_workers}, Files={file_workers} workers"
-=======
+== == == =
                 "🚀 Concurrent downloads enabled: REST=%d, OGC=%d, Files=%d workers",
                 self.global_cfg.get(
                     "concurrent_download_workers",
@@ -210,7 +214,7 @@ class Pipeline:
                 self.global_cfg.get(
                     "concurrent_file_workers",
                     4),
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
+>>>>>> > 451a390db650ddc3a12688a44583af8901886af8
             )
         else:
             self.logger.info(
@@ -323,13 +327,13 @@ class Pipeline:
                 reset_gdb(gdb_path)
             self.logger.info("✅ Staging GDB reset complete")
         except (ImportError, arcpy.ExecuteError, OSError) as reset_exc:
-<<<<<<< HEAD
+<< << << < HEAD
             self.logger.warning(f"⚠️ Failed to reset staging GDB: {reset_exc}")
-=======
+== == == =
             self.logger.warning(
                 "⚠️ Failed to reset staging GDB",
                 error=reset_exc)
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
+>>>>>> > 451a390db650ddc3a12688a44583af8901886af8
             if not self.global_cfg.get("continue_on_failure", True):
                 self.monitor.end_run("failed")
                 raise
