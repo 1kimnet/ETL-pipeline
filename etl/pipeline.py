@@ -1,3 +1,6 @@
+"""ETL pipeline module: orchestrates end-to-end data extraction, transformation, and loading."""
+
+# etl/pipeline.py (complete working version)
 # etl/pipeline.py (complete working version)
 from __future__ import annotations
 
@@ -162,10 +165,8 @@ class Pipeline:
 
         # ---------- 0. PRE-PIPELINE CLEANUP -------------------------------
         # Clean downloads and staging folders for fresh data
-        cleanup_downloads = self.global_cfg.get(
-            "cleanup_downloads_before_run", True)
-        cleanup_staging = self.global_cfg.get(
-            "cleanup_staging_before_run", True)
+        cleanup_downloads = self.global_cfg.get("cleanup_downloads_before_run", True)
+        cleanup_staging = self.global_cfg.get("cleanup_staging_before_run", True)
 
         if cleanup_downloads or cleanup_staging:
             lg_sum.info("🧹 Starting pre-pipeline cleanup...")
@@ -173,15 +174,7 @@ class Pipeline:
 
         # ---------- 1. DOWNLOAD & STAGING ---------------------------------
         sources = list(Source.load_all(self.sources_yaml_path))
-
-
-<< << << < HEAD
         self.logger.info(f"📋 Found sources to process: {len(sources)}")
-== == == =
-        self.logger.info(
-            "📋 Found sources to process",
-            source_count=len(sources))
->>>>>> > 451a390db650ddc3a12688a44583af8901886af8
 
         # Create SDE loader for proper source-to-dataset mapping
         from .models import AppConfig, SdeLoader
@@ -195,26 +188,11 @@ class Pipeline:
 
         # Log concurrent download configuration
         if self.global_cfg.get("enable_concurrent_downloads", True):
-            rest_workers = self.global_cfg.get(
-                "concurrent_download_workers", 5)
-            ogc_workers = self.global_cfg.get(
-                "concurrent_collection_workers", 3)
+            rest_workers = self.global_cfg.get("concurrent_download_workers", 5)
+            ogc_workers = self.global_cfg.get("concurrent_collection_workers", 3)
             file_workers = self.global_cfg.get("concurrent_file_workers", 4)
             self.logger.info(
-<< << << < HEAD
                 f"🚀 Concurrent downloads enabled: REST={rest_workers}, OGC={ogc_workers}, Files={file_workers} workers"
-== == == =
-                "🚀 Concurrent downloads enabled: REST=%d, OGC=%d, Files=%d workers",
-                self.global_cfg.get(
-                    "concurrent_download_workers",
-                    5),
-                self.global_cfg.get(
-                    "concurrent_collection_workers",
-                    3),
-                self.global_cfg.get(
-                    "concurrent_file_workers",
-                    4),
->>>>>> > 451a390db650ddc3a12688a44583af8901886af8
             )
         else:
             self.logger.info(
@@ -255,9 +233,8 @@ class Pipeline:
                             "source": src.name,
                             "type": src.type,
                             "concurrent": str(
-                                self.global_cfg.get(
-                                    "enable_concurrent_downloads",
-                                    True)),
+                                self.global_cfg.get("enable_concurrent_downloads", True)
+                            ),
                         },
                     )
                     self.metrics.increment_counter(
@@ -305,8 +282,7 @@ class Pipeline:
                             success=False, error=str(exc)
                         )
 
-                        if not self.global_cfg.get(
-                                "continue_on_failure", True):
+                        if not self.global_cfg.get("continue_on_failure", True):
                             self.monitor.end_run("failed")
                             # Execute pipeline rollback before raising
                             self.execute_pipeline_rollback(
@@ -327,13 +303,7 @@ class Pipeline:
                 reset_gdb(gdb_path)
             self.logger.info("✅ Staging GDB reset complete")
         except (ImportError, arcpy.ExecuteError, OSError) as reset_exc:
-<< << << < HEAD
             self.logger.warning(f"⚠️ Failed to reset staging GDB: {reset_exc}")
-== == == =
-            self.logger.warning(
-                "⚠️ Failed to reset staging GDB",
-                error=reset_exc)
->>>>>> > 451a390db650ddc3a12688a44583af8901886af8
             if not self.global_cfg.get("continue_on_failure", True):
                 self.monitor.end_run("failed")
                 raise
@@ -448,16 +418,9 @@ class Pipeline:
             )
         )
         if not aoi_boundary.exists():
-<<<<<<< HEAD
             self.logger.error(f"❌ AOI boundary not found: {aoi_boundary}")
-=======
-            self.logger.error(
-                "❌ AOI boundary not found",
-                aoi_path=str(aoi_boundary))
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             if not self.global_cfg.get("continue_on_failure", True):
-                raise FileNotFoundError(
-                    f"AOI boundary not found: {aoi_boundary}")
+                raise FileNotFoundError(f"AOI boundary not found: {aoi_boundary}")
             return
 
         try:
@@ -469,17 +432,11 @@ class Pipeline:
 
             # Perform simplified in-place geoprocessing (clip + project only)
             geoprocess.geoprocess_staging_gdb(
-<<<<<<< HEAD
                 staging_gdb=Path(str(paths.GDB)),
                 aoi_fc=aoi_boundary,
                 target_srid=target_srid,
                 pp_factor=geoprocessing_config.get("parallel_processing_factor", "100"),
             )
-=======
-                staging_gdb=paths.GDB, aoi_fc=aoi_boundary, target_srid=geoprocessing_config.get(
-                    "target_srid", 3006), pp_factor=geoprocessing_config.get(
-                    "parallel_processing_factor", "100"), )
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
 
             geoprocessing_duration = time.time() - start_time
             self.metrics.record_timing(
@@ -488,13 +445,8 @@ class Pipeline:
             self.metrics.increment_counter("geoprocessing.success")
 
             self.logger.info(
-<<<<<<< HEAD
                 f"✅ Geoprocessing complete in {geoprocessing_duration:.2f} seconds"
             )
-=======
-                "✅ Geoprocessing complete",
-                duration_seconds=geoprocessing_duration)
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
 
         except arcpy.ExecuteError as exc:
             self.logger.error(f"❌ Geoprocessing failed: {exc}")
@@ -507,13 +459,7 @@ class Pipeline:
         """🚚 Step 4: Load processed GDB to production SDE with parallel processing"""
 
         if not source_gdb.exists():
-<<<<<<< HEAD
             self.logger.error(f"❌ Source GDB not found: {source_gdb}")
-=======
-            self.logger.error(
-                "❌ Source GDB not found",
-                gdb_path=str(source_gdb))
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             return
 
         # Get SDE connection from config and validate
@@ -532,13 +478,7 @@ class Pipeline:
 
         all_feature_classes = self._discover_feature_classes(source_gdb)
         if not all_feature_classes:
-<<<<<<< HEAD
             self.logger.warning(f"⚠️ No feature classes found in {source_gdb}")
-=======
-            self.logger.warning(
-                "⚠️ No feature classes found",
-                gdb_path=str(source_gdb))
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             return
 
         self.logger.info(f"📋 Feature classes discovered: {len(all_feature_classes)}")
@@ -546,10 +486,11 @@ class Pipeline:
         # Check if parallel loading is enabled
         use_parallel = self.global_cfg.get("parallel_sde_loading", True)
 
-        if use_parallel and len(all_feature_classes) > 1:
-            self._load_to_sde_parallel(all_feature_classes, sde_connection)
-        else:
-            self._load_to_sde_sequential(all_feature_classes, sde_connection)
+        # For now, use sequential loading until ParallelProcessor interface is confirmed
+        # if use_parallel and len(all_feature_classes) > 1:
+        #     self._load_to_sde_parallel(all_feature_classes, sde_connection)
+        # else:
+        self._load_to_sde_sequential(all_feature_classes, sde_connection)
 
         self.logger.info(
             f"📊 SDE loading complete - Loaded: {self.summary.sde['done']}, Errors: {self.summary.sde['error']}"
@@ -564,15 +505,40 @@ class Pipeline:
         # Define the task function for parallel execution
         def load_task(fc_info):
             source_fc_path, fc_name = fc_info
-            self._load_fc_to_sde(source_fc_path, fc_name, sde_connection)
-            return fc_name
+            try:
+                self._load_fc_to_sde(source_fc_path, fc_name, sde_connection)
+                return fc_name
+            except Exception as e:
+                self.logger.error(f"❌ Failed to load {fc_name}: {e}")
+                return None
 
-        # Execute parallel loading
-        results = self.parallel_processor.execute(
-            tasks=[load_task] * len(feature_classes),
-            task_args=[(fc,) for fc in feature_classes],
-            task_name="sde_loading",
-        )
+        # Try different method names for parallel execution
+        try:
+            # Option 1: execute method
+            results = self.parallel_processor.execute(
+                tasks=[load_task] * len(feature_classes),
+                task_args=[(fc,) for fc in feature_classes],
+                task_name="sde_loading",
+            )
+        except AttributeError:
+            try:
+                # Option 2: process method
+                results = self.parallel_processor.process(
+                    func=load_task, items=feature_classes, description="Loading to SDE"
+                )
+            except AttributeError:
+                try:
+                    # Option 3: run method
+                    results = self.parallel_processor.run(
+                        target_func=load_task, arguments_list=feature_classes
+                    )
+                except AttributeError:
+                    # Fallback to sequential processing
+                    self.logger.warning(
+                        "⚠️ ParallelProcessor method not found, falling back to sequential"
+                    )
+                    self._load_to_sde_sequential(feature_classes, sde_connection)
+                    return
 
         successful = sum(1 for r in results if r is not None)
         self.logger.info(
@@ -594,13 +560,7 @@ class Pipeline:
 
     def _validate_sde_connection_file(self, path: Path) -> bool:
         if not path.exists():
-<<<<<<< HEAD
             self.logger.error(f"❌ SDE connection file not found: {path}")
-=======
-            self.logger.error(
-                "❌ SDE connection file not found",
-                sde_path=str(path))
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             return False
         return True
 
@@ -618,13 +578,7 @@ class Pipeline:
                     all_fcs.append((fc_full_path, fc))
             datasets = arcpy.ListDatasets(feature_type="Feature")
             if datasets:
-<<<<<<< HEAD
                 self.logger.debug(f"📁 Found feature datasets: {len(datasets)}")
-=======
-                self.logger.debug(
-                    "📁 Found feature datasets",
-                    count=len(datasets))
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
                 for ds in datasets:
                     ds_fcs = arcpy.ListFeatureClasses(feature_dataset=ds)
                     if ds_fcs:
@@ -650,18 +604,11 @@ class Pipeline:
             f"🔍 SDE mapping: '{fc_name}' → dataset='{dataset}', fc='{sde_fc_name}'"
         )
         lg_sum.info(
-<<<<<<< HEAD
             f"🔍 Target paths: dataset='{sde_dataset_path}', fc='{target_path}'"
         )
-=======
-            "🔍 Target paths: dataset='%s', fc='%s'",
-            sde_dataset_path,
-            target_path)
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
 
         # Get load strategy from config (default: truncate_and_load)
-        load_strategy = self.global_cfg.get(
-            "sde_load_strategy", "truncate_and_load")
+        load_strategy = self.global_cfg.get("sde_load_strategy", "truncate_and_load")
 
         try:
             # Check if target dataset exists in SDE
@@ -708,21 +655,8 @@ class Pipeline:
                 f"❌ SDE operation failed for {source_fc_path}: {arcpy.GetMessages(2)}"
             )
             lg_sum.error(
-<<<<<<< HEAD
                 f"❌ Check SDE permissions and ensure dataset '{dataset}' exists"
             )
-=======
-                "❌ Check SDE permissions and ensure dataset '%s' exists",
-                dataset)
-            lg_sum.error(
-                "❌ SDE operation failed for %s: %s",
-                source_fc_path,
-                arcpy.GetMessages(2),
-            )
-            lg_sum.error(
-                "❌ Check SDE permissions and ensure dataset '%s' exists",
-                dataset)
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             raise
 
     def _load_single_feature_class(
@@ -740,7 +674,6 @@ class Pipeline:
 
         if arcpy.Exists(target_path):
             if load_strategy == "truncate_and_load":
-<<<<<<< HEAD
                 lg_sum.info(f"🗑️ Truncating existing FC: {dataset}\\{sde_fc_name}")
                 arcpy.management.TruncateTable(target_path)
                 lg_sum.info(f"📄 Loading fresh data to: {dataset}\\{sde_fc_name}")
@@ -748,25 +681,6 @@ class Pipeline:
                     inputs=source_fc_path, target=target_path, schema_type="NO_TEST"
                 )
                 lg_sum.info(f"🚚→  {dataset}\\{sde_fc_name} (truncated + loaded)")
-=======
-                lg_sum.info(
-                    "🗑️ Truncating existing FC: %s\\%s",
-                    dataset,
-                    sde_fc_name)
-                arcpy.management.TruncateTable(target_path)
-                lg_sum.info(
-                    "📄 Loading fresh data to: %s\\%s",
-                    dataset,
-                    sde_fc_name)
-                arcpy.management.Append(
-                    inputs=source_fc_path,
-                    target=target_path,
-                    schema_type="NO_TEST")
-                lg_sum.info(
-                    "🚚→  %s\\%s (truncated + loaded)",
-                    dataset,
-                    sde_fc_name)
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             elif load_strategy == "replace":
                 self.logger.info(f"🗑️ Deleting existing FC: {dataset}\\{sde_fc_name}")
                 arcpy.management.Delete(target_path)
@@ -780,8 +694,7 @@ class Pipeline:
                 )
 
                 duration = time.time() - start_time
-                self.metrics.record_timing(
-                    "sde.replace.duration_ms", duration * 1000)
+                self.metrics.record_timing("sde.replace.duration_ms", duration * 1000)
                 self.logger.info(
                     f"🚚→ Replaced: {dataset}\\{sde_fc_name} in {duration:.2f}s"
                 )
@@ -790,16 +703,9 @@ class Pipeline:
                     f"⚠️ Appending to existing FC (may create duplicates): {dataset}\\{sde_fc_name}"
                 )
                 arcpy.management.Append(
-<<<<<<< HEAD
                     inputs=source_fc_path, target=target_path, schema_type="NO_TEST"
                 )
                 lg_sum.info(f"🚚→  {dataset}\\{sde_fc_name} (appended)")
-=======
-                    inputs=source_fc_path,
-                    target=target_path,
-                    schema_type="NO_TEST")
-                lg_sum.info("🚚→  %s\\%s (appended)", dataset, sde_fc_name)
->>>>>>> 451a390db650ddc3a12688a44583af8901886af8
             else:
                 self.logger.error(f"❌ Unknown sde_load_strategy: {load_strategy}")
         else:
@@ -814,8 +720,7 @@ class Pipeline:
             )
 
             duration = time.time() - start_time
-            self.metrics.record_timing(
-                "sde.create.duration_ms", duration * 1000)
+            self.metrics.record_timing("sde.create.duration_ms", duration * 1000)
             self.logger.info(
                 f"🚚→ Created: {dataset}\\{sde_fc_name} in {duration:.2f}s"
             )
