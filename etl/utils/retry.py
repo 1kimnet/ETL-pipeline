@@ -68,11 +68,13 @@ class RetryConfig:
             return is_recoverable_error(exception)
 
         # Check against configured recoverable exceptions
-        return any(
-            isinstance(exception, exc_type) for exc_type in self.recoverable_exceptions
-        )
+        return any(isinstance(exception, exc_type)
+                   for exc_type in self.recoverable_exceptions)
 
-    def get_delay(self, attempt: int, exception: Optional[Exception] = None) -> float:
+    def get_delay(
+            self,
+            attempt: int,
+            exception: Optional[Exception] = None) -> float:
         """Calculate delay before next retry attempt."""
         # Check if exception specifies a retry delay
         if exception and isinstance(exception, ETLError):
@@ -118,7 +120,11 @@ class CircuitBreaker:
 
         return wrapper
 
-    def _call_with_circuit_breaker(self, func: Callable, *args, **kwargs) -> Any:
+    def _call_with_circuit_breaker(
+            self,
+            func: Callable,
+            *args,
+            **kwargs) -> Any:
         """Execute function with circuit breaker logic."""
         if self.state == "OPEN":
             if self._should_attempt_reset():
@@ -159,7 +165,9 @@ class CircuitBreaker:
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
-            log.warning("🔴 Circuit breaker OPEN after %d failures", self.failure_count)
+            log.warning(
+                "🔴 Circuit breaker OPEN after %d failures",
+                self.failure_count)
 
 
 def retry_with_backoff(
@@ -209,8 +217,9 @@ def retry_with_backoff(
 
                     if attempt > 1:
                         log.info(
-                            "✅ %s succeeded on attempt %d", func.__name__, attempt
-                        )
+                            "✅ %s succeeded on attempt %d",
+                            func.__name__,
+                            attempt)
 
                     return result
 
@@ -280,15 +289,17 @@ def retry_on_exceptions(
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    if not any(isinstance(e, exc_type) for exc_type in exceptions):
+                    if not any(isinstance(e, exc_type)
+                               for exc_type in exceptions):
                         raise
 
                     if attempt == max_attempts - 1:
                         raise
 
                     log.warning(
-                        "Retrying %s due to %s", func.__name__, type(e).__name__
-                    )
+                        "Retrying %s due to %s",
+                        func.__name__,
+                        type(e).__name__)
                     time.sleep(delay)
 
         return wrapper
@@ -314,7 +325,10 @@ class RetryableOperation:
     def __enter__(self):
         self.attempt += 1
         self.start_time = time.time()
-        log.debug("🚀 Starting %s (attempt %d)", self.operation_name, self.attempt)
+        log.debug(
+            "🚀 Starting %s (attempt %d)",
+            self.operation_name,
+            self.attempt)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -325,8 +339,10 @@ class RetryableOperation:
             return True
 
         log.error(
-            "❌ %s failed after %.2fs: %s", self.operation_name, duration, exc_val
-        )
+            "❌ %s failed after %.2fs: %s",
+            self.operation_name,
+            duration,
+            exc_val)
 
         return False  # Don't suppress exceptions
 
@@ -348,7 +364,11 @@ class RetryStatistics:
         self.total_successes = 0
         self.total_failures = 0
 
-    def record_attempt(self, operation: str, success: bool, attempt_number: int):
+    def record_attempt(
+            self,
+            operation: str,
+            success: bool,
+            attempt_number: int):
         """Record a retry attempt."""
         if operation not in self.operation_stats:
             self.operation_stats[operation] = {
@@ -406,7 +426,11 @@ NETWORK_RETRY_CONFIG = RetryConfig(
     base_delay=2.0,
     max_delay=120.0,
     backoff_factor=2.0,
-    recoverable_exceptions=[NetworkError, SourceError, ConnectionError, TimeoutError],
+    recoverable_exceptions=[
+        NetworkError,
+        SourceError,
+        ConnectionError,
+        TimeoutError],
 )
 
 DATABASE_RETRY_CONFIG = RetryConfig(
@@ -461,8 +485,9 @@ def enhanced_retry_with_stats(
 
                     if attempt > 1:
                         log.info(
-                            "✅ %s succeeded on attempt %d", operation_name, attempt
-                        )
+                            "✅ %s succeeded on attempt %d",
+                            operation_name,
+                            attempt)
 
                     return result
 
@@ -485,7 +510,8 @@ def enhanced_retry_with_stats(
                             operation_name,
                             last_exception,
                         )
-                        _retry_stats.record_attempt(operation_name, False, attempt)
+                        _retry_stats.record_attempt(
+                            operation_name, False, attempt)
                         raise last_exception
 
                     if attempt == config.max_attempts:
@@ -495,7 +521,8 @@ def enhanced_retry_with_stats(
                             attempt,
                             last_exception,
                         )
-                        _retry_stats.record_attempt(operation_name, False, attempt)
+                        _retry_stats.record_attempt(
+                            operation_name, False, attempt)
                         raise last_exception
 
                     delay = config.get_delay(attempt, last_exception)
@@ -512,7 +539,8 @@ def enhanced_retry_with_stats(
 
             # This should never be reached, but just in case
             if last_exception:
-                _retry_stats.record_attempt(operation_name, False, config.max_attempts)
+                _retry_stats.record_attempt(
+                    operation_name, False, config.max_attempts)
                 raise last_exception
 
         return wrapper

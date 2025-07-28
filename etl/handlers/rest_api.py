@@ -33,7 +33,8 @@ SWEREF99_TM_WKID = 3006
 class RestApiDownloadHandler(HTTPSessionHandler):
     """Handles downloading data from ESRI REST API MapServer and FeatureServer Query endpoints."""
 
-    def __init__(self, src: Source, global_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, src: Source,
+                 global_config: Optional[Dict[str, Any]] = None):
         self.src = src
         self.global_config = global_config or {}
         ensure_dirs()
@@ -65,10 +66,13 @@ class RestApiDownloadHandler(HTTPSessionHandler):
             expected_exceptions=[Exception],
         )
 
-        log.info("🚀 Initializing RestApiDownloadHandler for source: %s", self.src.name)
+        log.info(
+            "🚀 Initializing RestApiDownloadHandler for source: %s",
+            self.src.name)
 
     @retry_with_backoff()
-    def _get_service_metadata(self, service_url: str) -> Optional[Dict[str, Any]]:
+    def _get_service_metadata(
+            self, service_url: str) -> Optional[Dict[str, Any]]:
         """Fetches base metadata for the service (MapServer/FeatureServer) with retries."""
         return self._fetch_service_metadata_impl(service_url)
 
@@ -171,11 +175,15 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         """Fetches metadata for a specific layer."""
         try:
             params = {"f": "json"}
-            response = self.session.get(layer_url, params=params, timeout=self.timeout)
+            response = self.session.get(
+                layer_url, params=params, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            log.error("❌ Failed to fetch layer metadata from %s: %s", layer_url, e)
+            log.error(
+                "❌ Failed to fetch layer metadata from %s: %s",
+                layer_url,
+                e)
             return None
 
     def _prepare_query_params(self) -> Dict[str, Any]:
@@ -210,7 +218,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
     ) -> Optional[Dict[str, Any]]:
         """Execute a paginated request and return the JSON payload."""
         try:
-            response_obj = self.session.get(query_url, params=params, timeout=120)
+            response_obj = self.session.get(
+                query_url, params=params, timeout=120)
             response_obj.raise_for_status()
             return response_obj.json()
         except requests.exceptions.RequestException as e:
@@ -221,7 +230,9 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                     source_name=self.src.name,
                     url=query_url,
                     operation="request_page",
-                    metadata={"layer": layer_name_sanitized, "page": page_num},
+                    metadata={
+                        "layer": layer_name_sanitized,
+                        "page": page_num},
                 ),
             ) from e
         except json.JSONDecodeError as e:
@@ -232,7 +243,9 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                     source_name=self.src.name,
                     url=query_url,
                     operation="parse_json",
-                    metadata={"layer": layer_name_sanitized, "page": page_num},
+                    metadata={
+                        "layer": layer_name_sanitized,
+                        "page": page_num},
                 ),
             ) from e
 
@@ -295,7 +308,10 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(final_output_data, f, ensure_ascii=False, indent=2)
-            log.info("✅ %s: %d features", layer_name_sanitized, features_written_total)
+            log.info(
+                "✅ %s: %d features",
+                layer_name_sanitized,
+                features_written_total)
             log.debug(
                 "💾 Successfully saved %d features for layer %s to %s",
                 features_written_total,
@@ -314,8 +330,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         """Main fetch method for REST API sources."""
         if not self.src.enabled:
             log.info(
-                "⏭️ Source '%s' (REST API) is disabled, skipping fetch.", self.src.name
-            )
+                "⏭️ Source '%s' (REST API) is disabled, skipping fetch.",
+                self.src.name)
             return
 
         log.info(
@@ -349,7 +365,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                 self.src.name,
             )
             if not isinstance(configured_layer_ids_from_yaml, list):
-                configured_layer_ids_from_yaml = [configured_layer_ids_from_yaml]
+                configured_layer_ids_from_yaml = [
+                    configured_layer_ids_from_yaml]
 
             for lid_val in configured_layer_ids_from_yaml:
                 lid_str = str(lid_val)
@@ -399,9 +416,7 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         ):
             log.info(
                 "Source '%s' appears to be a single-layer FeatureServer and no layers were previously identified. "
-                "Adding layer from service root or URL.",
-                self.src.name,
-            )
+                "Adding layer from service root or URL.", self.src.name, )
             layer_id_from_url_match = re.search(r"/(\d+)/?$", self.src.url)
             fs_layer_id = (
                 layer_id_from_url_match.group(1)
@@ -409,7 +424,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                 else service_meta.get("id", "0")
             )
             fs_layer_id_str = str(fs_layer_id)
-            fs_layer_name = service_meta.get("name", f"feature_layer_{fs_layer_id_str}")
+            fs_layer_name = service_meta.get(
+                "name", f"feature_layer_{fs_layer_id_str}")
             layers_to_iterate_final.append(
                 {"id": fs_layer_id_str, "name": fs_layer_name, "metadata": service_meta}
             )
@@ -417,12 +433,11 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         if not layers_to_iterate_final:
             log.warning(
                 "⚠️ No layers identified or specified to query for source '%s'. "
-                "Check service metadata and `layer_ids` config.",
-                self.src.name,
-            )
+                "Check service metadata and `layer_ids` config.", self.src.name, )
             return
 
-        log_layer_ids_to_query = [layer["id"] for layer in layers_to_iterate_final]
+        log_layer_ids_to_query = [layer["id"]
+                                  for layer in layers_to_iterate_final]
         log.info(
             "Source '%s': Will attempt to query %d layer(s): %s",
             self.src.name,
@@ -441,15 +456,19 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                     layer_metadata_from_service=layer_info_to_query.get("metadata"),
                 )
 
-    def _fetch_layers_concurrent(self, layers_to_iterate: List[Dict[str, Any]]) -> None:
+    def _fetch_layers_concurrent(
+            self, layers_to_iterate: List[Dict[str, Any]]) -> None:
         """Fetch multiple layers concurrently for improved performance."""
-        log.info("🚀 Starting concurrent download of %d layers", len(layers_to_iterate))
+        log.info(
+            "🚀 Starting concurrent download of %d layers",
+            len(layers_to_iterate))
 
         # Get concurrent downloader
         downloader = get_layer_downloader()
 
         # Enable parallel processing based on configuration
-        use_concurrent = self.global_config.get("enable_concurrent_downloads", True)
+        use_concurrent = self.global_config.get(
+            "enable_concurrent_downloads", True)
         max_workers = self.global_config.get("concurrent_download_workers", 5)
 
         if not use_concurrent:
@@ -486,7 +505,10 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         for result in results:
             if not result.success:
                 layer_name = result.metadata.get("task_name", "unknown")
-                log.error("❌ Layer download failed: %s - %s", layer_name, result.error)
+                log.error(
+                    "❌ Layer download failed: %s - %s",
+                    layer_name,
+                    result.error)
 
     def _determine_max_record_count(
         self,
@@ -498,7 +520,9 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         if max_record_count_from_config is not None:
             try:
                 max_record_count = int(max_record_count_from_config)
-                log.debug("Using max_record_count from config: %d", max_record_count)
+                log.debug(
+                    "Using max_record_count from config: %d",
+                    max_record_count)
                 return max_record_count, layer_meta
             except ValueError:
                 log.warning(
@@ -517,7 +541,9 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         if layer_meta:
             if layer_meta.get("maxRecordCount") is not None:
                 max_record_count = layer_meta["maxRecordCount"]
-                log.debug("Service metadata maxRecordCount: %d", max_record_count)
+                log.debug(
+                    "Service metadata maxRecordCount: %d",
+                    max_record_count)
             elif layer_meta.get("standardMaxRecordCount") is not None:
                 max_record_count = layer_meta["standardMaxRecordCount"]
                 log.debug(
@@ -590,8 +616,7 @@ class RestApiDownloadHandler(HTTPSessionHandler):
                     data["error"],
                 )
                 log.error(
-                    "❌ API_ERROR_REPORTED: Breaking from pagination loop for this layer.",
-                )
+                    "❌ API_ERROR_REPORTED: Breaking from pagination loop for this layer.", )
                 break
 
             done, current_offset, features_len = self._append_features(
@@ -672,9 +697,8 @@ class RestApiDownloadHandler(HTTPSessionHandler):
         params = self._prepare_query_params()
 
         source_name_sanitized = sanitize_for_filename(self.src.name)
-        staging_dir = (
-            Path(str(paths.STAGING)) / self.src.authority / source_name_sanitized
-        )
+        staging_dir = (Path(str(paths.STAGING)) /
+                       self.src.authority / source_name_sanitized)
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         output_filename = f"{layer_name_sanitized}.{params['f']}"
