@@ -246,3 +246,10 @@ test_concurrency_fix.py
 .bevel/shareable/graph/graph_main/fileInfo
 .bevel/do_not_share/port
 .bevel/do_not_share/port
+.bevel/shareable/graph/graph_main/fileInfo
+.bevel/do_not_share/port
+.bevel/do_not_share/port
+port*
+.bevel/do_not_share/port
+.bevel/shareable/graph/graph_main/fileInfo
+.bevel/do_not_share/port
