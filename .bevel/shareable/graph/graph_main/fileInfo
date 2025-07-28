@@ -1,4 +1,487 @@
 {
-  "fileInfos" : [ ],
+  "fileInfos" : [ {
+    "path" : "etl\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : -513683102,
+      "lastModified" : 1753372366314
+    },
+    "linesOfCode" : 14
+  }, {
+    "path" : "etl\\config.py",
+    "modificationInfo" : {
+      "contentHash" : -720784121,
+      "lastModified" : 1753372366317
+    },
+    "linesOfCode" : 551
+  }, {
+    "path" : "etl\\exceptions.py",
+    "modificationInfo" : {
+      "contentHash" : 934248859,
+      "lastModified" : 1753372357925
+    },
+    "linesOfCode" : 93
+  }, {
+    "path" : "etl\\exceptions\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : 1535861389,
+      "lastModified" : 1753372357932
+    },
+    "linesOfCode" : 111
+  }, {
+    "path" : "etl\\exceptions\\compat.py",
+    "modificationInfo" : {
+      "contentHash" : 1904473838,
+      "lastModified" : 1753372366321
+    },
+    "linesOfCode" : 149
+  }, {
+    "path" : "etl\\exceptions\\core.py",
+    "modificationInfo" : {
+      "contentHash" : -1104500852,
+      "lastModified" : 1753372366323
+    },
+    "linesOfCode" : 503
+  }, {
+    "path" : "etl\\handlers\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : 216364649,
+      "lastModified" : 1753670740123
+    },
+    "linesOfCode" : 22
+  }, {
+    "path" : "etl\\handlers\\atom_feed.py",
+    "modificationInfo" : {
+      "contentHash" : 429518372,
+      "lastModified" : 1753372366332
+    },
+    "linesOfCode" : 271
+  }, {
+    "path" : "etl\\handlers\\file.py",
+    "modificationInfo" : {
+      "contentHash" : 974920295,
+      "lastModified" : 1753399476023
+    },
+    "linesOfCode" : 392
+  }, {
+    "path" : "etl\\handlers\\geoprocess.py",
+    "modificationInfo" : {
+      "contentHash" : 1444132306,
+      "lastModified" : 1753372366337
+    },
+    "linesOfCode" : 104
+  }, {
+    "path" : "etl\\handlers\\ogc_api.py",
+    "modificationInfo" : {
+      "contentHash" : -725515200,
+      "lastModified" : 1753372366342
+    },
+    "linesOfCode" : 816
+  }, {
+    "path" : "etl\\handlers\\rest_api.py",
+    "modificationInfo" : {
+      "contentHash" : 919175803,
+      "lastModified" : 1753665394510
+    },
+    "linesOfCode" : 778
+  }, {
+    "path" : "etl\\loaders\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : -1593795738,
+      "lastModified" : 1753372366350
+    },
+    "linesOfCode" : 5
+  }, {
+    "path" : "etl\\loaders\\filegdb.py",
+    "modificationInfo" : {
+      "contentHash" : -1603474531,
+      "lastModified" : 1753372366354
+    },
+    "linesOfCode" : 482
+  }, {
+    "path" : "etl\\loaders\\geojson_loader.py",
+    "modificationInfo" : {
+      "contentHash" : -21828046,
+      "lastModified" : 1753372366357
+    },
+    "linesOfCode" : 212
+  }, {
+    "path" : "etl\\loaders\\gpkg_loader.py",
+    "modificationInfo" : {
+      "contentHash" : 534819613,
+      "lastModified" : 1753372366359
+    },
+    "linesOfCode" : 300
+  }, {
+    "path" : "etl\\loaders\\shapefile_loader.py",
+    "modificationInfo" : {
+      "contentHash" : 1034016203,
+      "lastModified" : 1753372366361
+    },
+    "linesOfCode" : 219
+  }, {
+    "path" : "etl\\mapping.py",
+    "modificationInfo" : {
+      "contentHash" : 1120102081,
+      "lastModified" : 1753372366365
+    },
+    "linesOfCode" : 445
+  }, {
+    "path" : "etl\\models.py",
+    "modificationInfo" : {
+      "contentHash" : 1030669456,
+      "lastModified" : 1753372366367
+    },
+    "linesOfCode" : 280
+  }, {
+    "path" : "etl\\monitoring.py",
+    "modificationInfo" : {
+      "contentHash" : 1675697435,
+      "lastModified" : 1753372366372
+    },
+    "linesOfCode" : 724
+  }, {
+    "path" : "etl\\network_context.py",
+    "modificationInfo" : {
+      "contentHash" : 853388444,
+      "lastModified" : 1753372366376
+    },
+    "linesOfCode" : 263
+  }, {
+    "path" : "etl\\pipeline.py",
+    "modificationInfo" : {
+      "contentHash" : 2056123016,
+      "lastModified" : 1753665394512
+    },
+    "linesOfCode" : 846
+  }, {
+    "path" : "etl\\utils\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : 1722489465,
+      "lastModified" : 1753372366382
+    },
+    "linesOfCode" : 12
+  }, {
+    "path" : "etl\\utils\\adaptive_tuning.py",
+    "modificationInfo" : {
+      "contentHash" : 19453596,
+      "lastModified" : 1753372366385
+    },
+    "linesOfCode" : 730
+  }, {
+    "path" : "etl\\utils\\arcpy_context.py",
+    "modificationInfo" : {
+      "contentHash" : -1946015785,
+      "lastModified" : 1753372366387
+    },
+    "linesOfCode" : 178
+  }, {
+    "path" : "etl\\utils\\circuit_breaker.py",
+    "modificationInfo" : {
+      "contentHash" : 205905315,
+      "lastModified" : 1753372366390
+    },
+    "linesOfCode" : 356
+  }, {
+    "path" : "etl\\utils\\cleanup.py",
+    "modificationInfo" : {
+      "contentHash" : -2125693654,
+      "lastModified" : 1753372366393
+    },
+    "linesOfCode" : 248
+  }, {
+    "path" : "etl\\utils\\concurrent.py",
+    "modificationInfo" : {
+      "contentHash" : 1106530209,
+      "lastModified" : 1753399476032
+    },
+    "linesOfCode" : 376
+  }, {
+    "path" : "etl\\utils\\concurrent_safe.py",
+    "modificationInfo" : {
+      "contentHash" : 1480755426,
+      "lastModified" : 1753372366397
+    },
+    "linesOfCode" : 293
+  }, {
+    "path" : "etl\\utils\\gdb_utils.py",
+    "modificationInfo" : {
+      "contentHash" : 261462802,
+      "lastModified" : 1753372366401
+    },
+    "linesOfCode" : 203
+  }, {
+    "path" : "etl\\utils\\http.py",
+    "modificationInfo" : {
+      "contentHash" : -490812080,
+      "lastModified" : 1753372366404
+    },
+    "linesOfCode" : 130
+  }, {
+    "path" : "etl\\utils\\http_session.py",
+    "modificationInfo" : {
+      "contentHash" : 1836916522,
+      "lastModified" : 1753399476035
+    },
+    "linesOfCode" : 202
+  }, {
+    "path" : "etl\\utils\\http_session_fix.py",
+    "modificationInfo" : {
+      "contentHash" : 2123308353,
+      "lastModified" : 1753372366408
+    },
+    "linesOfCode" : 194
+  }, {
+    "path" : "etl\\utils\\intelligent_cache.py",
+    "modificationInfo" : {
+      "contentHash" : -1042424688,
+      "lastModified" : 1753372366411
+    },
+    "linesOfCode" : 669
+  }, {
+    "path" : "etl\\utils\\io.py",
+    "modificationInfo" : {
+      "contentHash" : 2024232542,
+      "lastModified" : 1753372366414
+    },
+    "linesOfCode" : 91
+  }, {
+    "path" : "etl\\utils\\logging_cfg.py",
+    "modificationInfo" : {
+      "contentHash" : 1504261511,
+      "lastModified" : 1753372366416
+    },
+    "linesOfCode" : 91
+  }, {
+    "path" : "etl\\utils\\naming.py",
+    "modificationInfo" : {
+      "contentHash" : 1833643399,
+      "lastModified" : 1753372366420
+    },
+    "linesOfCode" : 96
+  }, {
+    "path" : "etl\\utils\\paths.py",
+    "modificationInfo" : {
+      "contentHash" : -245862816,
+      "lastModified" : 1752677773228
+    },
+    "linesOfCode" : 28
+  }, {
+    "path" : "etl\\utils\\performance.py",
+    "modificationInfo" : {
+      "contentHash" : -773289025,
+      "lastModified" : 1753372366422
+    },
+    "linesOfCode" : 541
+  }, {
+    "path" : "etl\\utils\\performance_monitor.py",
+    "modificationInfo" : {
+      "contentHash" : 898068138,
+      "lastModified" : 1753399476037
+    },
+    "linesOfCode" : 795
+  }, {
+    "path" : "etl\\utils\\performance_optimizer.py",
+    "modificationInfo" : {
+      "contentHash" : -950905738,
+      "lastModified" : 1753665394515
+    },
+    "linesOfCode" : 671
+  }, {
+    "path" : "etl\\utils\\recovery.py",
+    "modificationInfo" : {
+      "contentHash" : -2036038690,
+      "lastModified" : 1753372366431
+    },
+    "linesOfCode" : 616
+  }, {
+    "path" : "etl\\utils\\regression_detector.py",
+    "modificationInfo" : {
+      "contentHash" : 173590083,
+      "lastModified" : 1753372366434
+    },
+    "linesOfCode" : 697
+  }, {
+    "path" : "etl\\utils\\retry.py",
+    "modificationInfo" : {
+      "contentHash" : 574247185,
+      "lastModified" : 1753670717216
+    },
+    "linesOfCode" : 557
+  }, {
+    "path" : "etl\\utils\\run_summary.py",
+    "modificationInfo" : {
+      "contentHash" : 1119135396,
+      "lastModified" : 1753372366443
+    },
+    "linesOfCode" : 47
+  }, {
+    "path" : "etl\\utils\\sanitize.py",
+    "modificationInfo" : {
+      "contentHash" : -1016663816,
+      "lastModified" : 1753372366445
+    },
+    "linesOfCode" : 13
+  }, {
+    "path" : "etl\\utils\\shapefile_validation.py",
+    "modificationInfo" : {
+      "contentHash" : -2076574945,
+      "lastModified" : 1753372366447
+    },
+    "linesOfCode" : 124
+  }, {
+    "path" : "run_etl.py",
+    "modificationInfo" : {
+      "contentHash" : 1296141533,
+      "lastModified" : 1753372366467
+    },
+    "linesOfCode" : 40
+  }, {
+    "path" : "scripts\\cleanup_downloads.py",
+    "modificationInfo" : {
+      "contentHash" : 470314746,
+      "lastModified" : 1753372366471
+    },
+    "linesOfCode" : 51
+  }, {
+    "path" : "scripts\\create_sde_datasets.py",
+    "modificationInfo" : {
+      "contentHash" : 1642775652,
+      "lastModified" : 1753372366474
+    },
+    "linesOfCode" : 176
+  }, {
+    "path" : "scripts\\list_tree.py",
+    "modificationInfo" : {
+      "contentHash" : 1982823318,
+      "lastModified" : 1753372366477
+    },
+    "linesOfCode" : 137
+  }, {
+    "path" : "test_fixes.py",
+    "modificationInfo" : {
+      "contentHash" : 587477,
+      "lastModified" : 1753372366481
+    },
+    "linesOfCode" : 180
+  }, {
+    "path" : "test_simple_fix.py",
+    "modificationInfo" : {
+      "contentHash" : 1564032434,
+      "lastModified" : 1753399476041
+    },
+    "linesOfCode" : 78
+  }, {
+    "path" : "tests\\e2e\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : 1387453270,
+      "lastModified" : 1752958074822
+    },
+    "linesOfCode" : 1
+  }, {
+    "path" : "tests\\e2e\\test_full_workflow.py",
+    "modificationInfo" : {
+      "contentHash" : 1810236988,
+      "lastModified" : 1753372366483
+    },
+    "linesOfCode" : 301
+  }, {
+    "path" : "tests\\e2e\\test_pipeline_integration.py",
+    "modificationInfo" : {
+      "contentHash" : 213425172,
+      "lastModified" : 1753372366486
+    },
+    "linesOfCode" : 239
+  }, {
+    "path" : "tests\\integration\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : 1892701243,
+      "lastModified" : 1753372366488
+    },
+    "linesOfCode" : 1
+  }, {
+    "path" : "tests\\integration\\test_handlers_file.py",
+    "modificationInfo" : {
+      "contentHash" : -1781828205,
+      "lastModified" : 1753372366491
+    },
+    "linesOfCode" : 238
+  }, {
+    "path" : "tests\\integration\\test_handlers_rest_api.py",
+    "modificationInfo" : {
+      "contentHash" : 1660366894,
+      "lastModified" : 1753372366600
+    },
+    "linesOfCode" : 200
+  }, {
+    "path" : "tests\\test_runner.py",
+    "modificationInfo" : {
+      "contentHash" : -564105775,
+      "lastModified" : 1753372366603
+    },
+    "linesOfCode" : 46
+  }, {
+    "path" : "tests\\unit\\__init__.py",
+    "modificationInfo" : {
+      "contentHash" : -352407931,
+      "lastModified" : 1753372366609
+    },
+    "linesOfCode" : 1
+  }, {
+    "path" : "tests\\unit\\test_config.py",
+    "modificationInfo" : {
+      "contentHash" : 995143167,
+      "lastModified" : 1753372366614
+    },
+    "linesOfCode" : 358
+  }, {
+    "path" : "tests\\unit\\test_exceptions.py",
+    "modificationInfo" : {
+      "contentHash" : -764669116,
+      "lastModified" : 1753372366616
+    },
+    "linesOfCode" : 315
+  }, {
+    "path" : "tests\\unit\\test_mapping.py",
+    "modificationInfo" : {
+      "contentHash" : -2146416839,
+      "lastModified" : 1753372366619
+    },
+    "linesOfCode" : 408
+  }, {
+    "path" : "tests\\unit\\test_models.py",
+    "modificationInfo" : {
+      "contentHash" : -1409753707,
+      "lastModified" : 1753372366623
+    },
+    "linesOfCode" : 209
+  }, {
+    "path" : "tests\\unit\\test_resource_compatibility.py",
+    "modificationInfo" : {
+      "contentHash" : -672758150,
+      "lastModified" : 1753372366628
+    },
+    "linesOfCode" : 108
+  }, {
+    "path" : "tests\\unit\\test_retry.py",
+    "modificationInfo" : {
+      "contentHash" : -886415099,
+      "lastModified" : 1753372366630
+    },
+    "linesOfCode" : 377
+  }, {
+    "path" : "tests\\unit\\test_utils_naming.py",
+    "modificationInfo" : {
+      "contentHash" : 1922927597,
+      "lastModified" : 1753372366640
+    },
+    "linesOfCode" : 130
+  }, {
+    "path" : "tests\\unit\\test_utils_sanitize.py",
+    "modificationInfo" : {
+      "contentHash" : 297979293,
+      "lastModified" : 1753372366644
+    },
+    "linesOfCode" : 72
+  } ],
   "appVersion" : "1.3.0"
 }
