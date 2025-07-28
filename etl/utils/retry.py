@@ -3,6 +3,7 @@
 This module provides decorators and utilities for implementing robust retry
 logic with various backoff strategies, circuit breakers, and error handling.
 """
+
 from __future__ import annotations
 
 import functools
@@ -12,21 +13,18 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from ..exceptions import (
+    ConcurrentError,
+    ErrorContext,
     ETLError,
     NetworkError,
-    DataError,
-    SystemError,
-    ConfigurationError,
-    SourceError,
-    ProcessingError,
     PipelineError,
-    ConcurrentError,
-    is_recoverable_error,
-    get_retry_delay,
+    ProcessingError,
+    SourceError,
     classify_exception,
-    ErrorContext,
-    ErrorSeverity
+    get_retry_delay,
+    is_recoverable_error,
 )
+from ..exceptions import SystemError as ETLSystemError
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +40,7 @@ class RetryConfig:
         backoff_factor: float = 2.0,
         jitter: bool = True,
         exponential: bool = True,
-        recoverable_exceptions: Optional[List[Type[Exception]]] = None
+        recoverable_exceptions: Optional[List[Type[Exception]]] = None,
     ):
         self.max_attempts = max_attempts
         self.base_delay = base_delay
@@ -53,11 +51,11 @@ class RetryConfig:
         self.recoverable_exceptions = recoverable_exceptions or [
             NetworkError,
             SourceError,
-            SystemError,
+            ETLSystemError,
             ProcessingError,
             ConcurrentError,
             ConnectionError,
-            TimeoutError
+            TimeoutError,
         ]
 
     def should_retry(self, exception: Exception, attempt: int) -> bool:
@@ -70,13 +68,11 @@ class RetryConfig:
             return is_recoverable_error(exception)
 
         # Check against configured recoverable exceptions
-        return any(isinstance(exception, exc_type)
-                   for exc_type in self.recoverable_exceptions)
+        return any(
+            isinstance(exception, exc_type) for exc_type in self.recoverable_exceptions
+        )
 
-    def get_delay(
-            self,
-            attempt: int,
-            exception: Optional[Exception] = None) -> float:
+    def get_delay(self, attempt: int, exception: Optional[Exception] = None) -> float:
         """Calculate delay before next retry attempt."""
         # Check if exception specifies a retry delay
         if exception and isinstance(exception, ETLError):
@@ -91,7 +87,7 @@ class RetryConfig:
 
         # Apply jitter to avoid thundering herd
         if self.jitter:
-            delay *= (0.5 + random.random() * 0.5)
+            delay *= 0.5 + random.random() * 0.5
 
         return min(delay, self.max_delay)
 
@@ -103,7 +99,7 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 5,
         recovery_timeout: float = 60.0,
-        expected_exception: Type[Exception] = Exception
+        expected_exception: Type[Exception] = Exception,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -115,16 +111,14 @@ class CircuitBreaker:
 
     def __call__(self, func: Callable) -> Callable:
         """Decorator to apply circuit breaker to a function."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return self._call_with_circuit_breaker(func, *args, **kwargs)
+
         return wrapper
 
-    def _call_with_circuit_breaker(
-            self,
-            func: Callable,
-            *args,
-            **kwargs) -> Any:
+    def _call_with_circuit_breaker(self, func: Callable, *args, **kwargs) -> Any:
         """Execute function with circuit breaker logic."""
         if self.state == "OPEN":
             if self._should_attempt_reset():
@@ -134,14 +128,14 @@ class CircuitBreaker:
                 raise PipelineError(
                     f"Circuit breaker is OPEN for {func.__name__}",
                     dependency=func.__name__,
-                    context=ErrorContext(operation="circuit_breaker")
+                    context=ErrorContext(operation="circuit_breaker"),
                 )
 
         try:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except self.expected_exception as e:
+        except self.expected_exception:
             self._on_failure()
             raise
 
@@ -165,9 +159,7 @@ class CircuitBreaker:
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
-            log.warning(
-                "🔴 Circuit breaker OPEN after %d failures",
-                self.failure_count)
+            log.warning("🔴 Circuit breaker OPEN after %d failures", self.failure_count)
 
 
 def retry_with_backoff(
@@ -176,7 +168,7 @@ def retry_with_backoff(
     base_delay: float = 1.0,
     backoff_factor: float = 2.0,
     max_delay: float = 300.0,
-    jitter: bool = True
+    jitter: bool = True,
 ) -> Callable:
     """Decorator to add retry logic with exponential backoff to a function.
 
@@ -197,7 +189,7 @@ def retry_with_backoff(
             base_delay=base_delay,
             backoff_factor=backoff_factor,
             max_delay=max_delay,
-            jitter=jitter
+            jitter=jitter,
         )
 
     def decorator(func: Callable) -> Callable:
@@ -211,14 +203,14 @@ def retry_with_backoff(
                         "🔄 Attempting %s (attempt %d/%d)",
                         func.__name__,
                         attempt,
-                        config.max_attempts)
+                        config.max_attempts,
+                    )
                     result = func(*args, **kwargs)
 
                     if attempt > 1:
                         log.info(
-                            "✅ %s succeeded on attempt %d",
-                            func.__name__,
-                            attempt)
+                            "✅ %s succeeded on attempt %d", func.__name__, attempt
+                        )
 
                     return result
 
@@ -229,7 +221,8 @@ def retry_with_backoff(
                         log.debug(
                             "❌ %s failed with non-recoverable error: %s",
                             func.__name__,
-                            e)
+                            e,
+                        )
                         raise
 
                     if attempt == config.max_attempts:
@@ -237,13 +230,18 @@ def retry_with_backoff(
                             "❌ %s failed after %d attempts: %s",
                             func.__name__,
                             attempt,
-                            e)
+                            e,
+                        )
                         raise
 
                     delay = config.get_delay(attempt, e)
                     log.warning(
                         "⚠️  %s failed (attempt %d/%d): %s. Retrying in %.1fs",
-                        func.__name__, attempt, config.max_attempts, e, delay
+                        func.__name__,
+                        attempt,
+                        config.max_attempts,
+                        e,
+                        delay,
                     )
 
                     time.sleep(delay)
@@ -253,13 +251,14 @@ def retry_with_backoff(
                 raise last_exception
 
         return wrapper
+
     return decorator
 
 
 def retry_on_exceptions(
     exceptions: Union[Type[Exception], List[Type[Exception]]],
     max_attempts: int = 3,
-    delay: float = 1.0
+    delay: float = 1.0,
 ) -> Callable:
     """Simple retry decorator for specific exception types.
 
@@ -281,20 +280,19 @@ def retry_on_exceptions(
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    if not any(isinstance(e, exc_type)
-                               for exc_type in exceptions):
+                    if not any(isinstance(e, exc_type) for exc_type in exceptions):
                         raise
 
                     if attempt == max_attempts - 1:
                         raise
 
                     log.warning(
-                        "Retrying %s due to %s",
-                        func.__name__,
-                        type(e).__name__)
+                        "Retrying %s due to %s", func.__name__, type(e).__name__
+                    )
                     time.sleep(delay)
 
         return wrapper
+
     return decorator
 
 
@@ -305,7 +303,7 @@ class RetryableOperation:
         self,
         operation_name: str,
         config: Optional[RetryConfig] = None,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ):
         self.operation_name = operation_name
         self.config = config or RetryConfig()
@@ -316,10 +314,7 @@ class RetryableOperation:
     def __enter__(self):
         self.attempt += 1
         self.start_time = time.time()
-        log.debug(
-            "🚀 Starting %s (attempt %d)",
-            self.operation_name,
-            self.attempt)
+        log.debug("🚀 Starting %s (attempt %d)", self.operation_name, self.attempt)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -330,8 +325,7 @@ class RetryableOperation:
             return True
 
         log.error(
-            "❌ %s failed after %.2fs: %s",
-            self.operation_name, duration, exc_val
+            "❌ %s failed after %.2fs: %s", self.operation_name, duration, exc_val
         )
 
         return False  # Don't suppress exceptions
@@ -354,18 +348,14 @@ class RetryStatistics:
         self.total_successes = 0
         self.total_failures = 0
 
-    def record_attempt(
-            self,
-            operation: str,
-            success: bool,
-            attempt_number: int):
+    def record_attempt(self, operation: str, success: bool, attempt_number: int):
         """Record a retry attempt."""
         if operation not in self.operation_stats:
             self.operation_stats[operation] = {
                 "attempts": 0,
                 "successes": 0,
                 "failures": 0,
-                "total_retry_attempts": 0
+                "total_retry_attempts": 0,
             }
 
         stats = self.operation_stats[operation]
@@ -379,19 +369,25 @@ class RetryStatistics:
             self.total_failures += 1
 
         if attempt_number > 1:
-            stats["total_retry_attempts"] += (attempt_number - 1)
-            self.total_retries += (attempt_number - 1)
+            stats["total_retry_attempts"] += attempt_number - 1
+            self.total_retries += attempt_number - 1
 
     def get_summary(self) -> Dict[str, Any]:
         """Get summary of retry statistics."""
         return {
-            "total_operations": sum(stats["attempts"] for stats in self.operation_stats.values()),
+            "total_operations": sum(
+                stats["attempts"] for stats in self.operation_stats.values()
+            ),
             "total_retries": self.total_retries,
             "total_successes": self.total_successes,
             "total_failures": self.total_failures,
-            "success_rate": (self.total_successes / (self.total_successes + self.total_failures)) * 100
-            if (self.total_successes + self.total_failures) > 0 else 0,
-            "operations": self.operation_stats
+            "success_rate": (
+                self.total_successes / (self.total_successes + self.total_failures)
+            )
+            * 100
+            if (self.total_successes + self.total_failures) > 0
+            else 0,
+            "operations": self.operation_stats,
         }
 
 
@@ -410,18 +406,15 @@ NETWORK_RETRY_CONFIG = RetryConfig(
     base_delay=2.0,
     max_delay=120.0,
     backoff_factor=2.0,
-    recoverable_exceptions=[
-        NetworkError,
-        SourceError,
-        ConnectionError,
-        TimeoutError])
+    recoverable_exceptions=[NetworkError, SourceError, ConnectionError, TimeoutError],
+)
 
 DATABASE_RETRY_CONFIG = RetryConfig(
     max_attempts=3,
     base_delay=5.0,
     max_delay=300.0,
     backoff_factor=2.5,
-    recoverable_exceptions=[SystemError, ProcessingError]
+    recoverable_exceptions=[ETLSystemError, ProcessingError],
 )
 
 FILE_OPERATION_RETRY_CONFIG = RetryConfig(
@@ -429,7 +422,7 @@ FILE_OPERATION_RETRY_CONFIG = RetryConfig(
     base_delay=1.0,
     max_delay=60.0,
     backoff_factor=1.5,
-    recoverable_exceptions=[SystemError, ProcessingError, OSError, IOError]
+    recoverable_exceptions=[ETLSystemError, ProcessingError, OSError, IOError],
 )
 
 CONCURRENT_RETRY_CONFIG = RetryConfig(
@@ -437,13 +430,12 @@ CONCURRENT_RETRY_CONFIG = RetryConfig(
     base_delay=1.0,
     max_delay=30.0,
     backoff_factor=2.0,
-    recoverable_exceptions=[ConcurrentError, SystemError]
+    recoverable_exceptions=[ConcurrentError, ETLSystemError],
 )
 
 
 def enhanced_retry_with_stats(
-    operation_name: str,
-    config: Optional[RetryConfig] = None
+    operation_name: str, config: Optional[RetryConfig] = None
 ) -> Callable:
     """Enhanced retry decorator with statistics tracking."""
     if config is None:
@@ -460,7 +452,8 @@ def enhanced_retry_with_stats(
                         "🔄 %s attempt %d/%d",
                         operation_name,
                         attempt,
-                        config.max_attempts)
+                        config.max_attempts,
+                    )
                     result = func(*args, **kwargs)
 
                     # Record successful attempt
@@ -468,9 +461,8 @@ def enhanced_retry_with_stats(
 
                     if attempt > 1:
                         log.info(
-                            "✅ %s succeeded on attempt %d",
-                            operation_name,
-                            attempt)
+                            "✅ %s succeeded on attempt %d", operation_name, attempt
+                        )
 
                     return result
 
@@ -483,16 +475,17 @@ def enhanced_retry_with_stats(
                         log.debug(
                             "🔍 Classified %s as %s",
                             type(e).__name__,
-                            type(classified_error).__name__)
+                            type(classified_error).__name__,
+                        )
                         last_exception = classified_error
 
                     if not config.should_retry(last_exception, attempt):
                         log.debug(
                             "❌ %s failed with non-recoverable error: %s",
                             operation_name,
-                            last_exception)
-                        _retry_stats.record_attempt(
-                            operation_name, False, attempt)
+                            last_exception,
+                        )
+                        _retry_stats.record_attempt(operation_name, False, attempt)
                         raise last_exception
 
                     if attempt == config.max_attempts:
@@ -500,9 +493,9 @@ def enhanced_retry_with_stats(
                             "❌ %s failed after %d attempts: %s",
                             operation_name,
                             attempt,
-                            last_exception)
-                        _retry_stats.record_attempt(
-                            operation_name, False, attempt)
+                            last_exception,
+                        )
+                        _retry_stats.record_attempt(operation_name, False, attempt)
                         raise last_exception
 
                     delay = config.get_delay(attempt, last_exception)
@@ -512,39 +505,53 @@ def enhanced_retry_with_stats(
                         attempt,
                         config.max_attempts,
                         last_exception,
-                        delay)
+                        delay,
+                    )
 
                     time.sleep(delay)
 
             # This should never be reached, but just in case
             if last_exception:
-                _retry_stats.record_attempt(
-                    operation_name, False, config.max_attempts)
+                _retry_stats.record_attempt(operation_name, False, config.max_attempts)
                 raise last_exception
 
         return wrapper
+
     return decorator
 
 
-def smart_retry(operation_name: str = None):
+def smart_retry(operation_name: Optional[str] = None):
     """Smart retry decorator that automatically selects appropriate config based on operation name."""
+
     def decorator(func: Callable) -> Callable:
         nonlocal operation_name
-        if operation_name is None:
+        if operation_name is None:  # type: ignore [unreachable]
             operation_name = func.__name__
 
         # Select appropriate config based on operation name patterns
-        if any(pattern in operation_name.lower()
-               for pattern in ['http', 'request', 'download', 'fetch']):
+        if any(
+            pattern in operation_name.lower()
+            for pattern in ["http", "request", "download", "fetch"]
+        ):
             config = NETWORK_RETRY_CONFIG
-        elif any(pattern in operation_name.lower() for pattern in ['database', 'sql', 'sde', 'arcpy']):
+        elif any(
+            pattern in operation_name.lower()
+            for pattern in ["database", "sql", "sde", "arcpy"]
+        ):
             config = DATABASE_RETRY_CONFIG
-        elif any(pattern in operation_name.lower() for pattern in ['file', 'read', 'write', 'copy']):
+        elif any(
+            pattern in operation_name.lower()
+            for pattern in ["file", "read", "write", "copy"]
+        ):
             config = FILE_OPERATION_RETRY_CONFIG
-        elif any(pattern in operation_name.lower() for pattern in ['concurrent', 'parallel', 'thread']):
+        elif any(
+            pattern in operation_name.lower()
+            for pattern in ["concurrent", "parallel", "thread"]
+        ):
             config = CONCURRENT_RETRY_CONFIG
         else:
             config = RetryConfig()  # Default config
 
         return enhanced_retry_with_stats(operation_name, config)(func)
+
     return decorator
