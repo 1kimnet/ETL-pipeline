@@ -239,3 +239,9 @@ SOURCES_CLEANUP_ANALYSIS.md
 .vscode/settings.json
 test_concurrency_fix.py
 .gitignore
+.bevel/do_not_share/port
+.bevel/shareable/graph/graph_main/connections
+.bevel/do_not_share/port
+.bevel/shareable/graph/graph_main/nodes
+.bevel/shareable/graph/graph_main/fileInfo
+.bevel/do_not_share/port
