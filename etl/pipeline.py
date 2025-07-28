@@ -1,6 +1,3 @@
-"""ETL pipeline module: orchestrates end-to-end data extraction, transformation, and loading."""
-
-# etl/pipeline.py (complete working version)
 # etl/pipeline.py (complete working version)
 from __future__ import annotations
 

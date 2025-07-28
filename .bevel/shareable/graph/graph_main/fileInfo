@@ -79,10 +79,10 @@
   }, {
     "path" : "etl\\handlers\\rest_api.py",
     "modificationInfo" : {
-      "contentHash" : 919175803,
-      "lastModified" : 1753665394510
+      "contentHash" : -1891392044,
+      "lastModified" : 1753670949803
     },
-    "linesOfCode" : 778
+    "linesOfCode" : 744
   }, {
     "path" : "etl\\loaders\\__init__.py",
     "modificationInfo" : {
@@ -149,10 +149,10 @@
   }, {
     "path" : "etl\\pipeline.py",
     "modificationInfo" : {
-      "contentHash" : 2056123016,
-      "lastModified" : 1753665394512
+      "contentHash" : 1008306315,
+      "lastModified" : 1753672695780
     },
-    "linesOfCode" : 846
+    "linesOfCode" : 748
   }, {
     "path" : "etl\\utils\\__init__.py",
     "modificationInfo" : {
