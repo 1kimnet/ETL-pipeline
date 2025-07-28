@@ -733,3 +733,659 @@ KeyError: 'context'
 2025-07-25 01:23:55,672  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Jordbruksskiften (senaste året)' from URL: https://epub.sjv.se/inspire/inspire/wfs?service=WFS&request=GetFeature&typeName=inspire:senaste_arslager_skifte&outputFormat=application/json
 2025-07-25 01:23:55,674  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): epub.sjv.se:443
 2025-07-25 01:23:56,508  DEBUG    [urllib3.connectionpool:544]  https://epub.sjv.se:443 "GET /inspire/inspire/wfs?service=WFS&request=GetFeature&typeName=inspire:senaste_arslager_skifte&outputFormat=application/json&f=json HTTP/1.1" 200 None
+2025-07-25 01:26:41,025  WARNING  [etl.handlers.rest_api:419]  ⚠️ No layers identified or specified to query for source 'Jordbruksskiften (senaste året)'. Check service metadata and `layer_ids` config.
+2025-07-25 01:26:43,601  INFO     [pipeline:623]  🚚 Produktionsplatser för djurhållning
+2025-07-25 01:26:43,603  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Produktionsplatser för djurhållning
+2025-07-25 01:26:43,603  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Produktionsplatser för djurhållning' from URL: http://epub.sjv.se/inspire/inspire/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=inspire:produktionsplatser&outputFormat=application/json
+2025-07-25 01:26:43,604  DEBUG    [urllib3.connectionpool:241]  Starting new HTTP connection (1): epub.sjv.se:80
+2025-07-25 01:26:43,742  DEBUG    [urllib3.connectionpool:544]  http://epub.sjv.se:80 "GET /inspire/inspire/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=inspire:produktionsplatser&outputFormat=application/json&f=json HTTP/1.1" 200 None
+2025-07-25 01:26:47,711  WARNING  [etl.handlers.rest_api:419]  ⚠️ No layers identified or specified to query for source 'Produktionsplatser för djurhållning'. Check service metadata and `layer_ids` config.
+2025-07-25 01:26:47,767  INFO     [pipeline:623]  🚚 Ängs- och betesmarksinventeringen
+2025-07-25 01:26:47,767  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Ängs- och betesmarksinventeringen
+2025-07-25 01:26:47,767  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Ängs- och betesmarksinventeringen' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/SJV/lst_sjv_fak04ovr/MapServer
+2025-07-25 01:26:47,769  DEBUG    [urllib3.connectionpool:289]  Resetting dropped connection: ext-geodata-nationella.lansstyrelsen.se
+2025-07-25 01:26:47,950  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-nationella.lansstyrelsen.se:443 "GET /arcgis/rest/services/SJV/lst_sjv_fak04ovr/MapServer?f=json HTTP/1.1" 200 1198
+2025-07-25 01:26:47,951  INFO     [etl.handlers.rest_api:346]  Found explicit layer_ids in config: [4, 5] for source 'Ängs- och betesmarksinventeringen'. Processing only these.
+2025-07-25 01:26:47,952  INFO     [etl.handlers.rest_api:427]  Source 'Ängs- och betesmarksinventeringen': Will attempt to query 2 layer(s): ['4', '5']
+2025-07-25 01:26:47,952  INFO     [etl.handlers.rest_api:447]  🚀 Starting concurrent download of 2 layers
+2025-07-25 01:26:47,952  INFO     [etl.utils.concurrent:261]  Starting concurrent download of 2 layers
+2025-07-25 01:26:47,952  INFO     [etl.utils.concurrent:121]  Starting concurrent execution of 2 tasks with 5 workers
+2025-07-25 01:26:47,955  INFO     [etl.utils.concurrent:215]  Concurrent execution completed: 0/2 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-25 01:26:47,955  INFO     [etl.handlers.rest_api:480]  🏁 Concurrent downloads completed: 0 successful, 2 failed
+2025-07-25 01:26:47,955  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_SJV Ängs- och betesmarksinventeringen naturtyper - name 'time' is not defined
+2025-07-25 01:26:47,956  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_SJV Ängs- och betesmarksinventeringen - name 'time' is not defined
+2025-07-25 01:26:47,956  INFO     [pipeline:623]  🚚 Naturvärden
+2025-07-25 01:26:47,957  INFO     [etl.handlers.file:162]  🔗 Single resource download mode for 'Naturvärden' from URL: https://geodpags.skogsstyrelsen.se/geodataport/data/sksNaturvarden_gpkg.zip
+2025-07-25 01:26:48,204  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://geodpags.skogsstyrelsen.se/geodataport/data/sksNaturvarden_gpkg.zip'): sksNaturvarden_gpkg.zip
+2025-07-25 01:26:48,301  DEBUG    [etl.handlers.file:247]  Attempting to download: https://geodpags.skogsstyrelsen.se/geodataport/data/sksNaturvarden_gpkg.zip 
+    -> to local file: naturvarden.zip 
+    -> staging dir: data\staging\SKS\naturvarden
+2025-07-25 01:26:48,302  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): geodpags.skogsstyrelsen.se:443
+2025-07-25 01:26:48,470  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "HEAD /geodataport/data/sksNaturvarden_gpkg.zip HTTP/1.1" 200 0
+2025-07-25 01:26:48,471  INFO     [etl.utils.io:44]  ⬇ naturvarden.zip (17.8 MB)
+2025-07-25 01:26:48,473  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): geodpags.skogsstyrelsen.se:443
+2025-07-25 01:26:48,903  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /geodataport/data/sksNaturvarden_gpkg.zip HTTP/1.1" 200 18690966
+2025-07-25 01:26:52,215  INFO     [etl.utils.io:82]  ✅ naturvarden.zip
+2025-07-25 01:26:52,216  INFO     [etl.handlers.file:278]  Determined staged_data_type: 'gpkg' for downloaded file 'naturvarden.zip'
+2025-07-25 01:26:52,231  INFO     [etl.handlers.file:292]  ➕ Staged GPKG naturvarden.zip to data\staging\SKS\naturvarden\naturvarden.zip
+2025-07-25 01:26:52,232  INFO     [pipeline:623]  🚚 Ras och skred
+2025-07-25 01:26:52,233  INFO     [etl.handlers.atom_feed:41]  🌐 Reading Atom feed for source 'Ras och skred' from URL: https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml
+2025-07-25 01:26:52,234  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): geodpags.skogsstyrelsen.se:443
+2025-07-25 01:26:52,393  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "HEAD /geodataport/feeds/Rasochskred.xml HTTP/1.1" 404 0
+2025-07-25 01:26:52,393  INFO     [etl.utils.io:44]  ⬇ ras_och_skred_feed.xml (1.2 KB)
+2025-07-25 01:26:52,396  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): geodpags.skogsstyrelsen.se:443
+2025-07-25 01:26:52,566  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /geodataport/feeds/Rasochskred.xml HTTP/1.1" 404 1245
+2025-07-25 01:26:52,567  ERROR    [etl.handlers.atom_feed:56]  ❌ Failed to download or read Atom feed XML for 'Ras och skred' from https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml: 404 Client Error: Not Found for url: https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml
+Traceback (most recent call last):
+  File "C:\Git\ETL-pipeline\etl\handlers\atom_feed.py", line 51, in fetch
+    downloaded_feed_xml_path = download(
+                               ^^^^^^^^^
+  File "C:\Git\ETL-pipeline\etl\utils\io.py", line 49, in download
+    resp.raise_for_status()
+  File "C:\Users\kije\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://geodpags.skogsstyrelsen.se/geodataport/feeds/Rasochskred.xml
+2025-07-25 01:26:52,575  INFO     [pipeline:623]  🚚 Skogsstyrelsen - Biotopskydd (REST)
+2025-07-25 01:26:52,576  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Skogsstyrelsen - Biotopskydd (REST)
+2025-07-25 01:26:52,576  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Skogsstyrelsen - Biotopskydd (REST)' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaBiotopskydd/MapServer
+2025-07-25 01:26:52,576  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): geodpags.skogsstyrelsen.se:443
+2025-07-25 01:26:52,796  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaBiotopskydd/MapServer?f=json HTTP/1.1" 200 1130
+2025-07-25 01:26:52,861  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Skogsstyrelsen - Biotopskydd (REST)'. Discovering all layers from service metadata.
+2025-07-25 01:26:52,862  INFO     [etl.handlers.rest_api:427]  Source 'Skogsstyrelsen - Biotopskydd (REST)': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:26:52,862  INFO     [etl.handlers.rest_api:659]  🚚 biotopskydd_skogsstyrelsen
+2025-07-25 01:26:52,862  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: biotopskydd_skogsstyrelsen, Original: Biotopskydd_Skogsstyrelsen) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaBiotopskydd/MapServer/0/query
+2025-07-25 01:26:52,862  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:26:52,862  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:26:52,864  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer biotopskydd_skogsstyrelsen (offset 0, limit 5000)
+2025-07-25 01:26:53,180  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaBiotopskydd/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:26:53,255  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer biotopskydd_skogsstyrelsen (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:26:53,382  INFO     [etl.handlers.rest_api:298]  ✅ biotopskydd_skogsstyrelsen: 125 features
+2025-07-25 01:26:53,383  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 125 features for layer biotopskydd_skogsstyrelsen to C:\Git\ETL-pipeline\data\staging\SKS\skogsstyrelsen_-_biotopskydd_rest\biotopskydd_skogsstyrelsen.geojson
+2025-07-25 01:26:53,384  INFO     [pipeline:623]  🚚 Utförda avverkningar
+2025-07-25 01:26:53,387  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Utförda avverkningar
+2025-07-25 01:26:53,388  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Utförda avverkningar' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaUtfordavverkning/MapServer
+2025-07-25 01:26:53,455  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaUtfordavverkning/MapServer?f=json HTTP/1.1" 200 1201
+2025-07-25 01:26:53,523  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Utförda avverkningar'. Discovering all layers from service metadata.
+2025-07-25 01:26:53,524  INFO     [etl.handlers.rest_api:427]  Source 'Utförda avverkningar': Will attempt to query 2 layer(s): ['0', '1']
+2025-07-25 01:26:53,524  INFO     [etl.handlers.rest_api:447]  🚀 Starting concurrent download of 2 layers
+2025-07-25 01:26:53,524  INFO     [etl.utils.concurrent:261]  Starting concurrent download of 2 layers
+2025-07-25 01:26:53,525  INFO     [etl.utils.concurrent:121]  Starting concurrent execution of 2 tasks with 5 workers
+2025-07-25 01:26:53,529  INFO     [etl.utils.concurrent:215]  Concurrent execution completed: 0/2 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-25 01:26:53,529  INFO     [etl.handlers.rest_api:480]  🏁 Concurrent downloads completed: 0 successful, 2 failed
+2025-07-25 01:26:53,530  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_Översikt senaste året -  UtfordAvverkning_Skogsstyrelsen - name 'time' is not defined
+2025-07-25 01:26:53,530  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_UtfordAvverkning_Skogsstyrelsen - name 'time' is not defined
+2025-07-25 01:26:53,530  INFO     [pipeline:623]  🚚 Naturvårdsavtal
+2025-07-25 01:26:53,532  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Naturvårdsavtal
+2025-07-25 01:26:53,532  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Naturvårdsavtal' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer
+2025-07-25 01:26:53,590  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer?f=json HTTP/1.1" 200 1138
+2025-07-25 01:26:53,656  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Naturvårdsavtal'. Discovering all layers from service metadata.
+2025-07-25 01:26:53,656  INFO     [etl.handlers.rest_api:427]  Source 'Naturvårdsavtal': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:26:53,656  INFO     [etl.handlers.rest_api:659]  🚚 naturvardsavtal_skogsstyrelsen
+2025-07-25 01:26:53,656  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: naturvardsavtal_skogsstyrelsen, Original: Naturvardsavtal_Skogsstyrelsen) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer/0/query
+2025-07-25 01:26:53,656  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:26:53,657  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:26:53,658  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer naturvardsavtal_skogsstyrelsen (offset 0, limit 5000)
+2025-07-25 01:26:54,105  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaNaturvardsavtal/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:26:54,172  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer naturvardsavtal_skogsstyrelsen (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:26:54,214  INFO     [etl.handlers.rest_api:298]  ✅ naturvardsavtal_skogsstyrelsen: 59 features
+2025-07-25 01:26:54,214  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 59 features for layer naturvardsavtal_skogsstyrelsen to C:\Git\ETL-pipeline\data\staging\SKS\naturvardsavtal\naturvardsavtal_skogsstyrelsen.geojson
+2025-07-25 01:26:54,214  INFO     [pipeline:623]  🚚 Återvätningsavtal
+2025-07-25 01:26:54,215  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Återvätningsavtal
+2025-07-25 01:26:54,216  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Återvätningsavtal' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer
+2025-07-25 01:26:54,277  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer?f=json HTTP/1.1" 200 1251
+2025-07-25 01:26:54,338  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Återvätningsavtal'. Discovering all layers from service metadata.
+2025-07-25 01:26:54,338  INFO     [etl.handlers.rest_api:427]  Source 'Återvätningsavtal': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:26:54,339  INFO     [etl.handlers.rest_api:659]  🚚 atervatningyta_skogsstyrelsen
+2025-07-25 01:26:54,339  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: atervatningyta_skogsstyrelsen, Original: ÅtervätningYta_Skogsstyrelsen) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer/0/query
+2025-07-25 01:26:54,339  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:26:54,339  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:26:54,341  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer atervatningyta_skogsstyrelsen (offset 0, limit 5000)
+2025-07-25 01:26:54,448  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaAtervatningavtal/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 1921
+2025-07-25 01:26:54,461  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer atervatningyta_skogsstyrelsen (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:26:54,465  INFO     [etl.handlers.rest_api:298]  ✅ atervatningyta_skogsstyrelsen: 3 features
+2025-07-25 01:26:54,465  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 3 features for layer atervatningyta_skogsstyrelsen to C:\Git\ETL-pipeline\data\staging\SKS\atervatningsavtal\atervatningyta_skogsstyrelsen.geojson
+2025-07-25 01:26:54,465  INFO     [pipeline:623]  🚚 Nyckelbiotoper
+2025-07-25 01:26:54,467  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Nyckelbiotoper
+2025-07-25 01:26:54,467  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Nyckelbiotoper' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer
+2025-07-25 01:26:54,526  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer?f=json HTTP/1.1" 200 1143
+2025-07-25 01:26:54,588  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Nyckelbiotoper'. Discovering all layers from service metadata.
+2025-07-25 01:26:54,589  INFO     [etl.handlers.rest_api:427]  Source 'Nyckelbiotoper': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:26:54,589  INFO     [etl.handlers.rest_api:659]  🚚 nyckelbiotop_skogsstyrelsen
+2025-07-25 01:26:54,589  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: nyckelbiotop_skogsstyrelsen, Original: Nyckelbiotop_Skogsstyrelsen) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer/0/query
+2025-07-25 01:26:54,589  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:26:54,589  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:26:54,590  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer nyckelbiotop_skogsstyrelsen (offset 0, limit 5000)
+2025-07-25 01:26:55,073  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaNyckelbiotop/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:26:55,538  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer nyckelbiotop_skogsstyrelsen (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:26:56,189  INFO     [etl.handlers.rest_api:298]  ✅ nyckelbiotop_skogsstyrelsen: 1293 features
+2025-07-25 01:26:56,190  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 1293 features for layer nyckelbiotop_skogsstyrelsen to C:\Git\ETL-pipeline\data\staging\SKS\nyckelbiotoper\nyckelbiotop_skogsstyrelsen.geojson
+2025-07-25 01:26:56,194  INFO     [pipeline:623]  🚚 Sumpskogar
+2025-07-25 01:26:56,195  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Sumpskogar
+2025-07-25 01:26:56,195  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Sumpskogar' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer
+2025-07-25 01:26:56,257  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer?f=json HTTP/1.1" 200 1142
+2025-07-25 01:26:56,313  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Sumpskogar'. Discovering all layers from service metadata.
+2025-07-25 01:26:56,314  INFO     [etl.handlers.rest_api:427]  Source 'Sumpskogar': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:26:56,314  INFO     [etl.handlers.rest_api:659]  🚚 sumpskog_skogsstyrelsen
+2025-07-25 01:26:56,314  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: sumpskog_skogsstyrelsen, Original: Sumpskog_Skogsstyrelsen) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer/0/query
+2025-07-25 01:26:56,315  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:26:56,315  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:26:56,315  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer sumpskog_skogsstyrelsen (offset 0, limit 5000)
+2025-07-25 01:26:56,963  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:26:57,533  DEBUG    [etl.handlers.rest_api:270]  ⚠️ Exceeded transfer limit for layer sumpskog_skogsstyrelsen, fetching next page.
+2025-07-25 01:26:57,533  DEBUG    [etl.handlers.rest_api:565]  Fetching page 2 for layer sumpskog_skogsstyrelsen (offset 2000, limit 5000)
+2025-07-25 01:26:57,963  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSumpskog/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=2000&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:26:58,302  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer sumpskog_skogsstyrelsen (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:26:59,416  INFO     [etl.handlers.rest_api:298]  ✅ sumpskog_skogsstyrelsen: 2769 features
+2025-07-25 01:26:59,416  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 2769 features for layer sumpskog_skogsstyrelsen to C:\Git\ETL-pipeline\data\staging\SKS\sumpskogar\sumpskog_skogsstyrelsen.geojson
+2025-07-25 01:26:59,421  INFO     [pipeline:623]  🚚 Avverkningsanmälda områden
+2025-07-25 01:26:59,423  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Avverkningsanmälda områden
+2025-07-25 01:26:59,423  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Avverkningsanmälda områden' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer
+2025-07-25 01:26:59,483  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer?f=json HTTP/1.1" 200 1176
+2025-07-25 01:26:59,552  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Avverkningsanmälda områden'. Discovering all layers from service metadata.
+2025-07-25 01:26:59,552  INFO     [etl.handlers.rest_api:427]  Source 'Avverkningsanmälda områden': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:26:59,552  INFO     [etl.handlers.rest_api:659]  🚚 avverkningsanmalan_skogsstyrelsen
+2025-07-25 01:26:59,552  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: avverkningsanmalan_skogsstyrelsen, Original: Avverkningsanmalan_Skogsstyrelsen) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer/0/query
+2025-07-25 01:26:59,552  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:26:59,552  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:26:59,553  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer avverkningsanmalan_skogsstyrelsen (offset 0, limit 5000)
+2025-07-25 01:27:01,799  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaAvverkningsanmalan/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:27:02,331  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer avverkningsanmalan_skogsstyrelsen (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:27:02,989  INFO     [etl.handlers.rest_api:298]  ✅ avverkningsanmalan_skogsstyrelsen: 1337 features
+2025-07-25 01:27:02,989  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 1337 features for layer avverkningsanmalan_skogsstyrelsen to C:\Git\ETL-pipeline\data\staging\SKS\avverkningsanmalda_omraden\avverkningsanmalan_skogsstyrelsen.geojson
+2025-07-25 01:27:02,993  INFO     [pipeline:623]  🚚 Gräns för skogsskyddsbestämmelser
+2025-07-25 01:27:02,995  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Gräns för skogsskyddsbestämmelser
+2025-07-25 01:27:02,996  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Gräns för skogsskyddsbestämmelser' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer
+2025-07-25 01:27:03,072  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer?f=json HTTP/1.1" 200 1165
+2025-07-25 01:27:03,137  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Gräns för skogsskyddsbestämmelser'. Discovering all layers from service metadata.
+2025-07-25 01:27:03,137  INFO     [etl.handlers.rest_api:427]  Source 'Gräns för skogsskyddsbestämmelser': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:27:03,137  INFO     [etl.handlers.rest_api:659]  🚚 skogsskyddsbestammelser
+2025-07-25 01:27:03,137  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: skogsskyddsbestammelser, Original: Skogsskyddsbestämmelser) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer/0/query
+2025-07-25 01:27:03,138  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:27:03,138  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:27:03,139  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer skogsskyddsbestammelser (offset 0, limit 5000)
+2025-07-25 01:27:03,465  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsskyddsbestammelser/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:27:03,583  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer skogsskyddsbestammelser (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:27:03,706  INFO     [etl.handlers.rest_api:298]  ✅ skogsskyddsbestammelser: 1 features
+2025-07-25 01:27:03,706  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 1 features for layer skogsskyddsbestammelser to C:\Git\ETL-pipeline\data\staging\SKS\grans_for_skogsskyddsbestammelser\skogsskyddsbestammelser.geojson
+2025-07-25 01:27:03,707  INFO     [pipeline:623]  🚚 Nyckelbiotoper - storskogsbruket
+2025-07-25 01:27:03,708  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Nyckelbiotoper - storskogsbruket
+2025-07-25 01:27:03,708  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Nyckelbiotoper - storskogsbruket' from URL: https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer
+2025-07-25 01:27:03,771  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer?f=json HTTP/1.1" 200 1197
+2025-07-25 01:27:03,838  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Nyckelbiotoper - storskogsbruket'. Discovering all layers from service metadata.
+2025-07-25 01:27:03,838  INFO     [etl.handlers.rest_api:427]  Source 'Nyckelbiotoper - storskogsbruket': Will attempt to query 1 layer(s): ['0']
+2025-07-25 01:27:03,839  INFO     [etl.handlers.rest_api:659]  🚚 storskogsbrukets_nyckelbiotoper
+2025-07-25 01:27:03,839  DEBUG    [etl.handlers.rest_api:660]  Querying Layer ID: 0 (Sanitized Name: storskogsbrukets_nyckelbiotoper, Original: Storskogsbrukets_Nyckelbiotoper) from https://geodpags.skogsstyrelsen.se/arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer/0/query
+2025-07-25 01:27:03,839  DEBUG    [etl.handlers.rest_api:530]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-25 01:27:03,839  DEBUG    [etl.handlers.rest_api:199]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-25 01:27:03,840  DEBUG    [etl.handlers.rest_api:565]  Fetching page 1 for layer storskogsbrukets_nyckelbiotoper (offset 0, limit 5000)
+2025-07-25 01:27:04,201  DEBUG    [urllib3.connectionpool:544]  https://geodpags.skogsstyrelsen.se:443 "GET /arcgis/rest/services/Geodataportal/GeodataportalVisaSkogsbruknyckelbiotop/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-25 01:27:04,381  DEBUG    [etl.handlers.rest_api:279]  🏁 All features likely retrieved for layer storskogsbrukets_nyckelbiotoper (less than page limit or server maxRecordCount is 0).
+2025-07-25 01:27:04,592  INFO     [etl.handlers.rest_api:298]  ✅ storskogsbrukets_nyckelbiotoper: 161 features
+2025-07-25 01:27:04,592  DEBUG    [etl.handlers.rest_api:299]  💾 Successfully saved 161 features for layer storskogsbrukets_nyckelbiotoper to C:\Git\ETL-pipeline\data\staging\SKS\nyckelbiotoper_-_storskogsbruket\storskogsbrukets_nyckelbiotoper.geojson
+2025-07-25 01:27:04,593  INFO     [pipeline:623]  🚚 Stamnät
+2025-07-25 01:27:04,594  INFO     [etl.handlers.file:162]  🔗 Single resource download mode for 'Stamnät' from URL: https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip
+2025-07-25 01:27:04,764  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip'): SVK_STAMNAT.zip
+2025-07-25 01:27:04,771  DEBUG    [etl.handlers.file:247]  Attempting to download: https://gis-services.metria.se/svkfeed/filer/SVK_STAMNAT.zip 
+    -> to local file: stamnat.zip 
+    -> staging dir: data\staging\SVK\stamnat
+2025-07-25 01:27:04,775  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): gis-services.metria.se:443
+2025-07-25 01:27:04,866  DEBUG    [urllib3.connectionpool:544]  https://gis-services.metria.se:443 "HEAD /svkfeed/filer/SVK_STAMNAT.zip HTTP/1.1" 200 0
+2025-07-25 01:27:04,867  INFO     [etl.utils.io:44]  ⬇ stamnat.zip (2.3 MB)
+2025-07-25 01:27:04,869  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): gis-services.metria.se:443
+2025-07-25 01:27:05,005  DEBUG    [urllib3.connectionpool:544]  https://gis-services.metria.se:443 "GET /svkfeed/filer/SVK_STAMNAT.zip HTTP/1.1" 200 2381635
+2025-07-25 01:27:05,416  INFO     [etl.utils.io:82]  ✅ stamnat.zip
+2025-07-25 01:27:05,417  INFO     [etl.handlers.file:278]  Determined staged_data_type: 'shapefile_collection' for downloaded file 'stamnat.zip'
+2025-07-25 01:27:05,417  INFO     [etl.utils.io:88]  📦 Extracting stamnat.zip → C:\Git\ETL-pipeline\data\staging\SVK\stamnat
+2025-07-25 01:27:05,572  INFO     [etl.handlers.file:351]  ➕ Extracted and staged archive stamnat.zip to data\staging\SVK\stamnat
+2025-07-25 01:27:05,572  INFO     [pipeline:623]  🚚 Vägar
+2025-07-25 01:27:05,573  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Vägar
+2025-07-25 01:27:05,573  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Vägar' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/TV/lst_tv_fak01/MapServer
+2025-07-25 01:27:05,620  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-nationella.lansstyrelsen.se:443 "GET /arcgis/rest/services/TV/lst_tv_fak01/MapServer?f=json HTTP/1.1" 200 1111
+2025-07-25 01:27:05,622  INFO     [etl.handlers.rest_api:346]  Found explicit layer_ids in config: [0, 1, 2, 3, 4, 5, 6, 7] for source 'Vägar'. Processing only these.
+2025-07-25 01:27:05,622  WARNING  [etl.handlers.rest_api:364]  Layer ID '3' specified in config for source 'Vägar' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+2025-07-25 01:27:05,622  INFO     [etl.handlers.rest_api:427]  Source 'Vägar': Will attempt to query 8 layer(s): ['0', '1', '2', '3', '4', '5', '6', '7']
+2025-07-25 01:27:05,622  INFO     [etl.handlers.rest_api:447]  🚀 Starting concurrent download of 8 layers
+2025-07-25 01:27:05,622  INFO     [etl.utils.concurrent:261]  Starting concurrent download of 8 layers
+2025-07-25 01:27:05,623  INFO     [etl.utils.concurrent:121]  Starting concurrent execution of 8 tasks with 5 workers
+2025-07-25 01:27:05,635  INFO     [etl.utils.concurrent:215]  Concurrent execution completed: 0/8 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-25 01:27:05,636  INFO     [etl.handlers.rest_api:480]  🏁 Concurrent downloads completed: 0 successful, 8 failed
+2025-07-25 01:27:05,636  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Kulturvägar - name 'time' is not defined
+2025-07-25 01:27:05,636  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Alléer - name 'time' is not defined
+2025-07-25 01:27:05,636  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Artrika vägkanter - name 'time' is not defined
+2025-07-25 01:27:05,638  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_layer_3_cfg_only - name 'time' is not defined
+2025-07-25 01:27:05,638  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Faunapassage för medelstora däggdjur - Järnväg - name 'time' is not defined
+2025-07-25 01:27:05,638  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Faunapassage för medelstora däggdjur - Miljö och landskap - name 'time' is not defined
+2025-07-25 01:27:05,638  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Faunapassage för stora däggdjur - Järnväg - name 'time' is not defined
+2025-07-25 01:27:05,638  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Faunapassage för stora däggdjur - Miljö och landskap - name 'time' is not defined
+2025-07-25 01:27:05,638  INFO     [pipeline:623]  🚚 Övrigt
+2025-07-25 01:27:05,640  INFO     [etl.handlers.rest_api:68]  🚀 Initializing RestApiDownloadHandler for source: Övrigt
+2025-07-25 01:27:05,641  INFO     [etl.handlers.rest_api:321]  🌐 Processing REST API source: 'Övrigt' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/TV/lst_tv_fak06/MapServer
+2025-07-25 01:27:05,702  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-nationella.lansstyrelsen.se:443 "GET /arcgis/rest/services/TV/lst_tv_fak06/MapServer?f=json HTTP/1.1" 200 1362
+2025-07-25 01:27:05,702  INFO     [etl.handlers.rest_api:380]  No explicit layer_ids in config for source 'Övrigt'. Discovering all layers from service metadata.
+2025-07-25 01:27:05,703  INFO     [etl.handlers.rest_api:427]  Source 'Övrigt': Will attempt to query 18 layer(s): ['0', '18', '1', '2', '3', '4', '5', '17', '6', '7', '8', '9', '10', '11', '12', '13', '16', '14']
+2025-07-25 01:27:05,703  INFO     [etl.handlers.rest_api:447]  🚀 Starting concurrent download of 18 layers
+2025-07-25 01:27:05,703  INFO     [etl.utils.concurrent:261]  Starting concurrent download of 18 layers
+2025-07-25 01:27:05,703  INFO     [etl.utils.concurrent:121]  Starting concurrent execution of 18 tasks with 5 workers
+2025-07-25 01:27:05,721  INFO     [etl.utils.concurrent:215]  Concurrent execution completed: 0/18 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-25 01:27:05,722  INFO     [etl.handlers.rest_api:480]  🏁 Concurrent downloads completed: 0 successful, 18 failed
+2025-07-25 01:27:05,723  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV Viltstängsel - name 'time' is not defined
+2025-07-25 01:27:05,723  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Bro och tunnel - name 'time' is not defined
+2025-07-25 01:27:05,723  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Bärighet - name 'time' is not defined
+2025-07-25 01:27:05,723  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Cykelnät - name 'time' is not defined
+2025-07-25 01:27:05,723  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Driftbidrag - name 'time' is not defined
+2025-07-25 01:27:05,724  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Funktionell vägklass - name 'time' is not defined
+2025-07-25 01:27:05,724  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Gatunamn - name 'time' is not defined
+2025-07-25 01:27:05,724  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB GCM vägtyp - name 'time' is not defined
+2025-07-25 01:27:05,724  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Gångfarts område - name 'time' is not defined
+2025-07-25 01:27:05,724  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Hastighetsgräns - name 'time' is not defined
+2025-07-25 01:27:05,725  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Inskränkningar för trafik med farligt gods - name 'time' is not defined
+2025-07-25 01:27:05,725  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Rekommenderade vägar farligt gods - name 'time' is not defined
+2025-07-25 01:27:05,725  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Saltade vägar - name 'time' is not defined
+2025-07-25 01:27:05,726  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Trafikflöden - name 'time' is not defined
+2025-07-25 01:27:05,726  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Vägbredd - name 'time' is not defined
+2025-07-25 01:27:05,726  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Väghållare - Enskild-, kommunal- och statlig väg - name 'time' is not defined
+2025-07-25 01:27:05,726  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Vägnummer Text - name 'time' is not defined
+2025-07-25 01:27:05,726  ERROR    [etl.handlers.rest_api:490]  ❌ Layer download failed: layer_TV NVDB Vägnummer - name 'time' is not defined
+2025-07-25 01:27:05,727  INFO     [pipeline:623]  📦 Starting staging phase
+2025-07-25 01:27:05,728  INFO     [pipeline:623]  ✅ Staging GDB reset complete
+2025-07-25 01:27:05,828  INFO     [etl.models:127]  ✅ Loaded 53 sources from config\sources.yaml
+2025-07-25 01:27:05,830  INFO     [etl.loaders.filegdb:67]  🔄 Starting FileGDB loading process
+2025-07-25 01:27:05,830  INFO     [etl.loaders.filegdb:88]  🆕 Creating new FileGDB: C:\Git\ETL-pipeline\data\staging.gdb
+2025-07-25 01:27:07,881  INFO     [numexpr.utils:148]  Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2025-07-25 01:27:07,882  INFO     [numexpr.utils:160]  NumExpr defaulting to 8 threads.
+2025-07-25 01:27:16,130  DEBUG    [arcgis.gis._impl._portalpy:179]  Connecting to portal: u-aec.sokigo.com
+2025-07-25 01:27:16,134  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): u-aec.sokigo.com:443
+2025-07-25 01:27:16,168  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (2): u-aec.sokigo.com:443
+2025-07-25 01:27:16,216  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (3): u-aec.sokigo.com:443
+2025-07-25 01:27:16,256  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (4): u-aec.sokigo.com:443
+2025-07-25 01:27:16,297  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): u-aec.sokigo.com:443
+2025-07-25 01:27:16,334  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (2): u-aec.sokigo.com:443
+2025-07-25 01:27:19,830  INFO     [etl.loaders.filegdb:93]  ✅ Successfully created GDB: C:\Git\ETL-pipeline\data\staging.gdb
+2025-07-25 01:27:19,831  INFO     [etl.loaders.filegdb:77]  📋 Processing 53 configured sources
+2025-07-25 01:27:19,833  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Försvarsmakten - Rikstäckande geodata (Authority: FM)
+2025-07-25 01:27:19,834  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Försvarsmakten - Rikstäckande geodata': staged_data_type='shapefile_collection', normalized='shapefile_collection'
+2025-07-25 01:27:19,835  INFO     [etl.loaders.filegdb:155]  📐 Handling shapefile collection source 'Försvarsmakten - Rikstäckande geodata'
+2025-07-25 01:27:19,842  INFO     [etl.loaders.shapefile_loader:103]  Found 1 item(s) to process for source 'Försvarsmakten - Rikstäckande geodata'
+2025-07-25 01:27:19,850  INFO     [etl.loaders.shapefile_loader:145]  📐 Found 12 shapefile(s) in item dir 'shp'.
+2025-07-25 01:27:19,877  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Lågflygningsområde med påverkansområde.shp') → GDB:/'fm_lagflygningsomrade_med_paverkansomrade' (Authority: 'FM')
+2025-07-25 01:27:21,481  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Lågflygningsområde med påverkansområde.shp' to 'fm_lagflygningsomrade_med_paverkansomrade'
+2025-07-25 01:27:21,681  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('MSA-område.shp') → GDB:/'fm_msa_omrade' (Authority: 'FM')
+2025-07-25 01:27:22,442  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'MSA-område.shp' to 'fm_msa_omrade'
+2025-07-25 01:27:22,599  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Område av betydelse på land.shp') → GDB:/'fm_omrade_av_betydelse_pa_land' (Authority: 'FM')
+2025-07-25 01:27:23,372  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Område av betydelse på land.shp' to 'fm_omrade_av_betydelse_pa_land'
+2025-07-25 01:27:23,559  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Område med särskilt behov av hinderfrihet.shp') → GDB:/'fm_omrade_med_sarskilt_behov_av_hinderfrihet' (Authority: 'FM')
+2025-07-25 01:27:24,742  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Område med särskilt behov av hinderfrihet.shp' to 'fm_omrade_med_sarskilt_behov_av_hinderfrihet'
+2025-07-25 01:27:24,916  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Påverkansområde civil flygplats.shp') → GDB:/'fm_paverkansomrade_civil_flygplats' (Authority: 'FM')
+2025-07-25 01:27:25,641  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Påverkansområde civil flygplats.shp' to 'fm_paverkansomrade_civil_flygplats'
+2025-07-25 01:27:25,808  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Påverkansområde för buller eller annan risk.shp') → GDB:/'fm_paverkansomrade_for_buller_eller_annan_risk' (Authority: 'FM')
+2025-07-25 01:27:26,825  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Påverkansområde för buller eller annan risk.shp' to 'fm_paverkansomrade_for_buller_eller_annan_risk'
+2025-07-25 01:27:26,992  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Påverkansområde väderradar.shp') → GDB:/'fm_paverkansomrade_vaderradar' (Authority: 'FM')
+2025-07-25 01:27:27,892  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Påverkansområde väderradar.shp' to 'fm_paverkansomrade_vaderradar'
+2025-07-25 01:27:28,060  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Påverkansområde övrigt.shp') → GDB:/'fm_paverkansomrade_ovrigt' (Authority: 'FM')
+2025-07-25 01:27:28,820  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Påverkansområde övrigt.shp' to 'fm_paverkansomrade_ovrigt'
+2025-07-25 01:27:29,001  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Riksintresse i havet (sjöövningsområde).shp') → GDB:/'fm_riksintresse_i_havet_sjoovningsomrade' (Authority: 'FM')
+2025-07-25 01:27:29,891  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Riksintresse i havet (sjöövningsområde).shp' to 'fm_riksintresse_i_havet_sjoovningsomrade'
+2025-07-25 01:27:30,050  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Riksintresse på land.shp') → GDB:/'fm_riksintresse_pa_land' (Authority: 'FM')
+2025-07-25 01:27:30,820  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Riksintresse på land.shp' to 'fm_riksintresse_pa_land'
+2025-07-25 01:27:30,975  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Stoppområde för höga objekt.shp') → GDB:/'fm_stoppomrade_for_hoga_objekt' (Authority: 'FM')
+2025-07-25 01:27:31,705  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Stoppområde för höga objekt.shp' to 'fm_stoppomrade_for_hoga_objekt'
+2025-07-25 01:27:31,793  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Stoppområde för vindkraftverk.shp') → GDB:/'fm_stoppomrade_for_vindkraftverk' (Authority: 'FM')
+2025-07-25 01:27:32,492  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Stoppområde för vindkraftverk.shp' to 'fm_stoppomrade_for_vindkraftverk'
+2025-07-25 01:27:32,665  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Naturvårdsverket - Naturvårdsregistret (Authority: NVV)
+2025-07-25 01:27:32,667  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Naturvårdsverket - Naturvårdsregistret': staged_data_type='shapefile_collection', normalized='shapefile_collection'
+2025-07-25 01:27:32,668  INFO     [etl.loaders.filegdb:155]  📐 Handling shapefile collection source 'Naturvårdsverket - Naturvårdsregistret'
+2025-07-25 01:27:32,670  WARNING  [etl.loaders.shapefile_loader:68]  No staging directory found for source 'Naturvårdsverket - Naturvårdsregistret' at C:\Git\ETL-pipeline\data\staging\NVV\naturvardsverket_-_naturvardsregistret
+2025-07-25 01:27:32,671  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Miljöriskområde (Authority: LST)
+2025-07-25 01:27:32,672  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Miljöriskområde': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:27:32,675  INFO     [etl.loaders.filegdb:145]  📦 Source 'Miljöriskområde' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:27:32,677  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: miljoriskomrade.gpkg (Authority: 'LST', Include Filter: None)
+2025-07-25 01:27:39,222  INFO     [etl.loaders.gpkg_loader:186]  Found 1 feature classes in miljoriskomrade.gpkg: ['main.lst_lst_miljoriskomrade']
+2025-07-25 01:27:39,252  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from miljoriskomrade.gpkg
+2025-07-25 01:27:39,253  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.lst_lst_miljoriskomrade' → 'lst_lst_miljoriskomrade' for output naming
+2025-07-25 01:27:39,276  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.lst_lst_miljoriskomrade') → GDB:/'lst_lst_miljoriskomrade'
+2025-07-25 01:27:40,185  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.lst_lst_miljoriskomrade' to 'lst_lst_miljoriskomrade'
+2025-07-25 01:27:40,471  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Vindkraftskollen: Vindkraftverk (Authority: LST)
+2025-07-25 01:27:40,473  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Vindkraftskollen: Vindkraftverk': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:27:40,475  INFO     [etl.loaders.filegdb:145]  📦 Source 'Vindkraftskollen: Vindkraftverk' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:27:40,477  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: vindkraftskollen_vindkraftverk.gpkg (Authority: 'LST', Include Filter: None)
+2025-07-25 01:27:41,634  INFO     [etl.loaders.gpkg_loader:186]  Found 1 feature classes in vindkraftskollen_vindkraftverk.gpkg: ['main.lst_vbk_vindkraftverk']
+2025-07-25 01:27:41,661  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from vindkraftskollen_vindkraftverk.gpkg
+2025-07-25 01:27:41,663  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.lst_vbk_vindkraftverk' → 'lst_vbk_vindkraftverk' for output naming
+2025-07-25 01:27:41,698  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.lst_vbk_vindkraftverk') → GDB:/'lst_vbk_vindkraftverk'
+2025-07-25 01:27:54,462  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.lst_vbk_vindkraftverk' to 'lst_vbk_vindkraftverk'
+2025-07-25 01:27:54,784  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Vindkraftskollen: Projekteringsområden (Authority: LST)
+2025-07-25 01:27:54,784  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Vindkraftskollen: Projekteringsområden': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:27:54,786  INFO     [etl.loaders.filegdb:145]  📦 Source 'Vindkraftskollen: Projekteringsområden' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:27:54,788  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: vindkraftskollen_projekteringsomraden.gpkg (Authority: 'LST', Include Filter: None)
+2025-07-25 01:27:56,104  INFO     [etl.loaders.gpkg_loader:186]  Found 1 feature classes in vindkraftskollen_projekteringsomraden.gpkg: ['main.lst_vbk_projekteringsomraden']
+2025-07-25 01:27:56,118  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from vindkraftskollen_projekteringsomraden.gpkg
+2025-07-25 01:27:56,119  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.lst_vbk_projekteringsomraden' → 'lst_vbk_projekteringsomraden' for output naming
+2025-07-25 01:27:56,134  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.lst_vbk_projekteringsomraden') → GDB:/'lst_vbk_projekteringsomraden'
+2025-07-25 01:27:58,600  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.lst_vbk_projekteringsomraden' to 'lst_vbk_projekteringsomraden'
+2025-07-25 01:27:58,945  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Potentiellt förorenade områden (Authority: LST)
+2025-07-25 01:27:58,947  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Potentiellt förorenade områden': staged_data_type='shapefile_collection', normalized='shapefile_collection'
+2025-07-25 01:27:58,949  INFO     [etl.loaders.filegdb:155]  📐 Handling shapefile collection source 'Potentiellt förorenade områden'
+2025-07-25 01:27:58,956  INFO     [etl.loaders.shapefile_loader:103]  Found 1 item(s) to process for source 'Potentiellt förorenade områden'
+2025-07-25 01:27:58,963  INFO     [etl.loaders.shapefile_loader:145]  📐 Found 1 shapefile(s) in item dir 'potentiellt_fororenade_omraden'.
+2025-07-25 01:27:58,990  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('EBH_Potentiellt_fororenade_omraden.shp') → GDB:/'lst_ebh_potentiellt_fororenade_omraden' (Authority: 'LST')
+2025-07-25 01:28:04,332  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'EBH_Potentiellt_fororenade_omraden.shp' to 'lst_ebh_potentiellt_fororenade_omraden'
+2025-07-25 01:28:04,461  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Riksintressen (Authority: LST)
+2025-07-25 01:28:04,462  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Riksintressen': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:04,466  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Riksintressen'.
+2025-07-25 01:28:04,494  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2.geojson: {'Polygon', 'MultiPolygon'}
+2025-07-25 01:28:04,494  WARNING  [etl.loaders.geojson_loader:79]  ⚠️ Mixed geometry types found in lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2.geojson: {'Polygon', 'MultiPolygon'}. Using POLYGON as default.
+2025-07-25 01:28:04,495  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2.geojson
+2025-07-25 01:28:04,496  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2.geojson') → GDB:/'lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2_polygon' (Authority: 'LST', Geom: POLYGON)
+2025-07-25 01:28:06,731  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2_polygon' with 6 records, geometry type: Polygon
+2025-07-25 01:28:06,734  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Riksintressen - Vindbruk (Authority: LST)
+2025-07-25 01:28:06,735  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Riksintressen - Vindbruk': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:06,737  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Riksintressen - Vindbruk': C:\Git\ETL-pipeline\data\staging\LST\riksintressen_-_vindbruk
+2025-07-25 01:28:06,738  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Föreskrifter (Authority: LSTD)
+2025-07-25 01:28:06,739  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Föreskrifter': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:06,744  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD Föreskrifter'.
+2025-07-25 01:28:06,852  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_sjotrafikforeskrifter.geojson: {'Polygon'}
+2025-07-25 01:28:06,854  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_sjotrafikforeskrifter.geojson
+2025-07-25 01:28:06,857  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_sjotrafikforeskrifter.geojson
+2025-07-25 01:28:06,859  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_sjotrafikforeskrifter.geojson') → GDB:/'lstd_sjotrafikforeskrifter_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:28:08,340  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_sjotrafikforeskrifter_polygon' with 61 records, geometry type: Polygon
+2025-07-25 01:28:08,342  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Fysisk planering (Authority: LSTD)
+2025-07-25 01:28:08,344  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Fysisk planering': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:08,345  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Fysisk planering': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_fysisk_planering
+2025-07-25 01:28:08,346  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Ett rikt odlingslandskap (Authority: LSTD)
+2025-07-25 01:28:08,347  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Ett rikt odlingslandskap': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:08,349  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Ett rikt odlingslandskap': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_ett_rikt_odlingslandskap
+2025-07-25 01:28:08,353  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Friluftsliv (Authority: LSTD)
+2025-07-25 01:28:08,355  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Friluftsliv': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:08,357  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Friluftsliv': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_friluftsliv
+2025-07-25 01:28:08,358  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD God bebyggd miljö (Authority: LSTD)
+2025-07-25 01:28:08,361  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD God bebyggd miljö': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:08,365  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD God bebyggd miljö'.
+2025-07-25 01:28:08,377  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_gi_opaverkade_omraden_-_avgransning.geojson: {'Polygon'}
+2025-07-25 01:28:08,379  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_gi_opaverkade_omraden_-_avgransning.geojson
+2025-07-25 01:28:08,380  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_gi_opaverkade_omraden_-_avgransning.geojson
+2025-07-25 01:28:08,383  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_gi_opaverkade_omraden_-_avgransning.geojson') → GDB:/'lstd_gi_opaverkade_omraden_avgransning_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:28:09,499  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_gi_opaverkade_omraden_avgransning_polygon' with 10 records, geometry type: Polygon
+2025-07-25 01:28:09,501  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Hav i balans (Authority: LSTD)
+2025-07-25 01:28:09,501  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Hav i balans': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:09,502  INFO     [etl.loaders.filegdb:276]  ℹ️ No JSON/GeoJSON files found for source 'LstD Hav i balans'.
+2025-07-25 01:28:09,502  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Levande sjöar och vattendrag (Authority: LSTD)
+2025-07-25 01:28:09,503  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Levande sjöar och vattendrag': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:09,503  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Levande sjöar och vattendrag': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_levande_sjoar_och_vattendrag
+2025-07-25 01:28:09,504  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Levande skogar (Authority: LSTD)
+2025-07-25 01:28:09,504  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Levande skogar': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:28:09,505  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD Levande skogar'.
+2025-07-25 01:28:10,515  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad.geojson: {'Polygon'}
+2025-07-25 01:28:10,515  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad.geojson
+2025-07-25 01:28:10,538  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad.geojson
+2025-07-25 01:28:10,540  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad.geojson') → GDB:/'lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:29:20,425  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad_polygon' with 2783 records, geometry type: Polygon
+2025-07-25 01:29:20,426  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Klimat (Authority: LSTD)
+2025-07-25 01:29:20,427  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Klimat': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:20,428  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Klimat': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_klimat
+2025-07-25 01:29:20,429  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Kulturmiljö (Authority: LSTD)
+2025-07-25 01:29:20,429  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Kulturmiljö': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:20,430  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD Kulturmiljö'.
+2025-07-25 01:29:20,434  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_anmalningsplikt_enligt_kml_3_6.geojson: {'Polygon'}
+2025-07-25 01:29:20,435  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_anmalningsplikt_enligt_kml_3_6.geojson
+2025-07-25 01:29:20,436  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_anmalningsplikt_enligt_kml_3_6.geojson
+2025-07-25 01:29:20,437  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_anmalningsplikt_enligt_kml_3_6.geojson') → GDB:/'lstd_anmalningsplikt_enligt_kml_3_6_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:29:21,360  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_anmalningsplikt_enligt_kml_3_6_polygon' with 68 records, geometry type: Polygon
+2025-07-25 01:29:21,361  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Markavvattning (Authority: LSTD)
+2025-07-25 01:29:21,362  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Markavvattning': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:21,363  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Markavvattning': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_markavvattning
+2025-07-25 01:29:21,364  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Markstabilitet (Authority: LSTD)
+2025-07-25 01:29:21,364  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Markstabilitet': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:21,366  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD Markstabilitet'.
+2025-07-25 01:29:21,406  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter.geojson: {'Polygon'}
+2025-07-25 01:29:21,407  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter.geojson
+2025-07-25 01:29:21,409  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter.geojson
+2025-07-25 01:29:21,410  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter.geojson') → GDB:/'lstd_msb_oversiktlig_stabilitetskartering_90_talet_finkorniga_jordarter_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:29:22,439  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_msb_oversiktlig_stabilitetskartering_90_talet_finkorniga_jordarter_polygon' with 52 records, geometry type: Polygon
+2025-07-25 01:29:22,440  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Naturkartläggning (Authority: LSTD)
+2025-07-25 01:29:22,441  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Naturkartläggning': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:22,442  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD Naturkartläggning'.
+2025-07-25 01:29:22,481  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_sormlands_natur_-_naturvardsprogram_1991.geojson: {'Polygon'}
+2025-07-25 01:29:22,481  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_sormlands_natur_-_naturvardsprogram_1991.geojson
+2025-07-25 01:29:22,483  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_sormlands_natur_-_naturvardsprogram_1991.geojson
+2025-07-25 01:29:22,484  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_sormlands_natur_-_naturvardsprogram_1991.geojson') → GDB:/'lstd_sormlands_natur_naturvardsprogram_1991_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:29:23,871  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_sormlands_natur_naturvardsprogram_1991_polygon' with 245 records, geometry type: Polygon
+2025-07-25 01:29:23,872  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Skog och träd (Authority: LSTD)
+2025-07-25 01:29:23,873  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Skog och träd': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:23,873  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Skog och träd': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_skog_och_trad
+2025-07-25 01:29:23,874  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD GI Värdetrakter våtmark (Authority: LSTD)
+2025-07-25 01:29:23,874  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD GI Värdetrakter våtmark': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:23,874  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'LstD GI Värdetrakter våtmark'.
+2025-07-25 01:29:23,879  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in lstd_gi_vardetrakter_vatmark.geojson: {'Polygon'}
+2025-07-25 01:29:23,879  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for lstd_gi_vardetrakter_vatmark.geojson
+2025-07-25 01:29:23,879  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for lstd_gi_vardetrakter_vatmark.geojson
+2025-07-25 01:29:23,880  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('lstd_gi_vardetrakter_vatmark.geojson') → GDB:/'lstd_gi_vardetrakter_vatmark_polygon' (Authority: 'LSTD', Geom: POLYGON)
+2025-07-25 01:29:24,748  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'lstd_gi_vardetrakter_vatmark_polygon' with 7 records, geometry type: Polygon
+2025-07-25 01:29:24,750  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: LstD Strandskydd (Authority: LSTD)
+2025-07-25 01:29:24,751  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'LstD Strandskydd': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:29:24,751  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'LstD Strandskydd': C:\Git\ETL-pipeline\data\staging\LSTD\lstd_strandskydd
+2025-07-25 01:29:24,752  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Skyddsrum (Authority: MSB)
+2025-07-25 01:29:24,752  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Skyddsrum': staged_data_type='shapefile_collection', normalized='shapefile_collection'
+2025-07-25 01:29:24,753  INFO     [etl.loaders.filegdb:155]  📐 Handling shapefile collection source 'Skyddsrum'
+2025-07-25 01:29:24,757  INFO     [etl.loaders.shapefile_loader:103]  Found 1 item(s) to process for source 'Skyddsrum'
+2025-07-25 01:29:24,759  INFO     [etl.loaders.shapefile_loader:145]  📐 Found 1 shapefile(s) in item dir 'skyddsrum'.
+2025-07-25 01:29:24,775  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('Skyddsrum.shp') → GDB:/'msb_skyddsrum' (Authority: 'MSB')
+2025-07-25 01:29:28,665  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'Skyddsrum.shp' to 'msb_skyddsrum'
+2025-07-25 01:29:28,795  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Riksintresse Kulturmiljövård MB3kap6 (Authority: RAA)
+2025-07-25 01:29:28,796  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Riksintresse Kulturmiljövård MB3kap6': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:29:28,798  INFO     [etl.loaders.filegdb:145]  📦 Source 'Riksintresse Kulturmiljövård MB3kap6' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:29:28,800  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: riksintresse_kulturmiljovard_mb3kap6.gpkg (Authority: 'RAA', Include Filter: None)
+2025-07-25 01:29:30,238  INFO     [etl.loaders.gpkg_loader:186]  Found 1 feature classes in riksintresse_kulturmiljovard_mb3kap6.gpkg: ['main.raa_raa_ri_kulturmiljovard_mb3kap6']
+2025-07-25 01:29:30,264  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from riksintresse_kulturmiljovard_mb3kap6.gpkg
+2025-07-25 01:29:30,265  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.raa_raa_ri_kulturmiljovard_mb3kap6' → 'raa_raa_ri_kulturmiljovard_mb3kap6' for output naming
+2025-07-25 01:29:30,289  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.raa_raa_ri_kulturmiljovard_mb3kap6') → GDB:/'raa_raa_ri_kulturmiljovard_mb3kap6'
+2025-07-25 01:29:31,485  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.raa_raa_ri_kulturmiljovard_mb3kap6' to 'raa_raa_ri_kulturmiljovard_mb3kap6'
+2025-07-25 01:29:31,701  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: RAA Byggnader Sverige (Authority: RAA)
+2025-07-25 01:29:31,702  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'RAA Byggnader Sverige': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:29:31,703  INFO     [etl.loaders.filegdb:145]  📦 Source 'RAA Byggnader Sverige' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:29:31,705  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: raa_byggnader_sverige.gpkg (Authority: 'RAA', Include Filter: ['byggnader_sverige_point'])
+2025-07-25 01:29:32,681  INFO     [etl.loaders.gpkg_loader:186]  Found 3 feature classes in raa_byggnader_sverige.gpkg: ['main.byggnader_sverige_linestring', 'main.byggnader_sverige_point', 'main.byggnader_sverige_polygon']
+2025-07-25 01:29:32,682  INFO     [etl.loaders.gpkg_loader:197]  Normalized include filter for raa_byggnader_sverige.gpkg: {'byggnader_sverige_point'}
+2025-07-25 01:29:32,683  INFO     [etl.loaders.gpkg_loader:212]  ⏭️ Excluding GPKG FC 'main.byggnader_sverige_linestring' (not in include filter)
+2025-07-25 01:29:32,683  INFO     [etl.loaders.gpkg_loader:209]  ✅ Including GPKG FC 'main.byggnader_sverige_point' (matches filter)
+2025-07-25 01:29:32,684  INFO     [etl.loaders.gpkg_loader:212]  ⏭️ Excluding GPKG FC 'main.byggnader_sverige_polygon' (not in include filter)
+2025-07-25 01:29:32,685  INFO     [etl.loaders.gpkg_loader:216]  📦 After applying include filter: 1 feature classes remain
+2025-07-25 01:29:32,726  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from raa_byggnader_sverige.gpkg
+2025-07-25 01:29:32,727  INFO     [etl.loaders.gpkg_loader:138]  ✅ GPKG FC 'main.byggnader_sverige_point' (normalized: 'byggnader_sverige_point') is in include filter. Proceeding.
+2025-07-25 01:29:32,728  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.byggnader_sverige_point' → 'byggnader_sverige_point' for output naming
+2025-07-25 01:29:32,762  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.byggnader_sverige_point') → GDB:/'raa_byggnader_sverige_point'
+2025-07-25 01:29:45,249  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.byggnader_sverige_point' to 'raa_byggnader_sverige_point'
+2025-07-25 01:29:45,492  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Enskilda och statliga byggnadsminnen, skyddsområden (Authority: RAA)
+2025-07-25 01:29:45,494  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Enskilda och statliga byggnadsminnen, skyddsområden': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:29:45,495  INFO     [etl.loaders.filegdb:145]  📦 Source 'Enskilda och statliga byggnadsminnen, skyddsområden' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:29:45,497  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg (Authority: 'RAA', Include Filter: ['skyddsomrade_byggnadsminne_sverige_polygon'])
+2025-07-25 01:29:46,325  INFO     [etl.loaders.gpkg_loader:186]  Found 3 feature classes in enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg: ['main.skyddsomrade_byggnadsminne_sverige_linestring', 'main.skyddsomrade_byggnadsminne_sverige_point', 'main.skyddsomrade_byggnadsminne_sverige_polygon']
+2025-07-25 01:29:46,326  INFO     [etl.loaders.gpkg_loader:197]  Normalized include filter for enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg: {'skyddsomrade_byggnadsminne_sverige_polygon'}
+2025-07-25 01:29:46,326  INFO     [etl.loaders.gpkg_loader:212]  ⏭️ Excluding GPKG FC 'main.skyddsomrade_byggnadsminne_sverige_linestring' (not in include filter)
+2025-07-25 01:29:46,327  INFO     [etl.loaders.gpkg_loader:212]  ⏭️ Excluding GPKG FC 'main.skyddsomrade_byggnadsminne_sverige_point' (not in include filter)
+2025-07-25 01:29:46,328  INFO     [etl.loaders.gpkg_loader:209]  ✅ Including GPKG FC 'main.skyddsomrade_byggnadsminne_sverige_polygon' (matches filter)
+2025-07-25 01:29:46,329  INFO     [etl.loaders.gpkg_loader:216]  📦 After applying include filter: 1 feature classes remain
+2025-07-25 01:29:46,358  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg
+2025-07-25 01:29:46,359  INFO     [etl.loaders.gpkg_loader:138]  ✅ GPKG FC 'main.skyddsomrade_byggnadsminne_sverige_polygon' (normalized: 'skyddsomrade_byggnadsminne_sverige_polygon') is in include filter. Proceeding.
+2025-07-25 01:29:46,359  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.skyddsomrade_byggnadsminne_sverige_polygon' → 'skyddsomrade_byggnadsminne_sverige_polygon' for output naming
+2025-07-25 01:29:46,380  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.skyddsomrade_byggnadsminne_sverige_polygon') → GDB:/'raa_skyddsomrade_byggnadsminne_sverige_polygon'
+2025-07-25 01:29:47,799  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.skyddsomrade_byggnadsminne_sverige_polygon' to 'raa_skyddsomrade_byggnadsminne_sverige_polygon'
+2025-07-25 01:29:47,980  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Kulturhistoriska lämningar, Södermanland (Authority: RAA)
+2025-07-25 01:29:47,981  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Kulturhistoriska lämningar, Södermanland': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:29:47,982  INFO     [etl.loaders.filegdb:145]  📦 Source 'Kulturhistoriska lämningar, Södermanland' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:29:47,984  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: kulturhistoriska_lamningar_sodermanland.gpkg (Authority: 'RAA', Include Filter: None)
+2025-07-25 01:29:48,935  INFO     [etl.loaders.gpkg_loader:186]  Found 3 feature classes in kulturhistoriska_lamningar_sodermanland.gpkg: ['main.lämningar_län_södermanland_linestring', 'main.lämningar_län_södermanland_point', 'main.lämningar_län_södermanland_polygon']
+2025-07-25 01:29:49,027  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 3 valid feature classes from kulturhistoriska_lamningar_sodermanland.gpkg
+2025-07-25 01:29:49,028  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.lämningar_län_södermanland_linestring' → 'lämningar_län_södermanland_linestring' for output naming
+2025-07-25 01:29:49,046  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.lämningar_län_södermanland_linestring') → GDB:/'raa_lamningar_lan_sodermanland_linestring'
+2025-07-25 01:29:49,978  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.lämningar_län_södermanland_linestring' to 'raa_lamningar_lan_sodermanland_linestring'
+2025-07-25 01:29:50,106  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.lämningar_län_södermanland_point' → 'lämningar_län_södermanland_point' for output naming
+2025-07-25 01:29:50,161  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.lämningar_län_södermanland_point') → GDB:/'raa_lamningar_lan_sodermanland_point'
+2025-07-25 01:29:54,820  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.lämningar_län_södermanland_point' to 'raa_lamningar_lan_sodermanland_point'
+2025-07-25 01:29:54,961  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.lämningar_län_södermanland_polygon' → 'lämningar_län_södermanland_polygon' for output naming
+2025-07-25 01:29:55,109  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.lämningar_län_södermanland_polygon') → GDB:/'raa_lamningar_lan_sodermanland_polygon'
+2025-07-25 01:29:57,416  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.lämningar_län_södermanland_polygon' to 'raa_lamningar_lan_sodermanland_polygon'
+2025-07-25 01:29:57,667  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: RAA Världsarv i Sverige (Authority: RAA)
+2025-07-25 01:29:57,668  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'RAA Världsarv i Sverige': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:29:57,669  INFO     [etl.loaders.filegdb:145]  📦 Source 'RAA Världsarv i Sverige' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:29:57,670  INFO     [etl.loaders.gpkg_loader:166]  📦 Processing GeoPackage: raa_varldsarv_i_sverige.gpkg (Authority: 'RAA', Include Filter: ['varldsarv_sverige_polygon'])
+2025-07-25 01:29:58,497  INFO     [etl.loaders.gpkg_loader:186]  Found 3 feature classes in raa_varldsarv_i_sverige.gpkg: ['main.varldsarv_sverige_linestring', 'main.varldsarv_sverige_point', 'main.varldsarv_sverige_polygon']
+2025-07-25 01:29:58,498  INFO     [etl.loaders.gpkg_loader:197]  Normalized include filter for raa_varldsarv_i_sverige.gpkg: {'varldsarv_sverige_polygon'}
+2025-07-25 01:29:58,500  INFO     [etl.loaders.gpkg_loader:212]  ⏭️ Excluding GPKG FC 'main.varldsarv_sverige_linestring' (not in include filter)
+2025-07-25 01:29:58,501  INFO     [etl.loaders.gpkg_loader:212]  ⏭️ Excluding GPKG FC 'main.varldsarv_sverige_point' (not in include filter)
+2025-07-25 01:29:58,502  INFO     [etl.loaders.gpkg_loader:209]  ✅ Including GPKG FC 'main.varldsarv_sverige_polygon' (matches filter)
+2025-07-25 01:29:58,502  INFO     [etl.loaders.gpkg_loader:216]  📦 After applying include filter: 1 feature classes remain
+2025-07-25 01:29:58,523  INFO     [etl.loaders.gpkg_loader:242]  📦 Processing 1 valid feature classes from raa_varldsarv_i_sverige.gpkg
+2025-07-25 01:29:58,524  INFO     [etl.loaders.gpkg_loader:138]  ✅ GPKG FC 'main.varldsarv_sverige_polygon' (normalized: 'varldsarv_sverige_polygon') is in include filter. Proceeding.
+2025-07-25 01:29:58,525  INFO     [etl.loaders.gpkg_loader:144]  Stripped 'main.' from 'main.varldsarv_sverige_polygon' → 'varldsarv_sverige_polygon' for output naming
+2025-07-25 01:29:58,547  INFO     [etl.loaders.gpkg_loader:94]  📥 Copying GPKG FC ('main.varldsarv_sverige_polygon') → GDB:/'raa_varldsarv_sverige_polygon'
+2025-07-25 01:29:59,356  INFO     [etl.loaders.gpkg_loader:35]  ✅ SUCCESS: Copied GPKG FC 'main.varldsarv_sverige_polygon' to 'raa_varldsarv_sverige_polygon'
+2025-07-25 01:29:59,559  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Inträffade skred, ras och övriga jordrörelser (skreddatabas) (Authority: SGI)
+2025-07-25 01:29:59,559  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Inträffade skred, ras och övriga jordrörelser (skreddatabas)': staged_data_type='shapefile_collection', normalized='shapefile_collection'
+2025-07-25 01:29:59,561  INFO     [etl.loaders.filegdb:155]  📐 Handling shapefile collection source 'Inträffade skred, ras och övriga jordrörelser (skreddatabas)'
+2025-07-25 01:29:59,566  INFO     [etl.loaders.shapefile_loader:103]  Found 1 item(s) to process for source 'Inträffade skred, ras och övriga jordrörelser (skreddatabas)'
+2025-07-25 01:29:59,569  INFO     [etl.loaders.shapefile_loader:145]  📐 Found 1 shapefile(s) in item dir 'intraffade_skred_ras_och_ovriga_jordrorelser_skreddatabas'.
+2025-07-25 01:29:59,591  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('SGI_Skreddatabas_ver2.shp') → GDB:/'sgi_skreddatabas_ver2' (Authority: 'SGI')
+2025-07-25 01:30:00,638  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'SGI_Skreddatabas_ver2.shp' to 'sgi_skreddatabas_ver2'
+2025-07-25 01:30:00,804  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Erosion (Authority: SGU)
+2025-07-25 01:30:00,806  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Erosion': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:00,808  INFO     [etl.loaders.filegdb:276]  ℹ️ No JSON/GeoJSON files found for source 'Erosion'.
+2025-07-25 01:30:00,809  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Brunnar (Authority: SGU)
+2025-07-25 01:30:00,810  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Brunnar': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:00,813  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Brunnar'.
+2025-07-25 01:30:01,190  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in brunnar.geojson: {'Point'}
+2025-07-25 01:30:01,191  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Point → POINT for brunnar.geojson
+2025-07-25 01:30:01,209  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POINT for brunnar.geojson
+2025-07-25 01:30:01,211  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('brunnar.geojson') → GDB:/'sgu_brunnar_point' (Authority: 'SGU', Geom: POINT)
+2025-07-25 01:30:05,056  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sgu_brunnar_point' with 19579 records, geometry type: Point
+2025-07-25 01:30:05,057  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Jordskred och raviner (Authority: SGU)
+2025-07-25 01:30:05,058  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Jordskred och raviner': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:05,059  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Jordskred och raviner'.
+2025-07-25 01:30:05,062  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in jordskred-raviner.geojson: {'LineString'}
+2025-07-25 01:30:05,062  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping LineString → POLYLINE for jordskred-raviner.geojson
+2025-07-25 01:30:05,063  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYLINE for jordskred-raviner.geojson
+2025-07-25 01:30:05,063  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('jordskred-raviner.geojson') → GDB:/'sgu_jordskred_raviner_polyline' (Authority: 'SGU', Geom: POLYLINE)
+2025-07-25 01:30:06,149  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sgu_jordskred_raviner_polyline' with 48 records, geometry type: Polyline
+2025-07-25 01:30:06,150  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Grus Krossberg (Authority: SGU)
+2025-07-25 01:30:06,151  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Grus Krossberg': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:06,151  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Grus Krossberg': C:\Git\ETL-pipeline\data\staging\SGU\grus_krossberg
+2025-07-25 01:30:06,152  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Jordbruksblock (2024) (Authority: SJV)
+2025-07-25 01:30:06,152  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Jordbruksblock (2024)': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:06,153  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Jordbruksblock (2024)'.
+2025-07-25 01:30:09,499  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in sjv_jordbruksblock_2024.geojson: {'Polygon'}
+2025-07-25 01:30:09,500  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for sjv_jordbruksblock_2024.geojson
+2025-07-25 01:30:09,583  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for sjv_jordbruksblock_2024.geojson
+2025-07-25 01:30:09,586  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('sjv_jordbruksblock_2024.geojson') → GDB:/'sjv_jordbruksblock_2024_polygon' (Authority: 'SJV', Geom: POLYGON)
+2025-07-25 01:30:29,360  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sjv_jordbruksblock_2024_polygon' with 18581 records, geometry type: Polygon
+2025-07-25 01:30:29,361  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Jordbruksskiften (senaste året) (Authority: SJV)
+2025-07-25 01:30:29,361  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Jordbruksskiften (senaste året)': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:29,362  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Jordbruksskiften (senaste året)': C:\Git\ETL-pipeline\data\staging\SJV\jordbruksskiften_senaste_aret
+2025-07-25 01:30:29,362  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Produktionsplatser för djurhållning (Authority: SJV)
+2025-07-25 01:30:29,362  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Produktionsplatser för djurhållning': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:29,362  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Produktionsplatser för djurhållning': C:\Git\ETL-pipeline\data\staging\SJV\produktionsplatser_for_djurhallning
+2025-07-25 01:30:29,363  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Ängs- och betesmarksinventeringen (Authority: SJV)
+2025-07-25 01:30:29,363  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Ängs- och betesmarksinventeringen': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:29,364  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Ängs- och betesmarksinventeringen': C:\Git\ETL-pipeline\data\staging\SJV\angs-_och_betesmarksinventeringen
+2025-07-25 01:30:29,364  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Naturvärden (Authority: SKS)
+2025-07-25 01:30:29,365  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Naturvärden': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:30:29,365  INFO     [etl.loaders.filegdb:145]  📦 Source 'Naturvärden' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:30:29,365  WARNING  [etl.loaders.filegdb:237]  ⚠️ No GPKG file found for source 'Naturvärden' in dir C:\Git\ETL-pipeline\data\staging\SKS\naturvarden
+2025-07-25 01:30:29,365  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Ras och skred (Authority: SKS)
+2025-07-25 01:30:29,367  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Ras och skred': staged_data_type='gpkg', normalized='gpkg'
+2025-07-25 01:30:29,367  INFO     [etl.loaders.filegdb:145]  📦 Source 'Ras och skred' configured for GPKG - using GPKG loader exclusively
+2025-07-25 01:30:29,368  WARNING  [etl.loaders.filegdb:198]  ⚠️ Staging directory not found for GPKG source 'Ras och skred': C:\Git\ETL-pipeline\data\staging\SKS\ras_och_skred
+2025-07-25 01:30:29,368  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Skogsstyrelsen - Biotopskydd (REST) (Authority: SKS)
+2025-07-25 01:30:29,368  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Skogsstyrelsen - Biotopskydd (REST)': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:29,370  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Skogsstyrelsen - Biotopskydd (REST)'.
+2025-07-25 01:30:29,379  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in biotopskydd_skogsstyrelsen.geojson: {'Polygon'}
+2025-07-25 01:30:29,380  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for biotopskydd_skogsstyrelsen.geojson
+2025-07-25 01:30:29,381  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for biotopskydd_skogsstyrelsen.geojson
+2025-07-25 01:30:29,382  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('biotopskydd_skogsstyrelsen.geojson') → GDB:/'sks_biotopskydd_skogsstyrelsen_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:30,558  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_biotopskydd_skogsstyrelsen_polygon' with 125 records, geometry type: Polygon
+2025-07-25 01:30:30,559  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Utförda avverkningar (Authority: SKS)
+2025-07-25 01:30:30,559  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Utförda avverkningar': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:30,561  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Utförda avverkningar': C:\Git\ETL-pipeline\data\staging\SKS\utforda_avverkningar
+2025-07-25 01:30:30,561  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Naturvårdsavtal (Authority: SKS)
+2025-07-25 01:30:30,562  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Naturvårdsavtal': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:30,563  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Naturvårdsavtal'.
+2025-07-25 01:30:30,573  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in naturvardsavtal_skogsstyrelsen.geojson: {'Polygon', 'MultiPolygon'}
+2025-07-25 01:30:30,574  WARNING  [etl.loaders.geojson_loader:79]  ⚠️ Mixed geometry types found in naturvardsavtal_skogsstyrelsen.geojson: {'Polygon', 'MultiPolygon'}. Using POLYGON as default.
+2025-07-25 01:30:30,576  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for naturvardsavtal_skogsstyrelsen.geojson
+2025-07-25 01:30:30,577  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('naturvardsavtal_skogsstyrelsen.geojson') → GDB:/'sks_naturvardsavtal_skogsstyrelsen_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:31,650  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_naturvardsavtal_skogsstyrelsen_polygon' with 59 records, geometry type: Polygon
+2025-07-25 01:30:31,651  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Återvätningsavtal (Authority: SKS)
+2025-07-25 01:30:31,652  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Återvätningsavtal': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:31,653  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Återvätningsavtal'.
+2025-07-25 01:30:31,654  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in atervatningyta_skogsstyrelsen.geojson: {'Polygon'}
+2025-07-25 01:30:31,654  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for atervatningyta_skogsstyrelsen.geojson
+2025-07-25 01:30:31,654  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for atervatningyta_skogsstyrelsen.geojson
+2025-07-25 01:30:31,655  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('atervatningyta_skogsstyrelsen.geojson') → GDB:/'sks_atervatningyta_skogsstyrelsen_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:32,680  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_atervatningyta_skogsstyrelsen_polygon' with 3 records, geometry type: Polygon
+2025-07-25 01:30:32,682  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Nyckelbiotoper (Authority: SKS)
+2025-07-25 01:30:32,683  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Nyckelbiotoper': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:32,684  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Nyckelbiotoper'.
+2025-07-25 01:30:32,763  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in nyckelbiotop_skogsstyrelsen.geojson: {'Polygon'}
+2025-07-25 01:30:32,764  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for nyckelbiotop_skogsstyrelsen.geojson
+2025-07-25 01:30:32,768  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for nyckelbiotop_skogsstyrelsen.geojson
+2025-07-25 01:30:32,769  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('nyckelbiotop_skogsstyrelsen.geojson') → GDB:/'sks_nyckelbiotop_skogsstyrelsen_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:34,195  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_nyckelbiotop_skogsstyrelsen_polygon' with 1293 records, geometry type: Polygon
+2025-07-25 01:30:34,196  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Sumpskogar (Authority: SKS)
+2025-07-25 01:30:34,197  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Sumpskogar': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:34,200  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Sumpskogar'.
+2025-07-25 01:30:34,459  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in sumpskog_skogsstyrelsen.geojson: {'Polygon'}
+2025-07-25 01:30:34,459  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for sumpskog_skogsstyrelsen.geojson
+2025-07-25 01:30:34,468  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for sumpskog_skogsstyrelsen.geojson
+2025-07-25 01:30:34,469  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('sumpskog_skogsstyrelsen.geojson') → GDB:/'sks_sumpskog_skogsstyrelsen_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:36,769  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_sumpskog_skogsstyrelsen_polygon' with 2769 records, geometry type: Polygon
+2025-07-25 01:30:36,771  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Avverkningsanmälda områden (Authority: SKS)
+2025-07-25 01:30:36,772  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Avverkningsanmälda områden': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:36,776  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Avverkningsanmälda områden'.
+2025-07-25 01:30:36,947  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in avverkningsanmalan_skogsstyrelsen.geojson: {'Polygon'}
+2025-07-25 01:30:36,948  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for avverkningsanmalan_skogsstyrelsen.geojson
+2025-07-25 01:30:36,953  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for avverkningsanmalan_skogsstyrelsen.geojson
+2025-07-25 01:30:36,954  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('avverkningsanmalan_skogsstyrelsen.geojson') → GDB:/'sks_avverkningsanmalan_skogsstyrelsen_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:39,502  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_avverkningsanmalan_skogsstyrelsen_polygon' with 1337 records, geometry type: Polygon
+2025-07-25 01:30:39,503  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Gräns för skogsskyddsbestämmelser (Authority: SKS)
+2025-07-25 01:30:39,504  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Gräns för skogsskyddsbestämmelser': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:39,505  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Gräns för skogsskyddsbestämmelser'.
+2025-07-25 01:30:39,531  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in skogsskyddsbestammelser.geojson: {'MultiPolygon'}
+2025-07-25 01:30:39,532  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping MultiPolygon → POLYGON for skogsskyddsbestammelser.geojson
+2025-07-25 01:30:39,534  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for skogsskyddsbestammelser.geojson
+2025-07-25 01:30:39,537  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('skogsskyddsbestammelser.geojson') → GDB:/'sks_skogsskyddsbestammelser_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:40,678  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_skogsskyddsbestammelser_polygon' with 1 records, geometry type: Polygon
+2025-07-25 01:30:40,680  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Nyckelbiotoper - storskogsbruket (Authority: SKS)
+2025-07-25 01:30:40,681  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Nyckelbiotoper - storskogsbruket': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:40,683  INFO     [etl.loaders.filegdb:262]  🌍 Found 1 JSON/GeoJSON file(s) for source 'Nyckelbiotoper - storskogsbruket'.
+2025-07-25 01:30:40,714  INFO     [etl.loaders.geojson_loader:53]  🔍 Detected geometry types in storskogsbrukets_nyckelbiotoper.geojson: {'Polygon'}
+2025-07-25 01:30:40,715  INFO     [etl.loaders.geojson_loader:71]  🔍 Mapping Polygon → POLYGON for storskogsbrukets_nyckelbiotoper.geojson
+2025-07-25 01:30:40,717  INFO     [etl.loaders.geojson_loader:129]  📍 Detected geometry type: POLYGON for storskogsbrukets_nyckelbiotoper.geojson
+2025-07-25 01:30:40,719  INFO     [etl.loaders.geojson_loader:142]  📥 Converting JSON/GeoJSON ('storskogsbrukets_nyckelbiotoper.geojson') → GDB:/'sks_storskogsbrukets_nyckelbiotoper_polygon' (Authority: 'SKS', Geom: POLYGON)
+2025-07-25 01:30:42,063  INFO     [etl.loaders.geojson_loader:166]  ✅ SUCCESS: Created FC 'sks_storskogsbrukets_nyckelbiotoper_polygon' with 161 records, geometry type: Polygon
+2025-07-25 01:30:42,066  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Stamnät (Authority: SVK)
+2025-07-25 01:30:42,066  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Stamnät': staged_data_type='shapefile_collection', normalized='shapefile_collection'
+2025-07-25 01:30:42,068  INFO     [etl.loaders.filegdb:155]  📐 Handling shapefile collection source 'Stamnät'
+2025-07-25 01:30:42,074  INFO     [etl.loaders.shapefile_loader:103]  Found 1 item(s) to process for source 'Stamnät'
+2025-07-25 01:30:42,077  INFO     [etl.loaders.shapefile_loader:145]  📐 Found 4 shapefile(s) in item dir 'stamnat'.
+2025-07-25 01:30:42,091  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('STATIONER.shp') → GDB:/'svk_stationer' (Authority: 'SVK')
+2025-07-25 01:30:42,996  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'STATIONER.shp' to 'svk_stationer'
+2025-07-25 01:30:43,148  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('STATIONSOMRADEN.shp') → GDB:/'svk_stationsomraden' (Authority: 'SVK')
+2025-07-25 01:30:44,096  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'STATIONSOMRADEN.shp' to 'svk_stationsomraden'
+2025-07-25 01:30:44,250  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('SVK_LEDNINGAR.shp') → GDB:/'svk_ledningar' (Authority: 'SVK')
+2025-07-25 01:30:45,283  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'SVK_LEDNINGAR.shp' to 'svk_ledningar'
+2025-07-25 01:30:45,446  INFO     [etl.loaders.shapefile_loader:180]  📥 Copying SHP ('SVK_STOLPAR.shp') → GDB:/'svk_stolpar' (Authority: 'SVK')
+2025-07-25 01:30:49,459  INFO     [etl.loaders.shapefile_loader:192]  ✅ SUCCESS: Copied shapefile 'SVK_STOLPAR.shp' to 'svk_stolpar'
+2025-07-25 01:30:49,652  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Vägar (Authority: TRV)
+2025-07-25 01:30:49,654  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Vägar': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:49,654  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Vägar': C:\Git\ETL-pipeline\data\staging\TRV\vagar
+2025-07-25 01:30:49,655  INFO     [etl.loaders.filegdb:108]  🔄 Processing source: Övrigt (Authority: TRV)
+2025-07-25 01:30:49,656  INFO     [etl.loaders.filegdb:135]  🔍 Processing source 'Övrigt': staged_data_type='geojson', normalized='geojson'
+2025-07-25 01:30:49,656  WARNING  [etl.loaders.filegdb:250]  ⚠️ Staging directory not found for JSON/GeoJSON source 'Övrigt': C:\Git\ETL-pipeline\data\staging\TRV\ovrigt
+2025-07-25 01:30:49,657  INFO     [etl.loaders.filegdb:83]  ✅ FileGDB loading process completed
+2025-07-25 01:30:49,658  INFO     [pipeline:623]  ✅ Staging.gdb built successfully in 223.93 seconds
+2025-07-25 01:30:49,659  ERROR    [pipeline:623]  ❌ AOI boundary not found: data\connections\municipality_boundary.shp
+2025-07-25 01:30:49,659  INFO     [etl.utils.performance:481]  ⏱️  geoprocessing completed in 0.001s
+2025-07-25 01:30:49,661  INFO     [pipeline:623]  🚚 Starting SDE loading - Source: staging.gdb, SDE: data/connections/prod.sde
+2025-07-25 01:30:52,626  DEBUG    [pipeline:623]  📄 Found standalone feature classes: 48
+2025-07-25 01:30:52,649  INFO     [pipeline:623]  📋 Feature classes discovered: 48
+2025-07-25 01:30:52,650  INFO     [pipeline:623]  🚀 Starting parallel SDE loading with 2 workers
+2025-07-25 01:30:52,651  ERROR    [etl.utils.performance:486]  ⏱️  sde_loading failed after 2.990s: 'ParallelProcessor' object has no attribute 'execute'
+2025-07-25 01:30:52,651  ERROR    [etl.utils.performance:486]  ⏱️  pipeline_run failed after 529.244s: 'ParallelProcessor' object has no attribute 'execute'
