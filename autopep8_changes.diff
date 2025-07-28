@@ -12,37 +12,7 @@
              "operation_analysis": operation_analysis,
 --- original/./etl/utils/retry.py
 +++ fixed/./etl/utils/retry.py
-@@ -159,7 +159,8 @@
- 
-         if self.failure_count >= self.failure_threshold:
-             self.state = "OPEN"
--            log.warning("🔴 Circuit breaker OPEN after %d failures", self.failure_count)
-+            log.warning("🔴 Circuit breaker OPEN after %d failures",
-+                        self.failure_count)
- 
- 
- def retry_with_backoff(
-@@ -287,7 +288,8 @@
-                         raise
- 
-                     log.warning(
--                        "Retrying %s due to %s", func.__name__, type(e).__name__
-+                        "Retrying %s due to %s", func.__name__, type(
-+                            e).__name__
-                     )
-                     time.sleep(delay)
- 
-@@ -314,7 +316,8 @@
-     def __enter__(self):
-         self.attempt += 1
-         self.start_time = time.time()
--        log.debug("🚀 Starting %s (attempt %d)", self.operation_name, self.attempt)
-+        log.debug("🚀 Starting %s (attempt %d)",
-+                  self.operation_name, self.attempt)
-         return self
- 
-     def __exit__(self, exc_type, exc_val, exc_tb):
-@@ -382,7 +385,8 @@
+@@ -402,7 +402,8 @@
              "total_successes": self.total_successes,
              "total_failures": self.total_failures,
              "success_rate": (
@@ -52,46 +22,6 @@
              )
              * 100
              if (self.total_successes + self.total_failures) > 0
-@@ -406,7 +410,8 @@
-     base_delay=2.0,
-     max_delay=120.0,
-     backoff_factor=2.0,
--    recoverable_exceptions=[NetworkError, SourceError, ConnectionError, TimeoutError],
-+    recoverable_exceptions=[NetworkError,
-+                            SourceError, ConnectionError, TimeoutError],
- )
- 
- DATABASE_RETRY_CONFIG = RetryConfig(
-@@ -485,7 +490,8 @@
-                             operation_name,
-                             last_exception,
-                         )
--                        _retry_stats.record_attempt(operation_name, False, attempt)
-+                        _retry_stats.record_attempt(
-+                            operation_name, False, attempt)
-                         raise last_exception
- 
-                     if attempt == config.max_attempts:
-@@ -495,7 +501,8 @@
-                             attempt,
-                             last_exception,
-                         )
--                        _retry_stats.record_attempt(operation_name, False, attempt)
-+                        _retry_stats.record_attempt(
-+                            operation_name, False, attempt)
-                         raise last_exception
- 
-                     delay = config.get_delay(attempt, last_exception)
-@@ -512,7 +519,8 @@
- 
-             # This should never be reached, but just in case
-             if last_exception:
--                _retry_stats.record_attempt(operation_name, False, config.max_attempts)
-+                _retry_stats.record_attempt(
-+                    operation_name, False, config.max_attempts)
-                 raise last_exception
- 
-         return wrapper
 --- original/./etl/utils/adaptive_tuning.py
 +++ fixed/./etl/utils/adaptive_tuning.py
 @@ -43,8 +43,8 @@
@@ -107,63 +37,7 @@
  
 --- original/./etl/handlers/rest_api.py
 +++ fixed/./etl/handlers/rest_api.py
-@@ -65,7 +65,8 @@
-             expected_exceptions=[Exception],
-         )
- 
--        log.info("🚀 Initializing RestApiDownloadHandler for source: %s", self.src.name)
-+        log.info(
-+            "🚀 Initializing RestApiDownloadHandler for source: %s", self.src.name)
- 
-     @retry_with_backoff()
-     def _get_service_metadata(self, service_url: str) -> Optional[Dict[str, Any]]:
-@@ -171,11 +172,13 @@
-         """Fetches metadata for a specific layer."""
-         try:
-             params = {"f": "json"}
--            response = self.session.get(layer_url, params=params, timeout=self.timeout)
-+            response = self.session.get(
-+                layer_url, params=params, timeout=self.timeout)
-             response.raise_for_status()
-             return response.json()
-         except requests.exceptions.RequestException as e:
--            log.error("❌ Failed to fetch layer metadata from %s: %s", layer_url, e)
-+            log.error("❌ Failed to fetch layer metadata from %s: %s",
-+                      layer_url, e)
-             return None
- 
-     def _prepare_query_params(self) -> Dict[str, Any]:
-@@ -210,7 +213,8 @@
-     ) -> Optional[Dict[str, Any]]:
-         """Execute a paginated request and return the JSON payload."""
-         try:
--            response_obj = self.session.get(query_url, params=params, timeout=120)
-+            response_obj = self.session.get(
-+                query_url, params=params, timeout=120)
-             response_obj.raise_for_status()
-             return response_obj.json()
-         except requests.exceptions.RequestException as e:
-@@ -295,7 +299,8 @@
-         try:
-             with open(output_path, "w", encoding="utf-8") as f:
-                 json.dump(final_output_data, f, ensure_ascii=False, indent=2)
--            log.info("✅ %s: %d features", layer_name_sanitized, features_written_total)
-+            log.info("✅ %s: %d features", layer_name_sanitized,
-+                     features_written_total)
-             log.debug(
-                 "💾 Successfully saved %d features for layer %s to %s",
-                 features_written_total,
-@@ -349,7 +354,8 @@
-                 self.src.name,
-             )
-             if not isinstance(configured_layer_ids_from_yaml, list):
--                configured_layer_ids_from_yaml = [configured_layer_ids_from_yaml]
-+                configured_layer_ids_from_yaml = [
-+                    configured_layer_ids_from_yaml]
- 
-             for lid_val in configured_layer_ids_from_yaml:
-                 lid_str = str(lid_val)
-@@ -358,7 +364,8 @@
+@@ -375,7 +375,8 @@
                  if layer_detail:
                      layer_name = layer_detail.get("name", f"layer_{lid_str}")
                      layers_to_iterate_final.append(
@@ -173,13 +47,9 @@
                      )
                  else:
                      log.warning(
-@@ -409,9 +416,11 @@
-                 else service_meta.get("id", "0")
-             )
-             fs_layer_id_str = str(fs_layer_id)
--            fs_layer_name = service_meta.get("name", f"feature_layer_{fs_layer_id_str}")
-+            fs_layer_name = service_meta.get(
-+                "name", f"feature_layer_{fs_layer_id_str}")
+@@ -427,7 +428,8 @@
+             fs_layer_name = service_meta.get(
+                 "name", f"feature_layer_{fs_layer_id_str}")
              layers_to_iterate_final.append(
 -                {"id": fs_layer_id_str, "name": fs_layer_name, "metadata": service_meta}
 +                {"id": fs_layer_id_str, "name": fs_layer_name,
@@ -187,17 +57,7 @@
              )
  
          if not layers_to_iterate_final:
-@@ -422,7 +431,8 @@
-             )
-             return
- 
--        log_layer_ids_to_query = [layer["id"] for layer in layers_to_iterate_final]
-+        log_layer_ids_to_query = [layer["id"]
-+                                  for layer in layers_to_iterate_final]
-         log.info(
-             "Source '%s': Will attempt to query %d layer(s): %s",
-             self.src.name,
-@@ -438,18 +448,21 @@
+@@ -453,7 +455,8 @@
              for layer_info_to_query in layers_to_iterate_final:
                  self._fetch_layer_data(
                      layer_info=layer_info_to_query,
@@ -206,59 +66,4 @@
 +                        "metadata"),
                  )
  
-     def _fetch_layers_concurrent(self, layers_to_iterate: List[Dict[str, Any]]) -> None:
-         """Fetch multiple layers concurrently for improved performance."""
--        log.info("🚀 Starting concurrent download of %d layers", len(layers_to_iterate))
-+        log.info("🚀 Starting concurrent download of %d layers",
-+                 len(layers_to_iterate))
- 
-         # Get concurrent downloader
-         downloader = get_layer_downloader()
- 
-         # Enable parallel processing based on configuration
--        use_concurrent = self.global_config.get("enable_concurrent_downloads", True)
-+        use_concurrent = self.global_config.get(
-+            "enable_concurrent_downloads", True)
-         max_workers = self.global_config.get("concurrent_download_workers", 5)
- 
-         if not use_concurrent:
-@@ -486,7 +499,8 @@
-         for result in results:
-             if not result.success:
-                 layer_name = result.metadata.get("task_name", "unknown")
--                log.error("❌ Layer download failed: %s - %s", layer_name, result.error)
-+                log.error("❌ Layer download failed: %s - %s",
-+                          layer_name, result.error)
- 
-     def _determine_max_record_count(
-         self,
-@@ -498,7 +512,8 @@
-         if max_record_count_from_config is not None:
-             try:
-                 max_record_count = int(max_record_count_from_config)
--                log.debug("Using max_record_count from config: %d", max_record_count)
-+                log.debug("Using max_record_count from config: %d",
-+                          max_record_count)
-                 return max_record_count, layer_meta
-             except ValueError:
-                 log.warning(
-@@ -517,7 +532,8 @@
-         if layer_meta:
-             if layer_meta.get("maxRecordCount") is not None:
-                 max_record_count = layer_meta["maxRecordCount"]
--                log.debug("Service metadata maxRecordCount: %d", max_record_count)
-+                log.debug("Service metadata maxRecordCount: %d",
-+                          max_record_count)
-             elif layer_meta.get("standardMaxRecordCount") is not None:
-                 max_record_count = layer_meta["standardMaxRecordCount"]
-                 log.debug(
-@@ -673,7 +689,8 @@
- 
-         source_name_sanitized = sanitize_for_filename(self.src.name)
-         staging_dir = (
--            Path(str(paths.STAGING)) / self.src.authority / source_name_sanitized
-+            Path(str(paths.STAGING)) /
-+            self.src.authority / source_name_sanitized
-         )
-         staging_dir.mkdir(parents=True, exist_ok=True)
- 
+     def _fetch_layers_concurrent(
