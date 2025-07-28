@@ -1,0 +1,487 @@
+2025-07-28 05:18:53,218  INFO     [etl.mapping:95]  ⚙️  Loaded mapping settings: MappingSettings(default_schema='GNG', default_dataset_pattern='Underlag_{authority}', default_fc_pattern='{authority}_{source_name}', validate_datasets=True, create_missing_datasets=True, skip_unmappable_sources=False)
+2025-07-28 05:18:53,219  INFO     [etl.mapping:117]  ✅ Loaded 1 mappings from config\mappings.yaml
+2025-07-28 05:18:53,219  INFO     [etl.mapping:64]  🗺️  Mapping manager initialized with 1 mappings
+2025-07-28 05:18:53,219  INFO     [etl.monitoring:137]  📊 Metrics collector initialized (max_points=10000)
+2025-07-28 05:18:53,222  INFO     [etl.monitoring:449]  🔍 Pipeline monitor initialized
+2025-07-28 05:18:53,222  INFO     [etl.utils.performance:367]  ⚡ Parallel processor initialized: max_workers=2
+2025-07-28 05:18:53,223  INFO     [etl.monitoring:465]  🚀 Started pipeline run: pipeline_1753672733
+2025-07-28 05:18:53,224  INFO     [pipeline:623]  🚀 Starting ETL pipeline run - ID: pipeline_1753672733, Sources: config\sources.yaml
+2025-07-28 05:18:53,226  INFO     [etl.utils.cleanup:38]  🧹 Cleaning downloads folder: C:\Git\ETL-pipeline\data\downloads (18 files)
+2025-07-28 05:18:53,234  INFO     [etl.utils.cleanup:53]  ✅ Downloads folder cleaned: removed 18 items
+2025-07-28 05:18:53,266  INFO     [etl.utils.cleanup:80]  🧹 Cleaning staging folder: C:\Git\ETL-pipeline\data\staging (153 files)
+2025-07-28 05:18:53,326  INFO     [etl.utils.cleanup:95]  ✅ Staging folder cleaned: removed 153 items
+2025-07-28 05:18:53,361  INFO     [etl.models:127]  ✅ Loaded 53 sources from config\sources.yaml
+2025-07-28 05:18:53,361  INFO     [pipeline:623]  📋 Found sources to process: 53
+2025-07-28 05:18:53,361  INFO     [pipeline:623]  🚀 Concurrent downloads enabled: REST=5, OGC=3, Files=4 workers
+2025-07-28 05:18:53,361  INFO     [pipeline:623]  🚚 Försvarsmakten - Rikstäckande geodata
+2025-07-28 05:18:53,362  INFO     [etl.handlers.file:165]  🔗 Single resource download mode for 'Försvarsmakten - Rikstäckande geodata' from URL: https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip
+2025-07-28 05:18:53,491  WARNING  [etl.utils.http:100]      HEAD request for Content-Disposition failed for https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip: HTTP Error 403: Forbidden. Will fall back to URL basename.
+2025-07-28 05:18:53,493  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip'): rikstackande-geodata-forsvarsmakten.zip
+2025-07-28 05:18:53,495  DEBUG    [etl.handlers.file:251]  Attempting to download: https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip 
+    -> to local file: forsvarsmakten_-_rikstackande_geodata.zip 
+    -> staging dir: data\staging\FM\forsvarsmakten_-_rikstackande_geodata
+2025-07-28 05:18:53,498  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): www.forsvarsmakten.se:443
+2025-07-28 05:18:53,563  DEBUG    [urllib3.connectionpool:544]  https://www.forsvarsmakten.se:443 "HEAD /siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip HTTP/1.1" 403 0
+2025-07-28 05:18:53,563  INFO     [etl.utils.io:46]  ⬇ forsvarsmakten_-_rikstackande_geodata.zip
+2025-07-28 05:18:53,564  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): www.forsvarsmakten.se:443
+2025-07-28 05:18:53,652  DEBUG    [urllib3.connectionpool:544]  https://www.forsvarsmakten.se:443 "GET /siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip HTTP/1.1" 200 1331177
+2025-07-28 05:18:53,747  INFO     [etl.utils.io:82]  ✅ forsvarsmakten_-_rikstackande_geodata.zip
+2025-07-28 05:18:53,748  INFO     [etl.handlers.file:283]  Determined staged_data_type: 'shapefile_collection' for downloaded file 'forsvarsmakten_-_rikstackande_geodata.zip'
+2025-07-28 05:18:53,749  INFO     [etl.utils.io:88]  📦 Extracting forsvarsmakten_-_rikstackande_geodata.zip → C:\Git\ETL-pipeline\data\staging\FM\forsvarsmakten_-_rikstackande_geodata
+2025-07-28 05:18:53,845  INFO     [etl.handlers.file:358]  ➕ Extracted and staged archive forsvarsmakten_-_rikstackande_geodata.zip to data\staging\FM\forsvarsmakten_-_rikstackande_geodata
+2025-07-28 05:18:53,845  INFO     [pipeline:623]  🚚 Naturvårdsverket - Naturvårdsregistret
+2025-07-28 05:18:53,846  INFO     [etl.handlers.file:82]  🔗 Multi-part download mode for 'Naturvårdsverket - Naturvårdsregistret' (19 archives from base URL 'https://geodata.naturvardsverket.se/nedladdning/naturvardsregistret/')…
+2025-07-28 05:18:53,846  INFO     [etl.handlers.file:104]  🚀 Starting concurrent download of 19 files
+2025-07-28 05:18:53,846  INFO     [etl.utils.concurrent:87]  Initialized ConcurrentDownloadManager with 4 workers
+2025-07-28 05:18:53,846  ERROR    [etl.handlers.file:73]  ❌ Failed to fetch source 'Naturvårdsverket - Naturvårdsregistret': ConcurrentFileDownloader.download_files_concurrent() got an unexpected keyword argument 'max_workers'
+2025-07-28 05:18:53,846  INFO     [etl.utils.recovery:158]  🔄 Attempting recovery from TypeError in download_source_Naturvårdsverket - Naturvårdsregistret: ConcurrentFileDownloader.download_files_concurrent() got an unexpected keyword argument 'max_workers'
+2025-07-28 05:18:53,847  WARNING  [etl.utils.recovery:245]  ⏭️ Skipping failed operation: download_source_Naturvårdsverket - Naturvårdsregistret
+2025-07-28 05:18:53,847  INFO     [etl.utils.recovery:214]  ✅ Recovery successful using skip strategy
+2025-07-28 05:18:53,847  INFO     [pipeline:623]  ✅ Recovered from download error for Naturvårdsverket - Naturvårdsregistret
+2025-07-28 05:18:53,847  INFO     [pipeline:623]  🚚 Miljöriskområde
+2025-07-28 05:18:53,848  INFO     [etl.handlers.atom_feed:41]  🌐 Reading Atom feed for source 'Miljöriskområde' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml
+2025-07-28 05:18:53,849  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:54,142  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml HTTP/1.1" 200 0
+2025-07-28 05:18:54,142  INFO     [etl.utils.io:44]  ⬇ miljoriskomrade_feed.xml (1.0 KB)
+2025-07-28 05:18:54,143  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:54,243  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml HTTP/1.1" 200 1036
+2025-07-28 05:18:54,245  INFO     [etl.utils.io:82]  ✅ miljoriskomrade_feed.xml
+2025-07-28 05:18:54,248  INFO     [etl.handlers.atom_feed:77]  Target staging directory for all content from Atom source 'Miljöriskområde': data\staging\LST\miljoriskomrade
+2025-07-28 05:18:54,248  INFO     [etl.handlers.atom_feed:105]  Found linked resource in Atom feed for 'Miljöriskområde': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip
+2025-07-28 05:18:54,401  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip'): lst.LST_Miljoriskomrade.zip
+2025-07-28 05:18:54,402  INFO     [etl.handlers.atom_feed:157]  Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip 
+        -> to local file: lst_lst_miljoriskomrade.zip
+2025-07-28 05:18:54,404  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:54,504  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip HTTP/1.1" 200 0
+2025-07-28 05:18:54,505  INFO     [etl.utils.io:44]  ⬇ lst_lst_miljoriskomrade.zip (74.2 KB)
+2025-07-28 05:18:54,506  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:54,627  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip HTTP/1.1" 200 75967
+2025-07-28 05:18:54,674  INFO     [etl.utils.io:82]  ✅ lst_lst_miljoriskomrade.zip
+2025-07-28 05:18:54,675  INFO     [etl.handlers.atom_feed:168]  Downloaded file 'lst_lst_miljoriskomrade.zip' is a ZIP archive. Extracting...
+2025-07-28 05:18:54,675  INFO     [etl.utils.io:88]  📦 Extracting lst_lst_miljoriskomrade.zip → C:\Git\ETL-pipeline\data\staging\LST\miljoriskomrade
+2025-07-28 05:18:54,691  INFO     [etl.handlers.atom_feed:173]  ➕ Extracted and staged archive lst_lst_miljoriskomrade.zip into data\staging\LST\miljoriskomrade
+2025-07-28 05:18:54,691  INFO     [etl.handlers.atom_feed:180]  Source 'Miljöriskområde' expects a GPKG. Searching in extracted contents of lst_lst_miljoriskomrade.zip...
+2025-07-28 05:18:54,692  INFO     [etl.handlers.atom_feed:197]  Renaming/moving extracted GPKG 'lst.LST_Miljoriskomrade.gpkg' to 'miljoriskomrade.gpkg'
+2025-07-28 05:18:54,693  INFO     [etl.handlers.atom_feed:207]  ✅ Successfully staged GPKG 'miljoriskomrade.gpkg' for source 'Miljöriskområde'.
+2025-07-28 05:18:54,693  INFO     [pipeline:623]  🚚 Vindkraftskollen: Vindkraftverk
+2025-07-28 05:18:54,693  INFO     [etl.handlers.atom_feed:41]  🌐 Reading Atom feed for source 'Vindkraftskollen: Vindkraftverk' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml
+2025-07-28 05:18:54,695  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:54,803  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml HTTP/1.1" 200 0
+2025-07-28 05:18:54,804  INFO     [etl.utils.io:44]  ⬇ vindkraftskollen_vindkraftverk_feed.xml (1.0 KB)
+2025-07-28 05:18:54,805  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:54,900  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml HTTP/1.1" 200 1037
+2025-07-28 05:18:54,903  INFO     [etl.utils.io:82]  ✅ vindkraftskollen_vindkraftverk_feed.xml
+2025-07-28 05:18:54,904  INFO     [etl.handlers.atom_feed:77]  Target staging directory for all content from Atom source 'Vindkraftskollen: Vindkraftverk': data\staging\LST\vindkraftskollen_vindkraftverk
+2025-07-28 05:18:54,904  INFO     [etl.handlers.atom_feed:105]  Found linked resource in Atom feed for 'Vindkraftskollen: Vindkraftverk': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip
+2025-07-28 05:18:55,051  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip'): lst.vbk_vindkraftverk.zip
+2025-07-28 05:18:55,052  INFO     [etl.handlers.atom_feed:157]  Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip 
+        -> to local file: lst_vbk_vindkraftverk.zip
+2025-07-28 05:18:55,053  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:55,154  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip HTTP/1.1" 200 0
+2025-07-28 05:18:55,155  INFO     [etl.utils.io:44]  ⬇ lst_vbk_vindkraftverk.zip (4.1 MB)
+2025-07-28 05:18:55,156  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:55,290  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip HTTP/1.1" 200 4321083
+2025-07-28 05:18:55,704  INFO     [etl.utils.io:82]  ✅ lst_vbk_vindkraftverk.zip
+2025-07-28 05:18:55,705  INFO     [etl.handlers.atom_feed:168]  Downloaded file 'lst_vbk_vindkraftverk.zip' is a ZIP archive. Extracting...
+2025-07-28 05:18:55,705  INFO     [etl.utils.io:88]  📦 Extracting lst_vbk_vindkraftverk.zip → C:\Git\ETL-pipeline\data\staging\LST\vindkraftskollen_vindkraftverk
+2025-07-28 05:18:55,859  INFO     [etl.handlers.atom_feed:173]  ➕ Extracted and staged archive lst_vbk_vindkraftverk.zip into data\staging\LST\vindkraftskollen_vindkraftverk
+2025-07-28 05:18:55,859  INFO     [etl.handlers.atom_feed:180]  Source 'Vindkraftskollen: Vindkraftverk' expects a GPKG. Searching in extracted contents of lst_vbk_vindkraftverk.zip...
+2025-07-28 05:18:55,861  INFO     [etl.handlers.atom_feed:197]  Renaming/moving extracted GPKG 'lst.vbk_vindkraftverk.gpkg' to 'vindkraftskollen_vindkraftverk.gpkg'
+2025-07-28 05:18:55,862  INFO     [etl.handlers.atom_feed:207]  ✅ Successfully staged GPKG 'vindkraftskollen_vindkraftverk.gpkg' for source 'Vindkraftskollen: Vindkraftverk'.
+2025-07-28 05:18:55,862  INFO     [pipeline:623]  🚚 Vindkraftskollen: Projekteringsområden
+2025-07-28 05:18:55,864  INFO     [etl.handlers.atom_feed:41]  🌐 Reading Atom feed for source 'Vindkraftskollen: Projekteringsområden' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml
+2025-07-28 05:18:55,866  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:55,977  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml HTTP/1.1" 200 0
+2025-07-28 05:18:55,977  INFO     [etl.utils.io:44]  ⬇ vindkraftskollen_projekteringsomraden_feed.xml (1.0 KB)
+2025-07-28 05:18:55,979  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:56,083  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml HTTP/1.1" 200 1049
+2025-07-28 05:18:56,085  INFO     [etl.utils.io:82]  ✅ vindkraftskollen_projekteringsomraden_feed.xml
+2025-07-28 05:18:56,088  INFO     [etl.handlers.atom_feed:77]  Target staging directory for all content from Atom source 'Vindkraftskollen: Projekteringsområden': data\staging\LST\vindkraftskollen_projekteringsomraden
+2025-07-28 05:18:56,088  INFO     [etl.handlers.atom_feed:105]  Found linked resource in Atom feed for 'Vindkraftskollen: Projekteringsområden': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip
+2025-07-28 05:18:56,242  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip'): lst.vbk_projekteringsomraden.zip
+2025-07-28 05:18:56,243  INFO     [etl.handlers.atom_feed:157]  Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip 
+        -> to local file: lst_vbk_projekteringsomraden.zip
+2025-07-28 05:18:56,244  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:56,341  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip HTTP/1.1" 200 0
+2025-07-28 05:18:56,341  INFO     [etl.utils.io:44]  ⬇ lst_vbk_projekteringsomraden.zip (4.5 MB)
+2025-07-28 05:18:56,342  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:56,458  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip HTTP/1.1" 200 4735498
+2025-07-28 05:18:56,868  INFO     [etl.utils.io:82]  ✅ lst_vbk_projekteringsomraden.zip
+2025-07-28 05:18:56,868  INFO     [etl.handlers.atom_feed:168]  Downloaded file 'lst_vbk_projekteringsomraden.zip' is a ZIP archive. Extracting...
+2025-07-28 05:18:56,868  INFO     [etl.utils.io:88]  📦 Extracting lst_vbk_projekteringsomraden.zip → C:\Git\ETL-pipeline\data\staging\LST\vindkraftskollen_projekteringsomraden
+2025-07-28 05:18:56,937  INFO     [etl.handlers.atom_feed:173]  ➕ Extracted and staged archive lst_vbk_projekteringsomraden.zip into data\staging\LST\vindkraftskollen_projekteringsomraden
+2025-07-28 05:18:56,938  INFO     [etl.handlers.atom_feed:180]  Source 'Vindkraftskollen: Projekteringsområden' expects a GPKG. Searching in extracted contents of lst_vbk_projekteringsomraden.zip...
+2025-07-28 05:18:56,940  INFO     [etl.handlers.atom_feed:197]  Renaming/moving extracted GPKG 'lst.vbk_projekteringsomraden.gpkg' to 'vindkraftskollen_projekteringsomraden.gpkg'
+2025-07-28 05:18:56,941  INFO     [etl.handlers.atom_feed:207]  ✅ Successfully staged GPKG 'vindkraftskollen_projekteringsomraden.gpkg' for source 'Vindkraftskollen: Projekteringsområden'.
+2025-07-28 05:18:56,941  INFO     [pipeline:623]  🚚 Potentiellt förorenade områden
+2025-07-28 05:18:56,942  INFO     [etl.handlers.file:165]  🔗 Single resource download mode for 'Potentiellt förorenade områden' from URL: https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip
+2025-07-28 05:18:57,096  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip'): EBH_Potentiellt_fororenade_omraden.zip
+2025-07-28 05:18:57,097  DEBUG    [etl.handlers.file:251]  Attempting to download: https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip 
+    -> to local file: potentiellt_fororenade_omraden.zip 
+    -> staging dir: data\staging\LST\potentiellt_fororenade_omraden
+2025-07-28 05:18:57,099  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:57,198  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip HTTP/1.1" 200 0
+2025-07-28 05:18:57,198  INFO     [etl.utils.io:44]  ⬇ potentiellt_fororenade_omraden.zip (5.0 MB)
+2025-07-28 05:18:57,199  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:18:57,324  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip HTTP/1.1" 200 5247555
+2025-07-28 05:18:57,801  INFO     [etl.utils.io:82]  ✅ potentiellt_fororenade_omraden.zip
+2025-07-28 05:18:57,802  INFO     [etl.handlers.file:283]  Determined staged_data_type: 'shapefile_collection' for downloaded file 'potentiellt_fororenade_omraden.zip'
+2025-07-28 05:18:57,802  INFO     [etl.utils.io:88]  📦 Extracting potentiellt_fororenade_omraden.zip → C:\Git\ETL-pipeline\data\staging\LST\potentiellt_fororenade_omraden
+2025-07-28 05:18:57,999  INFO     [etl.handlers.file:358]  ➕ Extracted and staged archive potentiellt_fororenade_omraden.zip to data\staging\LST\potentiellt_fororenade_omraden
+2025-07-28 05:18:57,999  INFO     [pipeline:623]  🚚 Riksintressen
+2025-07-28 05:18:58,000  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: Riksintressen
+2025-07-28 05:18:58,001  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'Riksintressen' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer
+2025-07-28 05:18:58,002  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-geodata-nationella.lansstyrelsen.se:443
+2025-07-28 05:18:58,163  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-nationella.lansstyrelsen.se:443 "GET /arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer?f=json HTTP/1.1" 200 1106
+2025-07-28 05:18:58,163  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [0] for source 'Riksintressen'. Processing only these.
+2025-07-28 05:18:58,163  INFO     [etl.handlers.rest_api:441]  Source 'Riksintressen': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:18:58,163  INFO     [etl.handlers.rest_api:683]  🚚 lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2
+2025-07-28 05:18:58,164  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2, Original: LST_Riksintresse_Rorligt_Friluftsliv_MB4kap_1plus2) from https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer/0/query
+2025-07-28 05:18:58,164  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:18:58,164  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:18:58,164  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2 (offset 0, limit 5000)
+2025-07-28 05:18:58,320  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-nationella.lansstyrelsen.se:443 "GET /arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:18:58,405  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2 (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:18:58,441  INFO     [etl.handlers.rest_api:311]  ✅ lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2: 6 features
+2025-07-28 05:18:58,441  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 6 features for layer lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2 to C:\Git\ETL-pipeline\data\staging\LST\riksintressen\lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2.geojson
+2025-07-28 05:18:58,441  INFO     [pipeline:623]  🚚 Riksintressen - Vindbruk
+2025-07-28 05:18:58,442  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: Riksintressen - Vindbruk
+2025-07-28 05:18:58,442  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'Riksintressen - Vindbruk' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer
+2025-07-28 05:18:58,471  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-nationella.lansstyrelsen.se:443 "GET /arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer?f=json HTTP/1.1" 200 123
+2025-07-28 05:18:58,472  WARNING  [etl.handlers.rest_api:434]  ⚠️ No layers identified or specified to query for source 'Riksintressen - Vindbruk'. Check service metadata and `layer_ids` config.
+2025-07-28 05:18:58,472  INFO     [pipeline:623]  🚚 LstD Föreskrifter
+2025-07-28 05:18:58,472  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Föreskrifter
+2025-07-28 05:18:58,473  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Föreskrifter' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/MapServer
+2025-07-28 05:18:58,473  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-geodata-lokala-visning.lansstyrelsen.se:443
+2025-07-28 05:18:58,624  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:18:58,625  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD Föreskrifter'. Discovering all layers from service metadata.
+2025-07-28 05:18:58,625  INFO     [etl.handlers.rest_api:441]  Source 'LstD Föreskrifter': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:18:58,625  INFO     [etl.handlers.rest_api:683]  🚚 lstd_sjotrafikforeskrifter
+2025-07-28 05:18:58,625  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_sjotrafikforeskrifter, Original: LstD Sjötrafikföreskrifter) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/MapServer/0/query
+2025-07-28 05:18:58,625  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:18:58,625  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:18:58,626  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_sjotrafikforeskrifter (offset 0, limit 5000)
+2025-07-28 05:18:59,839  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:00,853  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_sjotrafikforeskrifter (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:00,987  INFO     [etl.handlers.rest_api:311]  ✅ lstd_sjotrafikforeskrifter: 61 features
+2025-07-28 05:19:00,987  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 61 features for layer lstd_sjotrafikforeskrifter to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_foreskrifter\lstd_sjotrafikforeskrifter.geojson
+2025-07-28 05:19:00,988  INFO     [pipeline:623]  🚚 LstD Fysisk planering
+2025-07-28 05:19:00,989  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Fysisk planering
+2025-07-28 05:19:00,989  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Fysisk planering' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/MapServer
+2025-07-28 05:19:01,070  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:01,071  WARNING  [etl.handlers.rest_api:434]  ⚠️ No layers identified or specified to query for source 'LstD Fysisk planering'. Check service metadata and `layer_ids` config.
+2025-07-28 05:19:01,071  INFO     [pipeline:623]  🚚 LstD Ett rikt odlingslandskap
+2025-07-28 05:19:01,071  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Ett rikt odlingslandskap
+2025-07-28 05:19:01,072  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Ett rikt odlingslandskap' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/MapServer
+2025-07-28 05:19:01,140  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:01,141  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [2, 3, 4, 5, 6] for source 'LstD Ett rikt odlingslandskap'. Processing only these.
+2025-07-28 05:19:01,141  INFO     [etl.handlers.rest_api:441]  Source 'LstD Ett rikt odlingslandskap': Will attempt to query 5 layer(s): ['2', '3', '4', '5', '6']
+2025-07-28 05:19:01,141  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 5 layers
+2025-07-28 05:19:01,141  INFO     [etl.utils.concurrent:87]  Initialized ConcurrentDownloadManager with 5 workers
+2025-07-28 05:19:01,141  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 5 layers
+2025-07-28 05:19:01,141  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 5 tasks with 5 workers
+2025-07-28 05:19:01,146  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/5 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:01,146  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 5 failed
+2025-07-28 05:19:01,146  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Betesmark - Exempelanalys - Spridningslänkar mellan kluster - Under 500 m - name 'time' is not defined
+2025-07-28 05:19:01,146  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Jordbruksmark - Tvärvillkorselement - Ytor - name 'time' is not defined
+2025-07-28 05:19:01,146  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Värdetrakter naturbetesmark - name 'time' is not defined
+2025-07-28 05:19:01,147  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Betesmark - Exempelanalys - Kluster av betesmarker - Buffert 250 m - name 'time' is not defined
+2025-07-28 05:19:01,147  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Jordbruksmark - Åkerholmar - name 'time' is not defined
+2025-07-28 05:19:01,147  INFO     [pipeline:623]  🚚 LstD Friluftsliv
+2025-07-28 05:19:01,147  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Friluftsliv
+2025-07-28 05:19:01,147  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Friluftsliv' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/MapServer
+2025-07-28 05:19:01,238  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:01,238  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [0, 1, 2, 3, 4] for source 'LstD Friluftsliv'. Processing only these.
+2025-07-28 05:19:01,238  WARNING  [etl.handlers.rest_api:381]  Layer ID '0' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+2025-07-28 05:19:01,238  WARNING  [etl.handlers.rest_api:381]  Layer ID '1' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+2025-07-28 05:19:01,238  WARNING  [etl.handlers.rest_api:381]  Layer ID '2' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+2025-07-28 05:19:01,238  WARNING  [etl.handlers.rest_api:381]  Layer ID '3' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+2025-07-28 05:19:01,238  WARNING  [etl.handlers.rest_api:381]  Layer ID '4' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+2025-07-28 05:19:01,238  INFO     [etl.handlers.rest_api:441]  Source 'LstD Friluftsliv': Will attempt to query 5 layer(s): ['0', '1', '2', '3', '4']
+2025-07-28 05:19:01,239  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 5 layers
+2025-07-28 05:19:01,239  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 5 layers
+2025-07-28 05:19:01,239  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 5 tasks with 5 workers
+2025-07-28 05:19:01,242  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/5 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:01,242  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 5 failed
+2025-07-28 05:19:01,242  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_layer_0_cfg_only - name 'time' is not defined
+2025-07-28 05:19:01,242  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_layer_1_cfg_only - name 'time' is not defined
+2025-07-28 05:19:01,242  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_layer_2_cfg_only - name 'time' is not defined
+2025-07-28 05:19:01,242  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_layer_3_cfg_only - name 'time' is not defined
+2025-07-28 05:19:01,242  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_layer_4_cfg_only - name 'time' is not defined
+2025-07-28 05:19:01,243  INFO     [pipeline:623]  🚚 LstD God bebyggd miljö
+2025-07-28 05:19:01,243  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD God bebyggd miljö
+2025-07-28 05:19:01,243  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD God bebyggd miljö' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/MapServer
+2025-07-28 05:19:01,276  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:01,277  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD God bebyggd miljö'. Discovering all layers from service metadata.
+2025-07-28 05:19:01,277  INFO     [etl.handlers.rest_api:441]  Source 'LstD God bebyggd miljö': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:19:01,277  INFO     [etl.handlers.rest_api:683]  🚚 lstd_gi_opaverkade_omraden_-_avgransning
+2025-07-28 05:19:01,277  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_gi_opaverkade_omraden_-_avgransning, Original: LstD GI Opåverkade områden - Avgränsning) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/MapServer/0/query
+2025-07-28 05:19:01,277  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:01,277  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:01,278  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_gi_opaverkade_omraden_-_avgransning (offset 0, limit 5000)
+2025-07-28 05:19:02,705  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:02,796  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_gi_opaverkade_omraden_-_avgransning (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:02,805  INFO     [etl.handlers.rest_api:311]  ✅ lstd_gi_opaverkade_omraden_-_avgransning: 10 features
+2025-07-28 05:19:02,805  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 10 features for layer lstd_gi_opaverkade_omraden_-_avgransning to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_god_bebyggd_miljo\lstd_gi_opaverkade_omraden_-_avgransning.geojson
+2025-07-28 05:19:02,805  INFO     [pipeline:623]  🚚 LstD Hav i balans
+2025-07-28 05:19:02,805  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Hav i balans
+2025-07-28 05:19:02,806  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Hav i balans' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/MapServer
+2025-07-28 05:19:02,845  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:02,845  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD Hav i balans'. Discovering all layers from service metadata.
+2025-07-28 05:19:02,845  INFO     [etl.handlers.rest_api:441]  Source 'LstD Hav i balans': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:19:02,845  INFO     [etl.handlers.rest_api:683]  🚚 lstd_gi_marina_naturvarden_-_inventering
+2025-07-28 05:19:02,845  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_gi_marina_naturvarden_-_inventering, Original: LstD GI Marina naturvärden - Inventering) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/MapServer/0/query
+2025-07-28 05:19:02,845  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:02,845  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:02,846  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_gi_marina_naturvarden_-_inventering (offset 0, limit 5000)
+2025-07-28 05:19:03,981  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 58
+2025-07-28 05:19:03,982  DEBUG    [etl.handlers.rest_api:266]  ℹ️ No features returned for layer lstd_gi_marina_naturvarden_-_inventering with current parameters.
+2025-07-28 05:19:03,982  INFO     [etl.handlers.rest_api:716]  ℹ️ lstd_gi_marina_naturvarden_-_inventering: no features
+2025-07-28 05:19:03,982  INFO     [pipeline:623]  🚚 LstD Levande sjöar och vattendrag
+2025-07-28 05:19:03,983  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Levande sjöar och vattendrag
+2025-07-28 05:19:03,983  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Levande sjöar och vattendrag' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/MapServer
+2025-07-28 05:19:04,019  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:04,020  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17] for source 'LstD Levande sjöar och vattendrag'. Processing only these.
+2025-07-28 05:19:04,020  INFO     [etl.handlers.rest_api:441]  Source 'LstD Levande sjöar och vattendrag': Will attempt to query 13 layer(s): ['2', '3', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17']
+2025-07-28 05:19:04,020  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 13 layers
+2025-07-28 05:19:04,020  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 13 layers
+2025-07-28 05:19:04,020  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 13 tasks with 5 workers
+2025-07-28 05:19:04,025  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/13 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:04,026  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 13 failed
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Tjockskalig målarmussla - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Kortskottsväxter - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Ansvarsområde sötvatten Länsstyrelsen i Södermanlands län - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Värdetrakter Hjälmar-, Mälar- och kustmynnande vattendrag (inkl Mälaren och Hjälmaren) - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Värdetrakter Kilaåns avrinningsområde - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Värdetrakter klarvattensjöar med kortskottsväxter - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Värdetrakter malens rike - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Värdetrakter nätverk för tjockskalig målarmussla - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Klarvattensjöar och kortskottsväxter - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Sjöar med rödlistade arter - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Sjöar med konnektivitetsarter - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Fosforbeting totalt i kg (område) - name 'time' is not defined
+2025-07-28 05:19:04,026  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD GI Sötvatten - Fosforbeting per arealenhet - name 'time' is not defined
+2025-07-28 05:19:04,026  INFO     [pipeline:623]  🚚 LstD Levande skogar
+2025-07-28 05:19:04,027  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Levande skogar
+2025-07-28 05:19:04,027  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Levande skogar' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer
+2025-07-28 05:19:04,062  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:04,063  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [0] for source 'LstD Levande skogar'. Processing only these.
+2025-07-28 05:19:04,063  INFO     [etl.handlers.rest_api:441]  Source 'LstD Levande skogar': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:19:04,063  INFO     [etl.handlers.rest_api:683]  🚚 lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad
+2025-07-28 05:19:04,063  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad, Original: LstD GI Värdekärnor ädellövmiljöer inkl skyddsvärda träd) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer/0/query
+2025-07-28 05:19:04,063  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:04,063  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:04,066  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad (offset 0, limit 5000)
+2025-07-28 05:19:05,648  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:06,654  DEBUG    [etl.handlers.rest_api:283]  ⚠️ Exceeded transfer limit for layer lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad, fetching next page.
+2025-07-28 05:19:06,654  DEBUG    [etl.handlers.rest_api:590]  Fetching page 2 for layer lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad (offset 2000, limit 5000)
+2025-07-28 05:19:08,904  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=2000&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:19,003  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:20,701  INFO     [etl.handlers.rest_api:311]  ✅ lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad: 2783 features
+2025-07-28 05:19:20,701  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 2783 features for layer lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_levande_skogar\lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad.geojson
+2025-07-28 05:19:20,716  INFO     [pipeline:623]  🚚 LstD Klimat
+2025-07-28 05:19:20,717  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Klimat
+2025-07-28 05:19:20,717  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Klimat' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Klimat_EXT/MapServer
+2025-07-28 05:19:20,793  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Klimat_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:20,793  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [2, 3, 4, 5, 6] for source 'LstD Klimat'. Processing only these.
+2025-07-28 05:19:20,793  INFO     [etl.handlers.rest_api:441]  Source 'LstD Klimat': Will attempt to query 5 layer(s): ['2', '3', '4', '5', '6']
+2025-07-28 05:19:20,793  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 5 layers
+2025-07-28 05:19:20,793  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 5 layers
+2025-07-28 05:19:20,794  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 5 tasks with 5 workers
+2025-07-28 05:19:20,796  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/5 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:20,796  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 5 failed
+2025-07-28 05:19:20,796  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Klimatanpassning - Rekommenderad lägsta grundläggningsnivå för ny bebyggelse - Mälaren - name 'time' is not defined
+2025-07-28 05:19:20,796  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Klimatanpassning - Kustöversvämning - HHW10 2012 - name 'time' is not defined
+2025-07-28 05:19:20,796  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Klimatanpassning - Kustöversvämning - HHW100 2012 - name 'time' is not defined
+2025-07-28 05:19:20,796  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Klimatanpassning - Kustöversvämning - HHW10 2100 - name 'time' is not defined
+2025-07-28 05:19:20,796  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Klimatanpassning - Kustöversvämning - HHW100 2100 - name 'time' is not defined
+2025-07-28 05:19:20,797  INFO     [pipeline:623]  🚚 LstD Kulturmiljö
+2025-07-28 05:19:20,797  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Kulturmiljö
+2025-07-28 05:19:20,797  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Kulturmiljö' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/MapServer
+2025-07-28 05:19:20,836  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:20,837  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [1] for source 'LstD Kulturmiljö'. Processing only these.
+2025-07-28 05:19:20,837  INFO     [etl.handlers.rest_api:441]  Source 'LstD Kulturmiljö': Will attempt to query 1 layer(s): ['1']
+2025-07-28 05:19:20,837  INFO     [etl.handlers.rest_api:683]  🚚 lstd_anmalningsplikt_enligt_kml_3_6
+2025-07-28 05:19:20,837  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 1 (Sanitized Name: lstd_anmalningsplikt_enligt_kml_3_6, Original: LstD Anmälningsplikt enligt KML 3_6) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/MapServer/1/query
+2025-07-28 05:19:20,837  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:20,837  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:20,837  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_anmalningsplikt_enligt_kml_3_6 (offset 0, limit 5000)
+2025-07-28 05:19:22,064  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Kulturmiljo_EXT/MapServer/1/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 1348
+2025-07-28 05:19:22,065  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_anmalningsplikt_enligt_kml_3_6 (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:22,072  INFO     [etl.handlers.rest_api:311]  ✅ lstd_anmalningsplikt_enligt_kml_3_6: 68 features
+2025-07-28 05:19:22,072  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 68 features for layer lstd_anmalningsplikt_enligt_kml_3_6 to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_kulturmiljo\lstd_anmalningsplikt_enligt_kml_3_6.geojson
+2025-07-28 05:19:22,073  INFO     [pipeline:623]  🚚 LstD Markavvattning
+2025-07-28 05:19:22,073  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Markavvattning
+2025-07-28 05:19:22,074  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Markavvattning' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/MapServer
+2025-07-28 05:19:22,115  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Markavvattning_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:22,116  INFO     [etl.handlers.rest_api:362]  Found explicit layer_ids in config: [2, 3, 4, 5, 6] for source 'LstD Markavvattning'. Processing only these.
+2025-07-28 05:19:22,116  INFO     [etl.handlers.rest_api:441]  Source 'LstD Markavvattning': Will attempt to query 5 layer(s): ['2', '3', '4', '5', '6']
+2025-07-28 05:19:22,116  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 5 layers
+2025-07-28 05:19:22,116  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 5 layers
+2025-07-28 05:19:22,116  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 5 tasks with 5 workers
+2025-07-28 05:19:22,119  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/5 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:22,119  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 5 failed
+2025-07-28 05:19:22,119  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Markavvattningsföretag - Båtnadsområde - Yta - name 'time' is not defined
+2025-07-28 05:19:22,119  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Lantbruksnämnden Markavvattning - Dikningsregister - name 'time' is not defined
+2025-07-28 05:19:22,119  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Lantbruksnämnden Markavvattning - Täckdikningsregister - name 'time' is not defined
+2025-07-28 05:19:22,119  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Lantbruksnämnden Markavvattning - Blandat arkivmaterial - name 'time' is not defined
+2025-07-28 05:19:22,120  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD LM Markavvattning - Vattenförrättningar före 1935 - name 'time' is not defined
+2025-07-28 05:19:22,120  INFO     [pipeline:623]  🚚 LstD Markstabilitet
+2025-07-28 05:19:22,121  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Markstabilitet
+2025-07-28 05:19:22,121  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Markstabilitet' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/MapServer
+2025-07-28 05:19:22,191  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:22,192  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD Markstabilitet'. Discovering all layers from service metadata.
+2025-07-28 05:19:22,192  INFO     [etl.handlers.rest_api:441]  Source 'LstD Markstabilitet': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:19:22,192  INFO     [etl.handlers.rest_api:683]  🚚 lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter
+2025-07-28 05:19:22,192  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter, Original: LstD MSB Översiktlig stabilitetskartering - 90-talet - Finkorniga jordarter) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/MapServer/0/query
+2025-07-28 05:19:22,192  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:22,192  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:22,193  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter (offset 0, limit 5000)
+2025-07-28 05:19:23,162  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Markstabilitet_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:23,956  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:24,039  INFO     [etl.handlers.rest_api:311]  ✅ lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter: 52 features
+2025-07-28 05:19:24,039  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 52 features for layer lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_markstabilitet\lstd_msb_oversiktlig_stabilitetskartering_-_90-talet_-_finkorniga_jordarter.geojson
+2025-07-28 05:19:24,040  INFO     [pipeline:623]  🚚 LstD Naturkartläggning
+2025-07-28 05:19:24,040  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Naturkartläggning
+2025-07-28 05:19:24,041  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Naturkartläggning' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/MapServer
+2025-07-28 05:19:24,107  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:24,107  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD Naturkartläggning'. Discovering all layers from service metadata.
+2025-07-28 05:19:24,107  INFO     [etl.handlers.rest_api:441]  Source 'LstD Naturkartläggning': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:19:24,107  INFO     [etl.handlers.rest_api:683]  🚚 lstd_sormlands_natur_-_naturvardsprogram_1991
+2025-07-28 05:19:24,107  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_sormlands_natur_-_naturvardsprogram_1991, Original: LstD Sörmlands natur - Naturvårdsprogram 1991) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/MapServer/0/query
+2025-07-28 05:19:24,108  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:24,108  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:24,108  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_sormlands_natur_-_naturvardsprogram_1991 (offset 0, limit 5000)
+2025-07-28 05:19:25,708  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Naturkartlaggning_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:26,986  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_sormlands_natur_-_naturvardsprogram_1991 (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:27,100  INFO     [etl.handlers.rest_api:311]  ✅ lstd_sormlands_natur_-_naturvardsprogram_1991: 245 features
+2025-07-28 05:19:27,100  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 245 features for layer lstd_sormlands_natur_-_naturvardsprogram_1991 to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_naturkartlaggning\lstd_sormlands_natur_-_naturvardsprogram_1991.geojson
+2025-07-28 05:19:27,100  INFO     [pipeline:623]  🚚 LstD Skog och träd
+2025-07-28 05:19:27,101  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Skog och träd
+2025-07-28 05:19:27,101  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Skog och träd' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/MapServer
+2025-07-28 05:19:27,145  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Skog_och_trad_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:27,145  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD Skog och träd'. Discovering all layers from service metadata.
+2025-07-28 05:19:27,145  INFO     [etl.handlers.rest_api:441]  Source 'LstD Skog och träd': Will attempt to query 3 layer(s): ['0', '1', '2']
+2025-07-28 05:19:27,145  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 3 layers
+2025-07-28 05:19:27,145  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 3 layers
+2025-07-28 05:19:27,145  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 3 tasks with 5 workers
+2025-07-28 05:19:27,148  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/3 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:27,148  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 3 failed
+2025-07-28 05:19:27,148  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Alléinventering - name 'time' is not defined
+2025-07-28 05:19:27,148  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Källskogar (extern) - name 'time' is not defined
+2025-07-28 05:19:27,148  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Skogliga värdetrakter - name 'time' is not defined
+2025-07-28 05:19:27,148  INFO     [pipeline:623]  🚚 LstD GI Värdetrakter våtmark
+2025-07-28 05:19:27,149  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD GI Värdetrakter våtmark
+2025-07-28 05:19:27,149  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD GI Värdetrakter våtmark' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/MapServer
+2025-07-28 05:19:27,221  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:27,222  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD GI Värdetrakter våtmark'. Discovering all layers from service metadata.
+2025-07-28 05:19:27,222  INFO     [etl.handlers.rest_api:441]  Source 'LstD GI Värdetrakter våtmark': Will attempt to query 1 layer(s): ['0']
+2025-07-28 05:19:27,222  INFO     [etl.handlers.rest_api:683]  🚚 lstd_gi_vardetrakter_vatmark
+2025-07-28 05:19:27,222  DEBUG    [etl.handlers.rest_api:684]  Querying Layer ID: 0 (Sanitized Name: lstd_gi_vardetrakter_vatmark, Original: LstD GI Värdetrakter våtmark) from https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/MapServer/0/query
+2025-07-28 05:19:27,222  DEBUG    [etl.handlers.rest_api:555]  maxRecordCount not found in layer metadata, using default: 5000
+2025-07-28 05:19:27,222  DEBUG    [etl.handlers.rest_api:207]  Applying BBOX: 586206,6551160,647910,6610992 (SRID: 3006)
+2025-07-28 05:19:27,223  DEBUG    [etl.handlers.rest_api:590]  Fetching page 1 for layer lstd_gi_vardetrakter_vatmark (offset 0, limit 5000)
+2025-07-28 05:19:28,632  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_GI_Myllrande_vatmarker_EXT/MapServer/0/query?where=1%3D1&outFields=%2A&returnGeometry=true&f=geojson&geometry=586206%2C6551160%2C647910%2C6610992&geometryType=esriGeometryEnvelope&inSR=3006&spatialRel=esriSpatialRelIntersects&resultOffset=0&resultRecordCount=5000 HTTP/1.1" 200 None
+2025-07-28 05:19:28,712  DEBUG    [etl.handlers.rest_api:292]  🏁 All features likely retrieved for layer lstd_gi_vardetrakter_vatmark (less than page limit or server maxRecordCount is 0).
+2025-07-28 05:19:28,718  INFO     [etl.handlers.rest_api:311]  ✅ lstd_gi_vardetrakter_vatmark: 7 features
+2025-07-28 05:19:28,718  DEBUG    [etl.handlers.rest_api:315]  💾 Successfully saved 7 features for layer lstd_gi_vardetrakter_vatmark to C:\Git\ETL-pipeline\data\staging\LSTD\lstd_gi_vardetrakter_vatmark\lstd_gi_vardetrakter_vatmark.geojson
+2025-07-28 05:19:28,718  INFO     [pipeline:623]  🚚 LstD Strandskydd
+2025-07-28 05:19:28,719  INFO     [etl.handlers.rest_api:69]  🚀 Initializing RestApiDownloadHandler for source: LstD Strandskydd
+2025-07-28 05:19:28,719  INFO     [etl.handlers.rest_api:337]  🌐 Processing REST API source: 'LstD Strandskydd' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/MapServer
+2025-07-28 05:19:28,768  DEBUG    [urllib3.connectionpool:544]  https://ext-geodata-lokala-visning.lansstyrelsen.se:443 "GET /arcgis/rest/services/LSTD/LstD_Strandskydd_EXT/MapServer?f=json HTTP/1.1" 200 None
+2025-07-28 05:19:28,768  INFO     [etl.handlers.rest_api:396]  No explicit layer_ids in config for source 'LstD Strandskydd'. Discovering all layers from service metadata.
+2025-07-28 05:19:28,768  INFO     [etl.handlers.rest_api:441]  Source 'LstD Strandskydd': Will attempt to query 4 layer(s): ['0', '1', '2', '3']
+2025-07-28 05:19:28,768  INFO     [etl.handlers.rest_api:462]  🚀 Starting concurrent download of 4 layers
+2025-07-28 05:19:28,768  INFO     [etl.utils.concurrent:267]  Starting concurrent download of 4 layers
+2025-07-28 05:19:28,768  INFO     [etl.utils.concurrent:122]  Starting concurrent execution of 4 tasks with 5 workers
+2025-07-28 05:19:28,771  INFO     [etl.utils.concurrent:221]  Concurrent execution completed: 0/4 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+2025-07-28 05:19:28,772  INFO     [etl.handlers.rest_api:498]  🏁 Concurrent downloads completed: 0 successful, 4 failed
+2025-07-28 05:19:28,772  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD LM Strandskydd - Generellt - name 'time' is not defined
+2025-07-28 05:19:28,772  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Strandskydd - Upphävt i enskilda fall - name 'time' is not defined
+2025-07-28 05:19:28,772  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Strandskydd - Utvidgat - name 'time' is not defined
+2025-07-28 05:19:28,772  ERROR    [etl.handlers.rest_api:508]  ❌ Layer download failed: layer_LstD Strandskydd - Utvidgat - Kartblad Mälaren Strängnäs - name 'time' is not defined
+2025-07-28 05:19:28,772  INFO     [pipeline:623]  🚚 Skyddsrum
+2025-07-28 05:19:28,772  INFO     [etl.handlers.file:165]  🔗 Single resource download mode for 'Skyddsrum' from URL: https://inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip
+2025-07-28 05:19:28,909  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip'): Skyddsrum.zip
+2025-07-28 05:19:28,910  DEBUG    [etl.handlers.file:251]  Attempting to download: https://inspire.msb.se/nedladdning/filer/shape/Skyddsrum.zip 
+    -> to local file: skyddsrum.zip 
+    -> staging dir: data\staging\MSB\skyddsrum
+2025-07-28 05:19:28,911  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): inspire.msb.se:443
+2025-07-28 05:19:28,998  DEBUG    [urllib3.connectionpool:544]  https://inspire.msb.se:443 "HEAD /nedladdning/filer/shape/Skyddsrum.zip HTTP/1.1" 200 0
+2025-07-28 05:19:28,999  INFO     [etl.utils.io:44]  ⬇ skyddsrum.zip (3.1 MB)
+2025-07-28 05:19:28,999  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): inspire.msb.se:443
+2025-07-28 05:19:29,117  DEBUG    [urllib3.connectionpool:544]  https://inspire.msb.se:443 "GET /nedladdning/filer/shape/Skyddsrum.zip HTTP/1.1" 200 3243249
+2025-07-28 05:19:29,309  INFO     [etl.utils.io:82]  ✅ skyddsrum.zip
+2025-07-28 05:19:29,310  INFO     [etl.handlers.file:283]  Determined staged_data_type: 'shapefile_collection' for downloaded file 'skyddsrum.zip'
+2025-07-28 05:19:29,310  INFO     [etl.utils.io:88]  📦 Extracting skyddsrum.zip → C:\Git\ETL-pipeline\data\staging\MSB\skyddsrum
+2025-07-28 05:19:29,502  INFO     [etl.handlers.file:358]  ➕ Extracted and staged archive skyddsrum.zip to data\staging\MSB\skyddsrum
+2025-07-28 05:19:29,503  INFO     [pipeline:623]  🚚 Riksintresse Kulturmiljövård MB3kap6
+2025-07-28 05:19:29,503  INFO     [etl.handlers.atom_feed:41]  🌐 Reading Atom feed for source 'Riksintresse Kulturmiljövård MB3kap6' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml
+2025-07-28 05:19:29,504  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:19:29,638  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml HTTP/1.1" 200 0
+2025-07-28 05:19:29,638  INFO     [etl.utils.io:44]  ⬇ riksintresse_kulturmiljovard_mb3kap6_feed.xml (1.1 KB)
+2025-07-28 05:19:29,639  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:19:29,773  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ATOM/ATOM_raa.RAA_RI_kulturmiljovard_MB3kap6.xml HTTP/1.1" 200 1080
+2025-07-28 05:19:29,774  INFO     [etl.utils.io:82]  ✅ riksintresse_kulturmiljovard_mb3kap6_feed.xml
+2025-07-28 05:19:29,776  INFO     [etl.handlers.atom_feed:77]  Target staging directory for all content from Atom source 'Riksintresse Kulturmiljövård MB3kap6': data\staging\RAA\riksintresse_kulturmiljovard_mb3kap6
+2025-07-28 05:19:29,776  INFO     [etl.handlers.atom_feed:105]  Found linked resource in Atom feed for 'Riksintresse Kulturmiljövård MB3kap6': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/raa.RAA_RI_kulturmiljovard_MB3kap6.zip
+2025-07-28 05:19:29,941  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/raa.RAA_RI_kulturmiljovard_MB3kap6.zip'): raa.RAA_RI_kulturmiljovard_MB3kap6.zip
+2025-07-28 05:19:29,942  INFO     [etl.handlers.atom_feed:157]  Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/raa.RAA_RI_kulturmiljovard_MB3kap6.zip 
+        -> to local file: raa_raa_ri_kulturmiljovard_mb3kap6.zip
+2025-07-28 05:19:29,942  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:19:30,060  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "HEAD /gemensamt/geodata/ShapeExport/raa.RAA_RI_kulturmiljovard_MB3kap6.zip HTTP/1.1" 200 0
+2025-07-28 05:19:30,061  INFO     [etl.utils.io:44]  ⬇ raa_raa_ri_kulturmiljovard_mb3kap6.zip (5.4 MB)
+2025-07-28 05:19:30,062  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): ext-dokument.lansstyrelsen.se:443
+2025-07-28 05:19:30,184  DEBUG    [urllib3.connectionpool:544]  https://ext-dokument.lansstyrelsen.se:443 "GET /gemensamt/geodata/ShapeExport/raa.RAA_RI_kulturmiljovard_MB3kap6.zip HTTP/1.1" 200 5687785
+2025-07-28 05:19:30,658  INFO     [etl.utils.io:82]  ✅ raa_raa_ri_kulturmiljovard_mb3kap6.zip
+2025-07-28 05:19:30,658  INFO     [etl.handlers.atom_feed:168]  Downloaded file 'raa_raa_ri_kulturmiljovard_mb3kap6.zip' is a ZIP archive. Extracting...
+2025-07-28 05:19:30,658  INFO     [etl.utils.io:88]  📦 Extracting raa_raa_ri_kulturmiljovard_mb3kap6.zip → C:\Git\ETL-pipeline\data\staging\RAA\riksintresse_kulturmiljovard_mb3kap6
+2025-07-28 05:19:30,712  INFO     [etl.handlers.atom_feed:173]  ➕ Extracted and staged archive raa_raa_ri_kulturmiljovard_mb3kap6.zip into data\staging\RAA\riksintresse_kulturmiljovard_mb3kap6
+2025-07-28 05:19:30,712  INFO     [etl.handlers.atom_feed:180]  Source 'Riksintresse Kulturmiljövård MB3kap6' expects a GPKG. Searching in extracted contents of raa_raa_ri_kulturmiljovard_mb3kap6.zip...
+2025-07-28 05:19:30,713  INFO     [etl.handlers.atom_feed:197]  Renaming/moving extracted GPKG 'raa.RAA_RI_kulturmiljovard_MB3kap6.gpkg' to 'riksintresse_kulturmiljovard_mb3kap6.gpkg'
+2025-07-28 05:19:30,714  INFO     [etl.handlers.atom_feed:207]  ✅ Successfully staged GPKG 'riksintresse_kulturmiljovard_mb3kap6.gpkg' for source 'Riksintresse Kulturmiljövård MB3kap6'.
+2025-07-28 05:19:30,714  INFO     [pipeline:623]  🚚 RAA Byggnader Sverige
+2025-07-28 05:19:30,714  INFO     [etl.handlers.file:165]  🔗 Single resource download mode for 'RAA Byggnader Sverige' from URL: https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg
+2025-07-28 05:19:30,857  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg'): byggnader_sverige.gpkg
+2025-07-28 05:19:30,858  DEBUG    [etl.handlers.file:251]  Attempting to download: https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg 
+    -> to local file: raa_byggnader_sverige.gpkg 
+    -> staging dir: data\staging\RAA\raa_byggnader_sverige
+2025-07-28 05:19:30,859  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): pub.raa.se:443
+2025-07-28 05:19:30,925  DEBUG    [urllib3.connectionpool:544]  https://pub.raa.se:443 "HEAD /nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg HTTP/1.1" 200 0
+2025-07-28 05:19:30,925  INFO     [etl.utils.io:44]  ⬇ raa_byggnader_sverige.gpkg (75.4 MB)
+2025-07-28 05:19:30,926  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): pub.raa.se:443
+2025-07-28 05:19:31,013  DEBUG    [urllib3.connectionpool:544]  https://pub.raa.se:443 "GET /nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg HTTP/1.1" 200 79097856
+2025-07-28 05:19:36,025  DEBUG    [etl.utils.io:66]  📊 raa_byggnader_sverige.gpkg: 24.1% (18.2 MB / 75.4 MB)
+2025-07-28 05:19:41,026  DEBUG    [etl.utils.io:66]  📊 raa_byggnader_sverige.gpkg: 48.5% (36.6 MB / 75.4 MB)
+2025-07-28 05:19:46,030  DEBUG    [etl.utils.io:66]  📊 raa_byggnader_sverige.gpkg: 72.0% (54.3 MB / 75.4 MB)
+2025-07-28 05:19:51,031  DEBUG    [etl.utils.io:66]  📊 raa_byggnader_sverige.gpkg: 96.3% (72.7 MB / 75.4 MB)
+2025-07-28 05:19:51,779  INFO     [etl.utils.io:82]  ✅ raa_byggnader_sverige.gpkg
+2025-07-28 05:19:51,779  INFO     [etl.handlers.file:283]  Determined staged_data_type: 'gpkg' for downloaded file 'raa_byggnader_sverige.gpkg'
+2025-07-28 05:19:51,817  INFO     [etl.handlers.file:297]  ➕ Staged GPKG raa_byggnader_sverige.gpkg to data\staging\RAA\raa_byggnader_sverige\raa_byggnader_sverige.gpkg
+2025-07-28 05:19:51,817  INFO     [pipeline:623]  🚚 Enskilda och statliga byggnadsminnen, skyddsområden
+2025-07-28 05:19:51,818  INFO     [etl.handlers.file:165]  🔗 Single resource download mode for 'Enskilda och statliga byggnadsminnen, skyddsområden' from URL: https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg
+2025-07-28 05:19:51,923  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg'): skyddsomrade_byggnadsminne_sverige.gpkg
+2025-07-28 05:19:51,926  DEBUG    [etl.handlers.file:251]  Attempting to download: https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg 
+    -> to local file: enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg 
+    -> staging dir: data\staging\RAA\enskilda_och_statliga_byggnadsminnen_skyddsomraden
+2025-07-28 05:19:51,927  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): pub.raa.se:443
+2025-07-28 05:19:52,010  DEBUG    [urllib3.connectionpool:544]  https://pub.raa.se:443 "HEAD /nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg HTTP/1.1" 200 0
+2025-07-28 05:19:52,010  INFO     [etl.utils.io:44]  ⬇ enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg (7.5 MB)
+2025-07-28 05:19:52,011  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): pub.raa.se:443
+2025-07-28 05:19:52,097  DEBUG    [urllib3.connectionpool:544]  https://pub.raa.se:443 "GET /nedladdning/datauttag/bebyggelse/byggnadsminne_skyddsomr/skyddsomrade_byggnadsminne_sverige.gpkg HTTP/1.1" 200 7843840
+2025-07-28 05:19:54,163  INFO     [etl.utils.io:82]  ✅ enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg
+2025-07-28 05:19:54,164  INFO     [etl.handlers.file:283]  Determined staged_data_type: 'gpkg' for downloaded file 'enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg'
+2025-07-28 05:19:54,170  INFO     [etl.handlers.file:297]  ➕ Staged GPKG enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg to data\staging\RAA\enskilda_och_statliga_byggnadsminnen_skyddsomraden\enskilda_och_statliga_byggnadsminnen_skyddsomraden.gpkg
+2025-07-28 05:19:54,170  INFO     [pipeline:623]  🚚 Kulturhistoriska lämningar, Södermanland
+2025-07-28 05:19:54,171  INFO     [etl.handlers.file:165]  🔗 Single resource download mode for 'Kulturhistoriska lämningar, Södermanland' from URL: https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg
+2025-07-28 05:19:54,260  INFO     [etl.utils.http:110]      Derived filename by unquoting URL basename ('https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg'): lämningar_län_södermanland.gpkg
+2025-07-28 05:19:54,261  DEBUG    [etl.handlers.file:251]  Attempting to download: https://pub.raa.se/nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg 
+    -> to local file: kulturhistoriska_lamningar_sodermanland.gpkg 
+    -> staging dir: data\staging\RAA\kulturhistoriska_lamningar_sodermanland
+2025-07-28 05:19:54,262  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): pub.raa.se:443
+2025-07-28 05:19:54,330  DEBUG    [urllib3.connectionpool:544]  https://pub.raa.se:443 "HEAD /nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg HTTP/1.1" 200 0
+2025-07-28 05:19:54,330  INFO     [etl.utils.io:44]  ⬇ kulturhistoriska_lamningar_sodermanland.gpkg (41.1 MB)
+2025-07-28 05:19:54,331  DEBUG    [urllib3.connectionpool:1049]  Starting new HTTPS connection (1): pub.raa.se:443
+2025-07-28 05:19:54,421  DEBUG    [urllib3.connectionpool:544]  https://pub.raa.se:443 "GET /nedladdning/datauttag/lamningar/lan/l%C3%A4mningar_l%C3%A4n_s%C3%B6dermanland.gpkg HTTP/1.1" 200 43114496
+2025-07-28 05:19:59,428  DEBUG    [etl.utils.io:66]  📊 kulturhistoriska_lamningar_sodermanland.gpkg: 44.5% (18.3 MB / 41.1 MB)
+2025-07-28 05:20:04,447  DEBUG    [etl.utils.io:66]  📊 kulturhistoriska_lamningar_sodermanland.gpkg: 88.9% (36.5 MB / 41.1 MB)

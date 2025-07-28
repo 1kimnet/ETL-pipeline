@@ -1,0 +1,177 @@
+05:18:53  INFO     🟢 Logging initialised → logs
+05:18:53  INFO     🛠  Using global config config\config.yaml
+05:18:53  INFO     ⚙️  Loaded mapping settings: MappingSettings(default_schema='GNG', default_dataset_pattern='Underlag_{authority}', default_fc_pattern='{authority}_{source_name}', validate_datasets=True, create_missing_datasets=True, skip_unmappable_sources=False)
+05:18:53  INFO     ✅ Loaded 1 mappings from config\mappings.yaml
+05:18:53  INFO     🗺️  Mapping manager initialized with 1 mappings
+05:18:53  INFO     📊 Metrics collector initialized (max_points=10000)
+05:18:53  INFO     🔍 Pipeline monitor initialized
+05:18:53  INFO     ⚡ Parallel processor initialized: max_workers=2
+05:18:53  INFO     🚀 Started pipeline run: pipeline_1753672733
+05:18:53  INFO     🧹 Starting pre-pipeline cleanup...
+05:18:53  INFO     🧹 Cleaning downloads folder: C:\Git\ETL-pipeline\data\downloads (18 files)
+05:18:53  INFO     ✅ Downloads folder cleaned: removed 18 items
+05:18:53  INFO     🧹 Cleaning staging folder: C:\Git\ETL-pipeline\data\staging (153 files)
+05:18:53  INFO     ✅ Staging folder cleaned: removed 153 items
+05:18:53  INFO     🧹 Pre-pipeline cleanup complete: 171 items removed
+05:18:53  INFO     ✅ Loaded 53 sources from config\sources.yaml
+05:18:53  INFO     🔗 Single resource download mode for 'Försvarsmakten - Rikstäckande geodata' from URL: https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip
+05:18:53  WARNING      HEAD request for Content-Disposition failed for https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip: HTTP Error 403: Forbidden. Will fall back to URL basename.
+05:18:53  INFO         Derived filename by unquoting URL basename ('https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/samhallsplanering/geodata/rikstackande-geodata-forsvarsmakten.zip'): rikstackande-geodata-forsvarsmakten.zip
+05:18:53  INFO     ⬇ forsvarsmakten_-_rikstackande_geodata.zip
+05:18:53  INFO     ✅ forsvarsmakten_-_rikstackande_geodata.zip
+05:18:53  INFO     Determined staged_data_type: 'shapefile_collection' for downloaded file 'forsvarsmakten_-_rikstackande_geodata.zip'
+05:18:53  INFO     📦 Extracting forsvarsmakten_-_rikstackande_geodata.zip → C:\Git\ETL-pipeline\data\staging\FM\forsvarsmakten_-_rikstackande_geodata
+05:18:53  INFO     ➕ Extracted and staged archive forsvarsmakten_-_rikstackande_geodata.zip to data\staging\FM\forsvarsmakten_-_rikstackande_geodata
+05:18:53  INFO     🔗 Multi-part download mode for 'Naturvårdsverket - Naturvårdsregistret' (19 archives from base URL 'https://geodata.naturvardsverket.se/nedladdning/naturvardsregistret/')…
+05:18:53  INFO     🚀 Starting concurrent download of 19 files
+05:18:53  INFO     Initialized ConcurrentDownloadManager with 4 workers
+05:18:53  ERROR    ❌ Failed to fetch source 'Naturvårdsverket - Naturvårdsregistret': ConcurrentFileDownloader.download_files_concurrent() got an unexpected keyword argument 'max_workers'
+05:18:53  INFO     🔄 Attempting recovery from TypeError in download_source_Naturvårdsverket - Naturvårdsregistret: ConcurrentFileDownloader.download_files_concurrent() got an unexpected keyword argument 'max_workers'
+05:18:53  WARNING  ⏭️ Skipping failed operation: download_source_Naturvårdsverket - Naturvårdsregistret
+05:18:53  INFO     ✅ Recovery successful using skip strategy
+05:18:53  INFO     🌐 Reading Atom feed for source 'Miljöriskområde' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.LST_Miljoriskomrade.xml
+05:18:54  INFO     ⬇ miljoriskomrade_feed.xml (1.0 KB)
+05:18:54  INFO     ✅ miljoriskomrade_feed.xml
+05:18:54  INFO     Target staging directory for all content from Atom source 'Miljöriskområde': data\staging\LST\miljoriskomrade
+05:18:54  INFO     Found linked resource in Atom feed for 'Miljöriskområde': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip
+05:18:54  INFO         Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip'): lst.LST_Miljoriskomrade.zip
+05:18:54  INFO     Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.LST_Miljoriskomrade.zip 
+        -> to local file: lst_lst_miljoriskomrade.zip
+05:18:54  INFO     ⬇ lst_lst_miljoriskomrade.zip (74.2 KB)
+05:18:54  INFO     ✅ lst_lst_miljoriskomrade.zip
+05:18:54  INFO     Downloaded file 'lst_lst_miljoriskomrade.zip' is a ZIP archive. Extracting...
+05:18:54  INFO     📦 Extracting lst_lst_miljoriskomrade.zip → C:\Git\ETL-pipeline\data\staging\LST\miljoriskomrade
+05:18:54  INFO     ➕ Extracted and staged archive lst_lst_miljoriskomrade.zip into data\staging\LST\miljoriskomrade
+05:18:54  INFO     Source 'Miljöriskområde' expects a GPKG. Searching in extracted contents of lst_lst_miljoriskomrade.zip...
+05:18:54  INFO     Renaming/moving extracted GPKG 'lst.LST_Miljoriskomrade.gpkg' to 'miljoriskomrade.gpkg'
+05:18:54  INFO     ✅ Successfully staged GPKG 'miljoriskomrade.gpkg' for source 'Miljöriskområde'.
+05:18:54  INFO     🌐 Reading Atom feed for source 'Vindkraftskollen: Vindkraftverk' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_vindkraftverk.xml
+05:18:54  INFO     ⬇ vindkraftskollen_vindkraftverk_feed.xml (1.0 KB)
+05:18:54  INFO     ✅ vindkraftskollen_vindkraftverk_feed.xml
+05:18:54  INFO     Target staging directory for all content from Atom source 'Vindkraftskollen: Vindkraftverk': data\staging\LST\vindkraftskollen_vindkraftverk
+05:18:54  INFO     Found linked resource in Atom feed for 'Vindkraftskollen: Vindkraftverk': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip
+05:18:55  INFO         Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip'): lst.vbk_vindkraftverk.zip
+05:18:55  INFO     Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_vindkraftverk.zip 
+        -> to local file: lst_vbk_vindkraftverk.zip
+05:18:55  INFO     ⬇ lst_vbk_vindkraftverk.zip (4.1 MB)
+05:18:55  INFO     ✅ lst_vbk_vindkraftverk.zip
+05:18:55  INFO     Downloaded file 'lst_vbk_vindkraftverk.zip' is a ZIP archive. Extracting...
+05:18:55  INFO     📦 Extracting lst_vbk_vindkraftverk.zip → C:\Git\ETL-pipeline\data\staging\LST\vindkraftskollen_vindkraftverk
+05:18:55  INFO     ➕ Extracted and staged archive lst_vbk_vindkraftverk.zip into data\staging\LST\vindkraftskollen_vindkraftverk
+05:18:55  INFO     Source 'Vindkraftskollen: Vindkraftverk' expects a GPKG. Searching in extracted contents of lst_vbk_vindkraftverk.zip...
+05:18:55  INFO     Renaming/moving extracted GPKG 'lst.vbk_vindkraftverk.gpkg' to 'vindkraftskollen_vindkraftverk.gpkg'
+05:18:55  INFO     ✅ Successfully staged GPKG 'vindkraftskollen_vindkraftverk.gpkg' for source 'Vindkraftskollen: Vindkraftverk'.
+05:18:55  INFO     🌐 Reading Atom feed for source 'Vindkraftskollen: Projekteringsområden' from URL: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ATOM/ATOM_lst.vbk_projekteringsomraden.xml
+05:18:55  INFO     ⬇ vindkraftskollen_projekteringsomraden_feed.xml (1.0 KB)
+05:18:56  INFO     ✅ vindkraftskollen_projekteringsomraden_feed.xml
+05:18:56  INFO     Target staging directory for all content from Atom source 'Vindkraftskollen: Projekteringsområden': data\staging\LST\vindkraftskollen_projekteringsomraden
+05:18:56  INFO     Found linked resource in Atom feed for 'Vindkraftskollen: Projekteringsområden': https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip
+05:18:56  INFO         Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip'): lst.vbk_projekteringsomraden.zip
+05:18:56  INFO     Attempting to download linked resource: https://ext-dokument.lansstyrelsen.se/gemensamt/geodata/ShapeExport/lst.vbk_projekteringsomraden.zip 
+        -> to local file: lst_vbk_projekteringsomraden.zip
+05:18:56  INFO     ⬇ lst_vbk_projekteringsomraden.zip (4.5 MB)
+05:18:56  INFO     ✅ lst_vbk_projekteringsomraden.zip
+05:18:56  INFO     Downloaded file 'lst_vbk_projekteringsomraden.zip' is a ZIP archive. Extracting...
+05:18:56  INFO     📦 Extracting lst_vbk_projekteringsomraden.zip → C:\Git\ETL-pipeline\data\staging\LST\vindkraftskollen_projekteringsomraden
+05:18:56  INFO     ➕ Extracted and staged archive lst_vbk_projekteringsomraden.zip into data\staging\LST\vindkraftskollen_projekteringsomraden
+05:18:56  INFO     Source 'Vindkraftskollen: Projekteringsområden' expects a GPKG. Searching in extracted contents of lst_vbk_projekteringsomraden.zip...
+05:18:56  INFO     Renaming/moving extracted GPKG 'lst.vbk_projekteringsomraden.gpkg' to 'vindkraftskollen_projekteringsomraden.gpkg'
+05:18:56  INFO     ✅ Successfully staged GPKG 'vindkraftskollen_projekteringsomraden.gpkg' for source 'Vindkraftskollen: Projekteringsområden'.
+05:18:56  INFO     🔗 Single resource download mode for 'Potentiellt förorenade områden' from URL: https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip
+05:18:57  INFO         Derived filename by unquoting URL basename ('https://ext-dokument.lansstyrelsen.se/Gemensamt/Geodata/Datadistribution/SWEREF99TM/EBH_Potentiellt_fororenade_omraden.zip'): EBH_Potentiellt_fororenade_omraden.zip
+05:18:57  INFO     ⬇ potentiellt_fororenade_omraden.zip (5.0 MB)
+05:18:57  INFO     ✅ potentiellt_fororenade_omraden.zip
+05:18:57  INFO     Determined staged_data_type: 'shapefile_collection' for downloaded file 'potentiellt_fororenade_omraden.zip'
+05:18:57  INFO     📦 Extracting potentiellt_fororenade_omraden.zip → C:\Git\ETL-pipeline\data\staging\LST\potentiellt_fororenade_omraden
+05:18:57  INFO     ➕ Extracted and staged archive potentiellt_fororenade_omraden.zip to data\staging\LST\potentiellt_fororenade_omraden
+05:18:58  INFO     🚀 Initializing RestApiDownloadHandler for source: Riksintressen
+05:18:58  INFO     🌐 Processing REST API source: 'Riksintressen' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_4/MapServer
+05:18:58  INFO     Found explicit layer_ids in config: [0] for source 'Riksintressen'. Processing only these.
+05:18:58  INFO     Source 'Riksintressen': Will attempt to query 1 layer(s): ['0']
+05:18:58  INFO     🚚 lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2
+05:18:58  INFO     ✅ lst_riksintresse_rorligt_friluftsliv_mb4kap_1plus2: 6 features
+05:18:58  INFO     🚀 Initializing RestApiDownloadHandler for source: Riksintressen - Vindbruk
+05:18:58  INFO     🌐 Processing REST API source: 'Riksintressen - Vindbruk' from URL: https://ext-geodata-nationella.lansstyrelsen.se/arcgis/rest/services/LST/lst_lst_riksintressen_vindbruk_4/MapServer
+05:18:58  WARNING  ⚠️ No layers identified or specified to query for source 'Riksintressen - Vindbruk'. Check service metadata and `layer_ids` config.
+05:18:58  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Föreskrifter
+05:18:58  INFO     🌐 Processing REST API source: 'LstD Föreskrifter' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Foreskrifter_EXT/MapServer
+05:18:58  INFO     No explicit layer_ids in config for source 'LstD Föreskrifter'. Discovering all layers from service metadata.
+05:18:58  INFO     Source 'LstD Föreskrifter': Will attempt to query 1 layer(s): ['0']
+05:18:58  INFO     🚚 lstd_sjotrafikforeskrifter
+05:19:00  INFO     ✅ lstd_sjotrafikforeskrifter: 61 features
+05:19:00  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Fysisk planering
+05:19:00  INFO     🌐 Processing REST API source: 'LstD Fysisk planering' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_Fysisk_planering_EXT/MapServer
+05:19:01  WARNING  ⚠️ No layers identified or specified to query for source 'LstD Fysisk planering'. Check service metadata and `layer_ids` config.
+05:19:01  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Ett rikt odlingslandskap
+05:19:01  INFO     🌐 Processing REST API source: 'LstD Ett rikt odlingslandskap' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Ett_rikt_odlingslandskap_EXT/MapServer
+05:19:01  INFO     Found explicit layer_ids in config: [2, 3, 4, 5, 6] for source 'LstD Ett rikt odlingslandskap'. Processing only these.
+05:19:01  INFO     Source 'LstD Ett rikt odlingslandskap': Will attempt to query 5 layer(s): ['2', '3', '4', '5', '6']
+05:19:01  INFO     🚀 Starting concurrent download of 5 layers
+05:19:01  INFO     Initialized ConcurrentDownloadManager with 5 workers
+05:19:01  INFO     Starting concurrent download of 5 layers
+05:19:01  INFO     Starting concurrent execution of 5 tasks with 5 workers
+05:19:01  INFO     Concurrent execution completed: 0/5 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+05:19:01  INFO     🏁 Concurrent downloads completed: 0 successful, 5 failed
+05:19:01  ERROR    ❌ Layer download failed: layer_LstD GI Betesmark - Exempelanalys - Spridningslänkar mellan kluster - Under 500 m - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_LstD GI Jordbruksmark - Tvärvillkorselement - Ytor - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_LstD GI Värdetrakter naturbetesmark - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_LstD GI Betesmark - Exempelanalys - Kluster av betesmarker - Buffert 250 m - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_LstD GI Jordbruksmark - Åkerholmar - name 'time' is not defined
+05:19:01  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Friluftsliv
+05:19:01  INFO     🌐 Processing REST API source: 'LstD Friluftsliv' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Friluftsliv_EXT/MapServer
+05:19:01  INFO     Found explicit layer_ids in config: [0, 1, 2, 3, 4] for source 'LstD Friluftsliv'. Processing only these.
+05:19:01  WARNING  Layer ID '0' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+05:19:01  WARNING  Layer ID '1' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+05:19:01  WARNING  Layer ID '2' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+05:19:01  WARNING  Layer ID '3' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+05:19:01  WARNING  Layer ID '4' specified in config for source 'LstD Friluftsliv' was not found in the service's layer metadata list. Will attempt to query it using this ID and a placeholder name.
+05:19:01  INFO     Source 'LstD Friluftsliv': Will attempt to query 5 layer(s): ['0', '1', '2', '3', '4']
+05:19:01  INFO     🚀 Starting concurrent download of 5 layers
+05:19:01  INFO     Starting concurrent download of 5 layers
+05:19:01  INFO     Starting concurrent execution of 5 tasks with 5 workers
+05:19:01  INFO     Concurrent execution completed: 0/5 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+05:19:01  INFO     🏁 Concurrent downloads completed: 0 successful, 5 failed
+05:19:01  ERROR    ❌ Layer download failed: layer_layer_0_cfg_only - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_layer_1_cfg_only - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_layer_2_cfg_only - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_layer_3_cfg_only - name 'time' is not defined
+05:19:01  ERROR    ❌ Layer download failed: layer_layer_4_cfg_only - name 'time' is not defined
+05:19:01  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD God bebyggd miljö
+05:19:01  INFO     🌐 Processing REST API source: 'LstD God bebyggd miljö' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_God_bebyggd_miljo_EXT/MapServer
+05:19:01  INFO     No explicit layer_ids in config for source 'LstD God bebyggd miljö'. Discovering all layers from service metadata.
+05:19:01  INFO     Source 'LstD God bebyggd miljö': Will attempt to query 1 layer(s): ['0']
+05:19:01  INFO     🚚 lstd_gi_opaverkade_omraden_-_avgransning
+05:19:02  INFO     ✅ lstd_gi_opaverkade_omraden_-_avgransning: 10 features
+05:19:02  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Hav i balans
+05:19:02  INFO     🌐 Processing REST API source: 'LstD Hav i balans' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Hav_i_balans_EXT/MapServer
+05:19:02  INFO     No explicit layer_ids in config for source 'LstD Hav i balans'. Discovering all layers from service metadata.
+05:19:02  INFO     Source 'LstD Hav i balans': Will attempt to query 1 layer(s): ['0']
+05:19:02  INFO     🚚 lstd_gi_marina_naturvarden_-_inventering
+05:19:03  INFO     ℹ️ lstd_gi_marina_naturvarden_-_inventering: no features
+05:19:03  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Levande sjöar och vattendrag
+05:19:03  INFO     🌐 Processing REST API source: 'LstD Levande sjöar och vattendrag' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_sjoar_och_vattendrag_EXT/MapServer
+05:19:04  INFO     Found explicit layer_ids in config: [2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17] for source 'LstD Levande sjöar och vattendrag'. Processing only these.
+05:19:04  INFO     Source 'LstD Levande sjöar och vattendrag': Will attempt to query 13 layer(s): ['2', '3', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17']
+05:19:04  INFO     🚀 Starting concurrent download of 13 layers
+05:19:04  INFO     Starting concurrent download of 13 layers
+05:19:04  INFO     Starting concurrent execution of 13 tasks with 5 workers
+05:19:04  INFO     Concurrent execution completed: 0/13 successful (0.0%), avg=0.00s, max=0.00s, total=0.00s
+05:19:04  INFO     🏁 Concurrent downloads completed: 0 successful, 13 failed
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Tjockskalig målarmussla - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Kortskottsväxter - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Ansvarsområde sötvatten Länsstyrelsen i Södermanlands län - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Värdetrakter Hjälmar-, Mälar- och kustmynnande vattendrag (inkl Mälaren och Hjälmaren) - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Värdetrakter Kilaåns avrinningsområde - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Värdetrakter klarvattensjöar med kortskottsväxter - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Värdetrakter malens rike - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Värdetrakter nätverk för tjockskalig målarmussla - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Klarvattensjöar och kortskottsväxter - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Sjöar med rödlistade arter - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Sjöar med konnektivitetsarter - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Fosforbeting totalt i kg (område) - name 'time' is not defined
+05:19:04  ERROR    ❌ Layer download failed: layer_LstD GI Sötvatten - Fosforbeting per arealenhet - name 'time' is not defined
+05:19:04  INFO     🚀 Initializing RestApiDownloadHandler for source: LstD Levande skogar
+05:19:04  INFO     🌐 Processing REST API source: 'LstD Levande skogar' from URL: https://ext-geodata-lokala-visning.lansstyrelsen.se/arcgis/rest/services/LSTD/LstD_GI_Levande_skogar_EXT/MapServer
+05:19:04  INFO     Found explicit layer_ids in config: [0] for source 'LstD Levande skogar'. Processing only these.
+05:19:04  INFO     Source 'LstD Levande skogar': Will attempt to query 1 layer(s): ['0']
+05:19:04  INFO     🚚 lstd_gi_vardekarnor_adellovmiljoer_inkl_skyddsvarda_trad
